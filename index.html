@@ -943,9 +943,9 @@
     <div class="topbar-right">
       <div class="tb-status-cluster">
         <div class="tb-conn-dot" id="topbar-conn-dot"></div>
-        <span class="tb-conn-txt" id="topbar-conn-txt">Connecting…</span>
+        <span class="tb-conn-txt" id="topbar-conn-txt">Not connected</span>
         <button id="topbar-connect-btn" onclick="oelConnectNow()"
-          style="padding:4px 10px;font-size:11px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;display:none;margin-left:6px">
+          style="padding:4px 10px;font-size:11px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-block;margin-left:6px">
           Connect
         </button>
       </div>
@@ -7218,10 +7218,21 @@ async function ddSendQuickMsg(leadId, leadName) {
 
 // ── Manual Odoo connect from topbar ──────────────────────────────────────────
 window.oelConnectNow = async function() {
-  const url = document.getElementById('odoo-url')?.value?.trim();
-  const db  = document.getElementById('odoo-db')?.value?.trim();
-  const usr = document.getElementById('odoo-user')?.value?.trim();
-  const key = document.getElementById('odoo-key')?.value?.trim();
+  // Read from localStorage directly — fields may not be rendered yet
+  let url, db, usr, key;
+  try {
+    const saved = JSON.parse(localStorage.getItem('odoo_email_link_creds') || '{}');
+    url = document.getElementById('odoo-url')?.value?.trim() || saved.url || '';
+    db  = document.getElementById('odoo-db')?.value?.trim()  || saved.db   || '';
+    usr = document.getElementById('odoo-user')?.value?.trim()|| saved.user || '';
+    key = document.getElementById('odoo-key')?.value?.trim() || saved.odooKey || '';
+    // Populate fields so settings shows correctly
+    if (saved.url)      { const el = document.getElementById('odoo-url');  if (el && !el.value) el.value = saved.url; }
+    if (saved.db)       { const el = document.getElementById('odoo-db');   if (el && !el.value) el.value = saved.db; }
+    if (saved.user)     { const el = document.getElementById('odoo-user'); if (el && !el.value) el.value = saved.user; }
+    if (saved.odooKey)  { const el = document.getElementById('odoo-key');  if (el && !el.value) el.value = saved.odooKey; }
+    if (saved.geminiKey){ const el = document.getElementById('gemini-key');if (el && !el.value) el.value = saved.geminiKey; }
+  } catch(e) {}
 
   if (!url || !db || !usr || !key) {
     openSettings();
@@ -7247,9 +7258,10 @@ window.oelConnectNow = async function() {
     if (typeof lazPopulatePipelineUsers === 'function') lazPopulatePipelineUsers();
     if (typeof populateUserDropdown === 'function') populateUserDropdown();
     if (typeof rebuildUserSelect === 'function') rebuildUserSelect();
-    // Load dashboard if on reports
+    if (typeof qmPopulateUsers === 'function') qmPopulateUsers();
+    // Auto-load dashboard if on reports
     if (document.getElementById('panel-reports')?.classList.contains('active')) {
-      if (typeof lazDashboardLoad === 'function') lazDashboardLoad();
+      if (typeof lazDashboardLoad === 'function') setTimeout(lazDashboardLoad, 200);
     }
   } catch(e) {
     if (dot) dot.style.background = 'var(--danger)';
@@ -7263,8 +7275,9 @@ window.oelConnectNow = async function() {
 window._updateConnectBtn = function() {
   const btn = document.getElementById('topbar-connect-btn');
   if (!btn) return;
-  const hasCredentials = !!(document.getElementById('odoo-url')?.value?.trim());
-  btn.style.display = (!window.odooUid && hasCredentials) ? 'inline-block' : 'none';
+  // Show Connect button whenever not connected
+  btn.style.display = !window.odooUid ? 'inline-block' : 'none';
+  btn.textContent   = !window.odooUid ? 'Connect' : '';
 };
 
 // Override oelSetLight to also update connect button
@@ -14978,7 +14991,14 @@ async function qcCopy() {
 
 async function qmPopulateUsers() {
   const sel = document.getElementById('qm-user-select');
-  if (!sel || !odooUid) return;
+  if (!sel) return;
+  // Retry up to 5x if odooUid not ready yet (auto-connect may still be running)
+  if (!odooUid) {
+    let attempts = 0;
+    const wait = () => new Promise(r => setTimeout(r, 600));
+    while (!odooUid && attempts < 5) { await wait(); attempts++; }
+    if (!odooUid) return; // give up
+  }
   let users = odooUsers;
   if (!users.length) {
     try {
@@ -17751,6 +17771,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof lazPopulatePipelineUsers === 'function') lazPopulatePipelineUsers();
         if (typeof populateUserDropdown === 'function') populateUserDropdown();
         if (typeof rebuildUserSelect === 'function') rebuildUserSelect();
+        if (typeof qmPopulateUsers === 'function') qmPopulateUsers();
         if (dot) dot.style.background = 'var(--success)';
         if (txt) txt.textContent = 'Odoo connected';
         // Auto-load dashboard if on reports
