@@ -871,6 +871,14 @@
       <span class="sb-badge" id="badge-catchup"></span>
     </div>
 
+    <div class="sb-item" id="nav-vendor" onclick="navTo('vendor')" title="Vendor Outreach">
+      <div class="sb-item-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 3 3.5.5-2.5 2.4.6 3.5L7 8.9l-3.1 1.5.6-3.5L2 4.5l3.5-.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg></div>
+      <span class="sb-item-label">Vendor Outreach</span>
+    </div>
+    <div class="sb-item" id="nav-docs" onclick="navTo('docs')" title="Documents">
+      <div class="sb-item-icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 1h6l3 3v9H3V1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M9 1v3h3M5 6h4M5 8.5h4M5 11h2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg></div>
+      <span class="sb-item-label">Documents</span>
+    </div>
     <div class="sb-item" id="nav-prospect" onclick="navTo('prospect')" title="Prospecting">
       <div class="sb-item-icon">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -2318,7 +2326,118 @@
       </div>
     </div>
 
-    <div id="settings-overlay" onclick="if(event.target===this)closeSettings()"></div>
+    <div class="section-panel" id="panel-vendor">
+      <div class="section-scroll">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">Vendor Outreach</div>
+          <div class="card-subtitle">Find subcontractors and vendors, blast a quote request, track responses.</div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="field"><label>State / Region</label>
+              <select id="vo-state" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.83rem;outline:none">
+                <option value="">All states</option><option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option><option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option><option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option><option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option><option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option><option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option><option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option><option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option><option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option><option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option><option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option><option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option><option>Wisconsin</option><option>Wyoming</option>
+              </select>
+            </div>
+            <div class="field"><label>City (optional)</label><input type="text" id="vo-city" placeholder="e.g. Tampa"></div>
+            <div class="field"><label>Equipment / service type</label><input type="text" id="vo-equipment" placeholder="e.g. crane, forklift"></div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="voSearch()" id="vo-search-btn" style="padding:8px 20px;font-size:0.85rem">Search Odoo vendors</button>
+            <button class="btn btn-ghost" onclick="voSearchAI()" id="vo-ai-btn" style="padding:8px 16px;font-size:0.85rem;border-color:var(--accent);color:var(--accent)">&#10022; AI suggestions</button>
+            <div id="vo-status" style="font-size:0.82rem;color:var(--muted)"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:0.88rem;font-weight:500">Quote request email</div>
+            <button class="btn btn-ghost" onclick="voGenerateTemplate()" style="padding:5px 12px;font-size:0.76rem">&#10022; AI draft</button>
+          </div>
+          <div class="field" style="margin-bottom:8px"><label>Subject</label><input type="text" id="vo-subject" value="Quote Request - Equipment Rental"></div>
+          <div class="field"><label>Message body</label>
+            <textarea id="vo-body" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.79rem;line-height:1.6;outline:none;resize:vertical">Hi,
+
+We are looking for a quote on the following equipment:
+
+Equipment: [type]
+Project location: [location]
+Dates needed: [start] to [end]
+
+Please reply with your best daily/weekly rate, availability, and delivery charges.
+
+Thank you</textarea>
+          </div>
+        </div>
+        <div id="vo-results-container" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div id="vo-results-label" style="font-size:0.82rem;color:var(--muted)"></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" onclick="voSelectAll()" style="padding:5px 12px;font-size:0.76rem">Select all</button>
+              <button class="btn btn-primary" onclick="voBlast()" id="vo-blast-btn" style="padding:5px 16px;font-size:0.76rem;display:none">Send quote requests</button>
+            </div>
+          </div>
+          <div id="vo-results-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+        <div id="vo-tracker-container" style="display:none;margin-top:16px">
+          <div class="card-title" style="margin-bottom:10px">Quote responses</div>
+          <div id="vo-tracker-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-panel" id="panel-docs">
+      <div class="section-scroll">
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">Document Center</div>
+          <div class="card-subtitle">Upload a PDF, add text or a signature, then print or email.</div>
+          <div id="docs-upload-zone" style="border:2px dashed var(--border);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:12px" onclick="document.getElementById('docs-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';docsHandleFile(event.dataTransfer.files[0])">
+            <div style="font-size:0.88rem;color:var(--muted);margin-bottom:4px">Drop a PDF here or click to upload</div>
+            <div style="font-size:0.74rem;color:var(--muted);opacity:0.7">PDF files only</div>
+            <input type="file" id="docs-file-input" accept=".pdf" style="display:none" onchange="docsHandleFile(this.files[0])">
+          </div>
+          <div id="docs-toolbar" style="display:none;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+            <button class="btn btn-ghost" onclick="docsSetTool('text')" id="docs-tool-text" style="padding:5px 12px;font-size:0.78rem">Add text</button>
+            <button class="btn btn-ghost" onclick="docsSetTool('sign')" id="docs-tool-sign" style="padding:5px 12px;font-size:0.78rem">Signature</button>
+            <button class="btn btn-ghost" onclick="docsSetTool('highlight')" id="docs-tool-highlight" style="padding:5px 12px;font-size:0.78rem">Highlight</button>
+            <div style="flex:1"></div>
+            <button class="btn btn-ghost" onclick="docsUndo()" style="padding:5px 10px;font-size:0.78rem">Undo</button>
+            <button class="btn btn-ghost" onclick="docsClearPage()" style="padding:5px 10px;font-size:0.78rem">Clear page</button>
+            <button class="btn btn-ghost" onclick="docsDownload()" style="padding:5px 12px;font-size:0.78rem">Print / Save PDF</button>
+            <button class="btn btn-primary" onclick="docsEmail()" style="padding:5px 12px;font-size:0.78rem">Email</button>
+          </div>
+          <div id="docs-page-nav" style="display:none;align-items:center;gap:10px;margin-bottom:10px;font-size:0.8rem;color:var(--muted)">
+            <button onclick="docsChangePage(-1)" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;cursor:pointer;color:var(--muted)">Prev</button>
+            <span id="docs-page-info">Page 1 of 1</span>
+            <button onclick="docsChangePage(1)" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;cursor:pointer;color:var(--muted)">Next</button>
+            <span id="docs-filename" style="margin-left:auto;font-size:0.74rem;font-family:'DM Mono',monospace;opacity:0.7"></span>
+          </div>
+        </div>
+        <div id="docs-canvas-container" style="display:none;position:relative;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;margin-bottom:14px">
+          <canvas id="docs-pdf-canvas" style="display:block;width:100%"></canvas>
+          <canvas id="docs-annotation-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair"></canvas>
+        </div>
+        <div id="docs-sign-pad" style="display:none" class="card">
+          <div style="font-size:0.82rem;font-weight:500;margin-bottom:8px">Draw your signature</div>
+          <canvas id="docs-sig-canvas" width="500" height="140" style="border:1px solid var(--border);border-radius:8px;background:#fff;cursor:crosshair;width:100%;display:block"></canvas>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="docsClearSig()" style="padding:4px 10px;font-size:0.75rem">Clear</button>
+            <button class="btn btn-primary" onclick="docsStampSig()" style="padding:4px 12px;font-size:0.75rem">Place on document</button>
+            <button class="btn btn-ghost" id="docs-sig-load-btn" onclick="docsLoadSavedSig()" style="padding:4px 10px;font-size:0.75rem;display:none">Use saved sig</button>
+            <button class="btn btn-ghost" onclick="docsUploadSig()" style="padding:4px 10px;font-size:0.75rem">Upload image</button>
+          </div>
+        </div>
+        <div id="docs-text-input-panel" style="display:none" class="card">
+          <div style="font-size:0.82rem;font-weight:500;margin-bottom:8px">Click document to place text</div>
+          <input type="text" id="docs-text-content" placeholder="Type text here, then click where to place it" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.83rem;outline:none;margin-bottom:8px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="font-size:0.76rem;color:var(--muted)">Size:</label>
+            <input type="range" id="docs-text-size" min="8" max="36" value="14" style="width:80px;accent-color:var(--accent)">
+            <label style="font-size:0.76rem;color:var(--muted)">Color:</label>
+            <input type="color" id="docs-text-color" value="#000000" style="width:28px;height:24px;border:none;cursor:pointer">
+          </div>
+        </div>
+      </div>
+    </div>
+
+        <div id="settings-overlay" onclick="if(event.target===this)closeSettings()"></div>
     <div id="settings-drawer">
       <div class="settings-header">
         <span class="settings-title">Settings</span>
@@ -5649,6 +5768,518 @@ function importCredentials(event) {
   };
   reader.readAsText(file);
 }
+
+
+// === VENDOR OUTREACH ENGINE ===
+
+const VO_TRACKER_KEY = 'oel_vo_tracker';
+let _voVendors = [];
+let _voTracker = [];
+
+function voLoadTracker() {
+  try { _voTracker = JSON.parse(localStorage.getItem(VO_TRACKER_KEY) || '[]'); } catch(e) { _voTracker = []; }
+  voRenderTracker();
+}
+
+async function voSearch() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const btn      = document.getElementById('vo-search-btn');
+  const statusEl = document.getElementById('vo-status');
+  const state    = document.getElementById('vo-state')?.value || '';
+  const city     = document.getElementById('vo-city')?.value?.trim() || '';
+  const equip    = document.getElementById('vo-equipment')?.value?.trim() || '';
+
+  btn.disabled = true;
+  statusEl.style.color = 'var(--muted)';
+  statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Searching...';
+  _voVendors = [];
+
+  try {
+    const domain = [['supplier_rank','>',0],['active','=',true]];
+    if (city) domain.push(['city','ilike',city]);
+
+    let vendors = await odooExecute(odooUid, 'res.partner', 'search_read',
+      [domain],
+      { fields: ['id','name','email','phone','city','state_id','street','company_name','supplier_rank','customer_rank','comment'], limit: 200, order: 'name asc' }
+    );
+
+    const stateLC = state.toLowerCase();
+    const equipLC = equip.toLowerCase();
+
+    const applyFilters = function(list, strictCity) {
+      return list.filter(function(v) {
+        const vState = (Array.isArray(v.state_id) ? v.state_id[1] : '').toLowerCase();
+        if (state && !vState.includes(stateLC)) return false;
+        if (strictCity && city && !(v.city||'').toLowerCase().includes(city.toLowerCase())) return false;
+        if (equip) {
+          if (!(v.name||'').toLowerCase().includes(equipLC) && !(v.comment||'').toLowerCase().includes(equipLC)) return false;
+        }
+        return true;
+      });
+    };
+
+    let filtered = applyFilters(vendors, true);
+
+    // Fallback: broaden to state if city gave nothing
+    if (!filtered.length && city && state) {
+      filtered = applyFilters(vendors, false);
+      if (filtered.length) {
+        statusEl.style.color = 'var(--warning)';
+        statusEl.textContent = 'No vendors in ' + city + ' - showing ' + filtered.length + ' in ' + state + ' (good for referrals)';
+      }
+    }
+
+    // Fallback 2: all vendors matching equipment type
+    if (!filtered.length) {
+      const allV = await odooExecute(odooUid, 'res.partner', 'search_read',
+        [[['supplier_rank','>',0],['active','=',true]]],
+        { fields: ['id','name','email','phone','city','state_id','street','company_name','supplier_rank','customer_rank','comment'], limit: 200, order: 'name asc' }
+      );
+      filtered = equip ? allV.filter(function(v) {
+        return (v.name||'').toLowerCase().includes(equipLC) || (v.comment||'').toLowerCase().includes(equipLC);
+      }) : allV.slice(0,50);
+      if (filtered.length) {
+        statusEl.style.color = 'var(--warning)';
+        statusEl.textContent = 'Showing all ' + filtered.length + ' Odoo vendors - no location match found';
+      }
+    }
+
+    _voVendors = filtered.map(function(v) {
+      return { id:v.id, name:v.name, email:v.email||'', phone:v.phone||'',
+        city:v.city||'', state:Array.isArray(v.state_id)?v.state_id[1]:'',
+        street:v.street||'', comment:v.comment||'', source:'odoo',
+        _selected:false, _sent:false, _rate:'' };
+    });
+
+    const container = document.getElementById('vo-results-container');
+    const label     = document.getElementById('vo-results-label');
+
+    if (!_voVendors.length) {
+      if (!statusEl.textContent.includes('Showing')) {
+        statusEl.style.color = 'var(--warning)';
+        statusEl.textContent = 'No vendors found - try AI suggestions or add vendors to Odoo contacts';
+      }
+      if (container) container.style.display = 'none';
+    } else {
+      if (!statusEl.textContent.includes('showing') && !statusEl.textContent.includes('Showing')) {
+        statusEl.style.color = 'var(--accent)';
+        statusEl.textContent = _voVendors.length + ' vendor' + (_voVendors.length!==1?'s':'') + ' found';
+      }
+      if (label) label.textContent = _voVendors.length + ' vendor' + (_voVendors.length!==1?'s':'') + ' - select and blast quote request';
+      if (container) container.style.display = 'block';
+      voRenderVendors();
+      var subj = document.getElementById('vo-subject');
+      if (subj && equip) subj.value = 'Quote Request - ' + equip + (city||state ? ' (' + [city,state].filter(Boolean).join(', ') + ')' : '');
+    }
+  } catch(e) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
+async function voSearchAI() {
+  const btn      = document.getElementById('vo-ai-btn');
+  const statusEl = document.getElementById('vo-status');
+  const equip    = document.getElementById('vo-equipment')?.value?.trim() || '';
+  const city     = document.getElementById('vo-city')?.value?.trim() || '';
+  const state    = document.getElementById('vo-state')?.value || '';
+  const groqKey  = document.getElementById('gemini-key')?.value?.trim();
+
+  if (!groqKey) { alert('Groq API key required - enter it in Settings'); return; }
+  if (!equip && !city) { alert('Enter equipment type and/or location'); return; }
+
+  if (btn) btn.disabled = true;
+  if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.innerHTML='<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Finding vendors with AI...'; }
+
+  try {
+    const location = [city,state].filter(Boolean).join(', ') || 'the US';
+    const prompt = 'Generate 8-10 realistic equipment rental companies in ' + location + ' that provide ' + (equip||'construction equipment') + ' rental. Return ONLY a JSON array with objects: name, city, state, phone, email, comment. Realistic business names for that region. Raw JSON only, no markdown.';
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+      body: JSON.stringify({ model: document.getElementById('gemini-model')?.value || 'llama-3.3-70b-versatile', max_tokens: 800, temperature: 0.4, messages: [{ role: 'user', content: prompt }] }),
+      signal: AbortSignal.timeout(25000)
+    });
+    const d = await r.json();
+    let raw = (d.choices?.[0]?.message?.content||'[]').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
+    let suggestions = [];
+    try { suggestions = JSON.parse(raw); } catch(e) { throw new Error('Could not parse AI response'); }
+
+    const ts = Date.now();
+    const aiVendors = (suggestions||[]).map(function(s, idx) {
+      return { id:'ai_'+ts+'_'+idx, name:s.name||'Unknown', email:s.email||'', phone:s.phone||'',
+        city:s.city||city, state:s.state||state, street:'', comment:s.comment||'',
+        source:'ai', _selected:false, _sent:false, _rate:'' };
+    });
+
+    var existingIds = new Set(_voVendors.map(function(v) { return v.id; }));
+    var newOnes = aiVendors.filter(function(v) { return !existingIds.has(v.id); });
+    _voVendors = _voVendors.concat(newOnes);
+
+    var container = document.getElementById('vo-results-container');
+    var label     = document.getElementById('vo-results-label');
+    if (container) container.style.display = 'block';
+    if (label) label.textContent = _voVendors.length + ' vendors total (' + newOnes.length + ' AI suggestions)';
+    if (statusEl) { statusEl.style.color='var(--accent)'; statusEl.textContent = newOnes.length + ' AI vendor suggestions added'; }
+    voRenderVendors();
+  } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='AI error: ' + e.message; }
+  }
+  if (btn) btn.disabled = false;
+}
+
+function voRenderVendors() {
+  var list = document.getElementById('vo-results-list');
+  if (!list) return;
+  list.innerHTML = _voVendors.map(function(v, i) {
+    var hasEmail    = !!v.email;
+    var location    = [v.city,v.state].filter(Boolean).join(', ');
+    var alreadySent = _voTracker.some(function(t) { return t.vendorId === v.id; });
+    var srcBadge    = v.source==='ai' ? ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:10px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(201,168,76,0.3)">AI</span>' : '';
+    var sentBadge   = alreadySent ? ' <span style="font-size:0.68rem;padding:1px 6px;border-radius:10px;background:rgba(201,168,76,0.15);color:var(--accent)">Sent</span>' : '';
+    var row = '<div class="lead-card ' + (v._selected?'selected':'') + '" id="vo-card-'+i+'">';
+    row += '<div style="display:flex;align-items:flex-start;gap:10px">';
+    row += '<input type="checkbox" '+(v._selected?'checked':'')+' style="accent-color:var(--accent);margin-top:3px;flex-shrink:0" onchange="voToggle('+i+',this.checked)">';
+    row += '<div style="flex:1;min-width:0">';
+    row += '<div style="font-size:0.88rem;font-weight:500;color:var(--text)">'+escHtml(v.name)+srcBadge+sentBadge+'</div>';
+    row += '<div style="font-size:0.75rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px">';
+    if (location) row += '<span>' + escHtml(location) + '</span>';
+    row += v.email ? '<span style="font-family:monospace">'+escHtml(v.email)+'</span>' : '<span style="color:var(--danger)">No email</span>';
+    if (v.phone) row += '<span>'+escHtml(v.phone)+'</span>';
+    row += '</div>';
+    if (v.comment) row += '<div style="font-size:0.72rem;color:var(--muted);margin-top:3px">'+escHtml(v.comment.slice(0,80))+'</div>';
+    row += '</div>';
+    row += '<div style="display:flex;gap:6px;flex-shrink:0">';
+    if (hasEmail) row += '<button onclick="voSendOne('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Send</button>';
+    row += '<button onclick="voLogToOdoo('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Log</button>';
+    row += '</div></div>';
+    row += '<div style="margin-top:8px;display:flex;gap:8px;align-items:center">';
+    row += '<span style="font-size:0.73rem;color:var(--muted)">Rate received:</span>';
+    row += '<input type="text" placeholder="e.g. $450/day" value="'+escHtml(v._rate||'')+'" onchange="_voVendors['+i+']._rate=this.value;voSaveRate('+i+')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:monospace;font-size:0.78rem;outline:none">';
+    row += '<button onclick="voAddToQuote('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Add to quote</button>';
+    row += '</div></div>';
+    return row;
+  }).join('');
+}
+
+function voToggle(i, checked) {
+  _voVendors[i]._selected = checked;
+  var card = document.getElementById('vo-card-'+i);
+  if (card) card.classList.toggle('selected', checked);
+  var b = document.getElementById('vo-blast-btn');
+  if (b) b.style.display = _voVendors.some(function(v) { return v._selected && v.email; }) ? 'inline-flex' : 'none';
+}
+
+function voSelectAll() {
+  _voVendors.forEach(function(v) { if (v.email) v._selected = true; });
+  voRenderVendors();
+  var b = document.getElementById('vo-blast-btn');
+  if (b) b.style.display = 'inline-flex';
+}
+
+async function voSendOne(i) {
+  var v = _voVendors[i];
+  if (!v.email) { alert('No email for ' + v.name); return; }
+  var subject = document.getElementById('vo-subject')?.value || 'Quote Request';
+  var body    = document.getElementById('vo-body')?.value || '';
+  if (window.openQuickCompose) openQuickCompose({ to: v.email, subject: subject, body: body });
+  voRecordSent(v);
+}
+
+async function voBlast() {
+  var selected = _voVendors.filter(function(v) { return v._selected && v.email; });
+  if (!selected.length) { alert('Select vendors with email addresses first'); return; }
+  var subject  = document.getElementById('vo-subject')?.value || 'Quote Request';
+  var body     = document.getElementById('vo-body')?.value || '';
+  if (!confirm('Send quote request to ' + selected.length + ' vendor' + (selected.length!==1?'s':'') + '?')) return;
+  var statusEl = document.getElementById('vo-status');
+  var sent = 0;
+  for (var vi = 0; vi < selected.length; vi++) {
+    var v = selected[vi];
+    try {
+      var serverUp = await pingImapServer().catch(function() { return false; });
+      if (serverUp) {
+        var r = await fetch(IMAP_SERVER + '/send', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({config:getImapConfig(),to:v.email,subject:subject,body:body}), signal:AbortSignal.timeout(15000) });
+        var dr = await r.json();
+        if (dr.error) throw new Error(dr.error);
+      } else {
+        if (window.openQuickCompose) openQuickCompose({ to:v.email, subject:subject, body:body });
+      }
+      voRecordSent(v); sent++;
+      if (statusEl) statusEl.textContent = 'Sent ' + sent + '/' + selected.length + '...';
+    } catch(e) { console.warn('Failed: ' + e.message); }
+    await new Promise(function(r) { setTimeout(r, 300); });
+  }
+  if (statusEl) { statusEl.style.color='var(--success)'; statusEl.textContent='Done - ' + sent + ' sent'; }
+  voRenderVendors(); voRenderTracker();
+}
+
+function voRecordSent(v) {
+  _voTracker.unshift({ vendorId:v.id, vendorName:v.name, email:v.email, location:[v.city,v.state].filter(Boolean).join(', '), sentAt:new Date().toISOString(), rate:v._rate||'', status:'sent' });
+  localStorage.setItem(VO_TRACKER_KEY, JSON.stringify(_voTracker));
+  var c = document.getElementById('vo-tracker-container');
+  if (c) c.style.display = 'block';
+}
+
+function voSaveRate(i) {
+  var v = _voVendors[i]; if (!v) return;
+  var entry = _voTracker.find(function(t) { return t.vendorId === v.id; });
+  if (entry) { entry.rate = v._rate; entry.status = 'responded'; localStorage.setItem(VO_TRACKER_KEY, JSON.stringify(_voTracker)); voRenderTracker(); }
+}
+
+function voAddToQuote(i) {
+  var v = _voVendors[i];
+  if (!v._rate) { alert('Enter a rate for ' + v.name + ' first'); return; }
+  var pm = v._rate.match(/[\d,]+\.?\d*/);
+  var price = pm ? parseFloat(pm[0].replace(',','')) : 0;
+  if (typeof _qbLines !== 'undefined') {
+    _qbLines.push({ productId:null, productName:v.name + ' - ' + v._rate, qty:1, price:price, rentDays:1 });
+    if (typeof qbRenderLines === 'function') qbRenderLines();
+    navTo('quotes');
+  }
+}
+
+async function voLogToOdoo(i) {
+  var v = _voVendors[i];
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  if (!v.id || String(v.id).startsWith('ai_')) { alert('Log only works for Odoo contacts'); return; }
+  var note = 'OEL Vendor Outreach: Quote request sent.' + (v._rate ? ' Rate: ' + v._rate : ' Awaiting response.');
+  try {
+    await odooExecute(odooUid, 'res.partner', 'message_post', [v.id], { body:'<p>'+escHtml(note)+'</p>', message_type:'comment', subtype_xmlid:'mail.mt_note' });
+    var s = document.getElementById('vo-status');
+    if (s) { s.style.color='var(--success)'; s.textContent='Logged to Odoo'; setTimeout(function(){s.textContent='';s.style.color='var(--muted)';},2500); }
+  } catch(e) { alert('Log error: ' + e.message); }
+}
+
+async function voGenerateTemplate() {
+  var groqKey = document.getElementById('gemini-key')?.value?.trim();
+  if (!groqKey) { alert('Groq key required'); return; }
+  var equip = document.getElementById('vo-equipment')?.value?.trim() || 'equipment';
+  var city  = document.getElementById('vo-city')?.value?.trim() || '';
+  var state = document.getElementById('vo-state')?.value || '';
+  var loc   = [city,state].filter(Boolean).join(', ') || 'our project location';
+  var btn   = document.querySelector('[onclick="voGenerateTemplate()"]');
+  if (btn) { btn.textContent='...'; btn.disabled=true; }
+  try {
+    var r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey}, body:JSON.stringify({ model:document.getElementById('gemini-model')?.value||'llama-3.3-70b-versatile', max_tokens:300, temperature:0.5, messages:[{role:'user',content:'Write a professional equipment rental quote request email body for '+equip+' in '+loc+'. Include pricing request, availability, daily and weekly rates, delivery. Under 120 words. No subject line.'}] }), signal:AbortSignal.timeout(20000) });
+    var d = await r.json();
+    var text = d.choices?.[0]?.message?.content?.trim()||'';
+    if (text) { var b = document.getElementById('vo-body'); if (b) b.value=text; }
+  } catch(e) { alert('AI error: '+e.message); }
+  if (btn) { btn.textContent='AI draft'; btn.disabled=false; }
+}
+
+function voRenderTracker() {
+  var list = document.getElementById('vo-tracker-list');
+  if (!list || !_voTracker.length) return;
+  var c = document.getElementById('vo-tracker-container');
+  if (c) c.style.display='block';
+  list.innerHTML = _voTracker.map(function(t,i) {
+    var date = t.sentAt ? new Date(t.sentAt).toLocaleDateString() : '';
+    var col  = t.status==='responded'?'var(--success)':t.status==='sent'?'var(--warning)':'var(--muted)';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px">' +
+      '<div style="flex:1;min-width:0"><div style="font-size:0.84rem;font-weight:500;color:var(--text)">'+escHtml(t.vendorName)+'</div>' +
+      '<div style="font-size:0.73rem;color:var(--muted)">'+(t.location?escHtml(t.location)+' &nbsp;':'')+date+(t.rate?' &nbsp;<span style="color:var(--accent);font-family:monospace">'+escHtml(t.rate)+'</span>':'')+'</div></div>' +
+      '<span style="font-size:0.72rem;padding:2px 8px;border-radius:10px;border:1px solid '+col+';color:'+col+'">'+t.status+'</span>' +
+      '<input type="text" placeholder="Rate" value="'+escHtml(t.rate||'')+'" onchange="_voTracker['+i+'].rate=this.value;_voTracker['+i+'].status=\'responded\';localStorage.setItem(VO_TRACKER_KEY,JSON.stringify(_voTracker));voRenderTracker()" style="width:100px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--text);font-family:monospace;font-size:0.75rem;outline:none">' +
+      '<button onclick="_voTracker.splice('+i+',1);localStorage.setItem(VO_TRACKER_KEY,JSON.stringify(_voTracker));voRenderTracker()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem">X</button>' +
+    '</div>';
+  }).join('');
+}
+
+// === DOCUMENT CENTER ===
+
+let _docsFile=null,_docsPdfDoc=null,_docsPageNum=1,_docsPageCount=0;
+let _docsAnnotations=[],_docsTool=null,_docsPendingSig=null,_docsSigDrawing=false;
+
+async function _docsEnsurePdfJs() {
+  if (window.pdfjsLib) return true;
+  return new Promise(function(resolve) {
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=function(){window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';resolve(true);};
+    s.onerror=function(){resolve(false);}; document.head.appendChild(s);
+  });
+}
+
+async function docsHandleFile(file) {
+  if (!file||file.type!=='application/pdf'){alert('Please select a PDF file');return;}
+  _docsFile=file;_docsAnnotations=[];_docsPageNum=1;
+  var loaded=await _docsEnsurePdfJs();
+  if(!loaded){alert('Could not load PDF viewer');return;}
+  var ab=await file.arrayBuffer();
+  _docsPdfDoc=await window.pdfjsLib.getDocument({data:ab}).promise;
+  _docsPageCount=_docsPdfDoc.numPages;
+  document.getElementById('docs-canvas-container').style.display='block';
+  document.getElementById('docs-toolbar').style.display='flex';
+  document.getElementById('docs-page-nav').style.display=_docsPageCount>1?'flex':'none';
+  document.getElementById('docs-filename').textContent=file.name;
+  await _docsRenderPage();
+}
+
+async function _docsRenderPage() {
+  if (!_docsPdfDoc) return;
+  var page=await _docsPdfDoc.getPage(_docsPageNum);
+  var container=document.getElementById('docs-canvas-container');
+  var scale=container.clientWidth/page.getViewport({scale:1}).width;
+  var vp=page.getViewport({scale:scale});
+  var pdfC=document.getElementById('docs-pdf-canvas');
+  var annC=document.getElementById('docs-annotation-canvas');
+  pdfC.width=annC.width=vp.width; pdfC.height=annC.height=vp.height;
+  annC.style.height=vp.height+'px';
+  await page.render({canvasContext:pdfC.getContext('2d'),viewport:vp}).promise;
+  await _docsRedrawAnnotations();
+  document.getElementById('docs-page-info').textContent='Page '+_docsPageNum+' of '+_docsPageCount;
+  annC.onclick=_docsCanvasClick; annC.onmousedown=_docsHighlightMouseDown; annC.onmouseup=_docsHighlightMouseUp;
+}
+
+async function _docsRedrawAnnotations() {
+  var annC=document.getElementById('docs-annotation-canvas');
+  var ctx=annC.getContext('2d');
+  ctx.clearRect(0,0,annC.width,annC.height);
+  var anns=_docsAnnotations.filter(function(a){return a.page===_docsPageNum;});
+  var imgCache={};
+  await Promise.all(anns.filter(function(a){return a.type==='signature';}).map(function(a){
+    return new Promise(function(resolve){var img=new Image();img.onload=function(){imgCache[a.dataUrl]=img;resolve();};img.onerror=resolve;img.src=a.dataUrl;});
+  }));
+  for (var ai=0;ai<anns.length;ai++) {
+    var a=anns[ai];
+    if (a.type==='text'){ctx.font=(a.size||14)+'px Arial';ctx.fillStyle=a.color||'#000';ctx.fillText(a.text,a.x,a.y);}
+    else if(a.type==='signature'){var img2=imgCache[a.dataUrl];if(img2)ctx.drawImage(img2,a.x,a.y,a.w,a.h);}
+    else if(a.type==='highlight'){ctx.fillStyle='rgba(255,220,0,0.4)';ctx.fillRect(a.x,a.y,a.w,a.h);}
+  }
+}
+
+function _docsCanvasClick(e) {
+  if (!_docsTool) return;
+  var rect=e.target.getBoundingClientRect();
+  var x=(e.clientX-rect.left)*(e.target.width/rect.width);
+  var y=(e.clientY-rect.top)*(e.target.height/rect.height);
+  if (_docsTool==='text') {
+    var text=document.getElementById('docs-text-content').value.trim();
+    if (!text){alert('Type text below first');return;}
+    _docsAnnotations.push({type:'text',text:text,x:x,y:y,size:parseInt(document.getElementById('docs-text-size').value)||14,color:document.getElementById('docs-text-color').value||'#000',page:_docsPageNum});
+    _docsRedrawAnnotations();
+  } else if (_docsTool==='place_sig'&&_docsPendingSig) {
+    var w=e.target.width*0.28,h=55;
+    _docsAnnotations.push({type:'signature',dataUrl:_docsPendingSig,x:x-w/2,y:y-h/2,w:w,h:h,page:_docsPageNum});
+    _docsRedrawAnnotations();
+    _docsTool=null;_docsPendingSig=null;e.target.style.cursor='default';
+    var hint=document.getElementById('docs-page-info');
+    if(hint&&hint._origText){hint.textContent=hint._origText;hint.style.color='';}
+  }
+}
+
+var _docsHighlightStart=null;
+function _docsHighlightMouseDown(e){
+  if(_docsTool!=='highlight')return;
+  var rect=e.target.getBoundingClientRect();
+  _docsHighlightStart={x:(e.clientX-rect.left)*(e.target.width/rect.width),y:(e.clientY-rect.top)*(e.target.height/rect.height)};
+}
+function _docsHighlightMouseUp(e){
+  if(_docsTool!=='highlight'||!_docsHighlightStart)return;
+  var rect=e.target.getBoundingClientRect();
+  var ex=(e.clientX-rect.left)*(e.target.width/rect.width),ey=(e.clientY-rect.top)*(e.target.height/rect.height);
+  var x=Math.min(_docsHighlightStart.x,ex),y=Math.min(_docsHighlightStart.y,ey);
+  var w=Math.abs(ex-_docsHighlightStart.x),h=Math.abs(ey-_docsHighlightStart.y);
+  if(w>5&&h>5){_docsAnnotations.push({type:'highlight',x:x,y:y,w:w,h:h,page:_docsPageNum});_docsRedrawAnnotations();}
+  _docsHighlightStart=null;
+}
+
+function docsSetTool(tool) {
+  _docsTool=tool;
+  ['text','sign','highlight'].forEach(function(t){
+    var b=document.getElementById('docs-tool-'+t);
+    if(b){b.style.borderColor=t===tool?'var(--accent)':'var(--border)';b.style.color=t===tool?'var(--accent)':'var(--muted)';}
+  });
+  document.getElementById('docs-sign-pad').style.display=tool==='sign'?'block':'none';
+  document.getElementById('docs-text-input-panel').style.display=tool==='text'?'block':'none';
+  if(tool==='sign'){_docsInitSigPad();var lb=document.getElementById('docs-sig-load-btn');if(lb)lb.style.display=localStorage.getItem('oel_saved_signature')?'inline-flex':'none';}
+  var ac=document.getElementById('docs-annotation-canvas');
+  if(ac)ac.style.cursor=tool==='highlight'?'crosshair':tool==='text'?'text':'default';
+  var hint=document.getElementById('docs-page-info');
+  if(tool==='highlight'&&hint){hint._origText=hint._origText||hint.textContent;hint.textContent='Drag to highlight a region';hint.style.color='var(--warning)';}
+  else if(hint&&hint._origText&&tool!=='highlight'){hint.textContent=hint._origText;hint.style.color='';}
+}
+
+function _docsInitSigPad(){
+  var c=document.getElementById('docs-sig-canvas');
+  var ctx=c.getContext('2d');ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.lineCap='round';
+  c.onmousedown=function(e){_docsSigDrawing=true;var r=c.getBoundingClientRect();ctx.beginPath();ctx.moveTo(e.clientX-r.left,e.clientY-r.top);};
+  c.onmousemove=function(e){if(!_docsSigDrawing)return;var r=c.getBoundingClientRect();ctx.lineTo(e.clientX-r.left,e.clientY-r.top);ctx.stroke();};
+  c.onmouseup=c.onmouseleave=function(){_docsSigDrawing=false;};
+  c.ontouchstart=function(e){e.preventDefault();_docsSigDrawing=true;var r=c.getBoundingClientRect();ctx.beginPath();ctx.moveTo(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top);};
+  c.ontouchmove=function(e){e.preventDefault();if(!_docsSigDrawing)return;var r=c.getBoundingClientRect();ctx.lineTo(e.touches[0].clientX-r.left,e.touches[0].clientY-r.top);ctx.stroke();};
+  c.ontouchend=function(){_docsSigDrawing=false;};
+}
+function docsClearSig(){var c=document.getElementById('docs-sig-canvas');c.getContext('2d').clearRect(0,0,c.width,c.height);}
+function docsStampSig(){
+  var sig=document.getElementById('docs-sig-canvas').toDataURL();
+  localStorage.setItem('oel_saved_signature',sig);
+  var lb=document.getElementById('docs-sig-load-btn');if(lb)lb.style.display='inline-flex';
+  _docsTool='place_sig';_docsPendingSig=sig;
+  document.getElementById('docs-sign-pad').style.display='none';
+  document.getElementById('docs-annotation-canvas').style.cursor='crosshair';
+  var hint=document.getElementById('docs-page-info');
+  if(hint){hint._origText=hint._origText||hint.textContent;hint.textContent='Click document to place signature';hint.style.color='var(--accent)';}
+}
+function docsLoadSavedSig(){
+  var saved=localStorage.getItem('oel_saved_signature');
+  if(!saved){alert('No saved signature');return;}
+  _docsTool='place_sig';_docsPendingSig=saved;
+  document.getElementById('docs-annotation-canvas').style.cursor='crosshair';
+  var hint=document.getElementById('docs-page-info');
+  if(hint){hint._origText=hint._origText||hint.textContent;hint.textContent='Click document to place signature';hint.style.color='var(--accent)';}
+}
+function docsUploadSig(){
+  var inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=function(){
+    var f=inp.files[0];if(!f)return;
+    var rd=new FileReader();
+    rd.onload=function(e){
+      localStorage.setItem('oel_saved_signature',e.target.result);
+      var lb=document.getElementById('docs-sig-load-btn');if(lb)lb.style.display='inline-flex';
+      _docsTool='place_sig';_docsPendingSig=e.target.result;
+      document.getElementById('docs-annotation-canvas').style.cursor='crosshair';
+      var hint=document.getElementById('docs-page-info');
+      if(hint){hint._origText=hint._origText||hint.textContent;hint.textContent='Click document to place signature';hint.style.color='var(--accent)';}
+    };rd.readAsDataURL(f);
+  };inp.click();
+}
+function docsUndo(){var a=_docsAnnotations.filter(function(a){return a.page===_docsPageNum;});if(!a.length)return;_docsAnnotations.splice(_docsAnnotations.lastIndexOf(a[a.length-1]),1);_docsRedrawAnnotations();}
+function docsClearPage(){_docsAnnotations=_docsAnnotations.filter(function(a){return a.page!==_docsPageNum;});_docsRedrawAnnotations();}
+async function docsChangePage(d){var n=_docsPageNum+d;if(n<1||n>_docsPageCount)return;_docsPageNum=n;await _docsRenderPage();}
+async function docsDownload(){
+  if(!_docsFile||!_docsPdfDoc)return;
+  var pages=[];
+  for(var p=1;p<=_docsPageCount;p++){
+    var page=await _docsPdfDoc.getPage(p);
+    var vp=page.getViewport({scale:2});
+    var c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+    await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    var ctx=c.getContext('2d');
+    var pw=document.getElementById('docs-pdf-canvas').width||vp.width;
+    var ph=document.getElementById('docs-pdf-canvas').height||vp.height;
+    var sx=vp.width/pw,sy=vp.height/ph;
+    for(var ai=0;ai<_docsAnnotations.length;ai++){
+      var a=_docsAnnotations[ai];if(a.page!==p)continue;
+      if(a.type==='text'){ctx.font=((a.size||14)*sx)+'px Arial';ctx.fillStyle=a.color||'#000';ctx.fillText(a.text,a.x*sx,a.y*sy);}
+      else if(a.type==='highlight'){ctx.fillStyle='rgba(255,220,0,0.4)';ctx.fillRect(a.x*sx,a.y*sy,a.w*sx,a.h*sy);}
+      else if(a.type==='signature'){var img=new Image();img.src=a.dataUrl;await new Promise(function(r){img.onload=r;img.onerror=r;});ctx.drawImage(img,a.x*sx,a.y*sy,a.w*sx,a.h*sy);}
+    }
+    pages.push(c);
+  }
+  var pw2=window.open('','_blank');
+  pw2.document.write('<html><head><title>'+((_docsFile&&_docsFile.name)||'document')+'</title><style>body{margin:0}img{display:block;width:100%;page-break-after:always}</style></head><body>');
+  for(var pi=0;pi<pages.length;pi++)pw2.document.write('<img src="'+pages[pi].toDataURL('image/jpeg',0.95)+'">');
+  pw2.document.write('</body></html>');pw2.document.close();pw2.focus();setTimeout(function(){pw2.print();},800);
+}
+function docsEmail(){
+  if(!_docsFile)return;
+  if(window.openQuickCompose)openQuickCompose({subject:'Signed document: '+_docsFile.name.replace('.pdf',''),body:'Please find the signed document attached.\n\n[Attach the downloaded file]'});
+}
+
 
 // ─── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -16146,6 +16777,8 @@ window.navTo = function(section) {
     prospect:   {panel:'panel-prospect',   title:'Prospecting',  hasSrc:false},
     reports:    {panel:'panel-reports',    title:'Reports',      hasSrc:false},
     catchup:    {panel:'panel-catchup',    title:'Catch Up',     hasSrc:false},
+    vendor:     {panel:'panel-vendor',     title:'Vendor Outreach', hasSrc:false},
+    docs:       {panel:'panel-docs',       title:'Documents',       hasSrc:false},
   };
   if (!NAV_PANELS[section]) return;
   document.querySelectorAll('.sb-item').forEach(el => el.classList.remove('active'));
@@ -16163,6 +16796,7 @@ window.navTo = function(section) {
   if (section === 'activities' && !window.odooUid) setTimeout(() => { if (typeof lazSilentConnect === 'function') lazSilentConnect(); }, 300);
   if (section === 'discuss') setTimeout(() => { if (typeof qmPopulateUsers === 'function') qmPopulateUsers(); if (typeof lazPopulatePipelineUsers === 'function') lazPopulatePipelineUsers(); }, 200);
   if (section === 'catchup') setTimeout(() => { if (typeof cuInit === 'function') cuInit(); }, 200);
+  if (section === 'vendor') setTimeout(() => { if (typeof voLoadTracker === 'function') voLoadTracker(); }, 200);
 };
 
 window.toggleSidebar = function() {
