@@ -1,7 +1,7 @@
 {
   "name": "OEL Command",
   "short_name": "OEL",
-  "description": "AI-powered CRM follow-up emails — works with any email client",
+  "description": "AI-powered CRM follow-up emails \u2014 works with any email client",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -40,6 +40,10 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "productivity"],
-  "screenshots": []
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "screenshots": [],
+  "version": "7.0.0"
 }
