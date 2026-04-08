@@ -5637,8 +5637,9 @@ function exportCredentials() {
   a.click();
 }
 
-function importCredentials(event) {
-  const file = event.target.files[0];
+function importCredentials(eventOrElement) {
+  const el = eventOrElement && eventOrElement.target ? eventOrElement.target : eventOrElement;
+  const file = el && el.files ? el.files[0] : null;
   if (!file) return;
   const reader = new FileReader();
   reader.onload = (e) => {
