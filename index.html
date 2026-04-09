@@ -1941,6 +1941,79 @@
       <div class="section-scroll">
     <div id="laz-support" style="padding:20px 24px">
 
+      <!-- Remote Support -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-title">Remote Support</div>
+        <div class="card-subtitle">Launch remote tools or send a session invite to a client.</div>
+
+        <!-- Tool launchers -->
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px">
+
+          <a href="#" onclick="rdpLaunchQuickAssist(); return false;" style="text-decoration:none">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,120,212,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#0078d4" stroke-width="1.3"/><path d="M8 5v3l2 2" stroke="#0078d4" stroke-width="1.3" stroke-linecap="round"/></svg>
+              </div>
+              <div>
+                <div style="font-size:0.84rem;font-weight:500;color:var(--text)">Quick Assist</div>
+                <div style="font-size:0.72rem;color:var(--muted)">Windows built-in</div>
+              </div>
+            </div>
+          </a>
+
+          <a href="#" onclick="rdpLaunchRDP(); return false;" style="text-decoration:none">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+              <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,120,212,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="2.5" width="13" height="9" rx="1.5" stroke="#0078d4" stroke-width="1.3"/><path d="M5 11.5v2M11 11.5v2M3.5 13.5h9" stroke="#0078d4" stroke-width="1.3" stroke-linecap="round"/></svg>
+              </div>
+              <div>
+                <div style="font-size:0.84rem;font-weight:500;color:var(--text)">Windows RDP</div>
+                <div style="font-size:0.72rem;color:var(--muted)">Remote Desktop</div>
+              </div>
+            </div>
+          </a>
+
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s" onclick="rdpLaunchAnyDesk()" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'" title="Open AnyDesk app">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l5.5 9.5H2.5L8 2z" stroke="#ef4444" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 6v3M8 10.5v.5" stroke="#ef4444" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div style="font-size:0.84rem;font-weight:500;color:var(--text)">AnyDesk</div>
+              <div style="font-size:0.72rem;color:var(--muted)">Remote access</div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s" onclick="rdpLaunchTeamViewer()" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'" title="Open TeamViewer app">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,175,79,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#00af4f" stroke-width="1.3"/><path d="M5 8h6M8 5v6" stroke="#00af4f" stroke-width="1.3" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div style="font-size:0.84rem;font-weight:500;color:var(--text)">TeamViewer</div>
+              <div style="font-size:0.72rem;color:var(--muted)">Remote control</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Session invite -->
+        <div style="border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px">Send session invite to client</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <select id="rdp-tool-select" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none">
+              <option value="quickassist">Quick Assist</option>
+              <option value="anydesk">AnyDesk</option>
+              <option value="teamviewer">TeamViewer</option>
+              <option value="rdp">Windows RDP</option>
+            </select>
+            <input type="text" id="rdp-your-id" placeholder="Your ID / code (optional)" style="flex:1;min-width:140px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;outline:none">
+            <button class="btn btn-primary" onclick="rdpSendInvite()" style="padding:7px 16px;font-size:0.82rem" title="Open Quick Compose with a pre-written session invite">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 4.5L1 10V6.5l6-2-6-2V1z" fill="currentColor"/></svg>
+              Send invite
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Toolbar -->
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
         <button class="btn btn-primary" onclick="supportScan()" id="support-scan-btn" style="padding:8px 18px;font-size:0.82rem;gap:6px">
@@ -6716,6 +6789,89 @@ async function cuBulkSchedule() {
     statusEl.style.color = failed ? 'var(--warning)' : 'var(--success)';
     statusEl.textContent = '\u2713 ' + done + ' activit' + (done!==1?'ies':'y') + ' scheduled' + (failed ? ' (' + failed + ' failed)' : '');
     setTimeout(()=>{statusEl.textContent='';statusEl.style.color='var(--muted)';}, 3500);
+  }
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── REMOTE SUPPORT ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+function rdpLaunch(uri, fallbackUrl, appName) {
+  // Try the URI protocol — browser will launch if registered, silently fail if not
+  const a = document.createElement('a');
+  a.href = uri;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // After a short delay, if still on page, offer the download page
+  setTimeout(() => {
+    if (!document.hidden) {
+      // User is still here — app may not be installed or protocol not registered
+      // Silently do nothing; app is either launching or not installed
+    }
+  }, 1500);
+}
+
+function rdpLaunchQuickAssist() {
+  // Quick Assist has no browser URI. Show keyboard shortcut.
+  rdpShowLaunchHint('Quick Assist', 'Press Windows + Ctrl + Q to open Quick Assist, or search "Quick Assist" in the Start menu.');
+}
+
+function rdpLaunchRDP() {
+  // Try rdp:// URI (works on some Windows builds with mstsc registered)
+  rdpLaunch('rdp://', '', 'Remote Desktop');
+  rdpShowLaunchHint('Remote Desktop', 'If it did not open, press Windows + R, type mstsc and press Enter.');
+}
+
+function rdpLaunchAnyDesk() {
+  rdpLaunch('anydesk:', 'https://anydesk.com/download', 'AnyDesk');
+  rdpShowLaunchHint('AnyDesk', 'If AnyDesk did not open, it may need to be installed. Visit anydesk.com/download');
+}
+
+function rdpLaunchTeamViewer() {
+  rdpLaunch('teamviewer10:', 'https://www.teamviewer.com/download', 'TeamViewer');
+}
+
+function rdpShowLaunchHint(tool, msg) {
+  // Show a small non-blocking hint below the remote card
+  let hint = document.getElementById('rdp-hint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'rdp-hint';
+    hint.style.cssText = 'font-size:0.78rem;color:var(--muted);padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-top:8px';
+    const card = document.querySelector('#laz-support .card');
+    if (card) card.appendChild(hint);
+  }
+  hint.textContent = '💡 ' + tool + ': ' + msg;
+  hint.style.display = 'block';
+  clearTimeout(hint._timer);
+  hint._timer = setTimeout(() => { hint.style.display = 'none'; }, 6000);
+}
+
+function rdpSendInvite() {
+  const tool   = document.getElementById('rdp-tool-select')?.value || 'quickassist';
+  const yourId = document.getElementById('rdp-your-id')?.value?.trim() || '';
+  const nl = '\n';
+
+  const toolNames = { quickassist:'Quick Assist', anydesk:'AnyDesk', teamviewer:'TeamViewer', rdp:'Windows Remote Desktop' };
+
+  const idLine = yourId ? (nl + nl + 'My ID: ' + yourId) : '';
+  const steps = {
+    quickassist: 'To connect:' + nl + '1. Open Quick Assist (Start > Quick Assist)' + nl + '2. Click Get assistance' + nl + '3. Share the 6-digit code with me' + nl + 'I will enter it on my end to connect.' + idLine,
+    anydesk:     'To connect:' + nl + '1. Install AnyDesk if needed: https://anydesk.com/download' + nl + '2. Open AnyDesk and share your 9-digit ID with me' + idLine,
+    teamviewer:  'To connect:' + nl + '1. Install TeamViewer if needed: https://www.teamviewer.com/download' + nl + '2. Open TeamViewer and share your ID and password with me' + idLine,
+    rdp:         'To connect via Remote Desktop:' + nl + '1. Enable Remote Desktop on your computer' + nl + '2. Share your computer name or IP address with me' + idLine + nl + nl + 'You may need to allow Remote Desktop through Windows Firewall.',
+  };
+
+  const subject = 'Remote Support Session - ' + toolNames[tool];
+  const body = 'Hi,' + nl + nl + 'I would like to connect to your computer remotely to assist you.' + nl + 'We will be using ' + toolNames[tool] + ' for this session.' + nl + nl + steps[tool] + nl + nl + 'Please let me know if you have any questions.' + nl + nl + 'Thank you';
+
+  if (window.openQuickCompose) {
+    openQuickCompose({ to: '', subject: subject, body: body });
+  } else {
+    navigator.clipboard?.writeText(body).then(() => alert('Invite copied to clipboard'));
   }
 }
 
