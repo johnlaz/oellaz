@@ -399,80 +399,189 @@ class IMAPHandler(BaseHTTPRequestHandler):
             self._json(result)
 
         elif path == '/browse':
-            config = data.get('config', {})
-            limit  = int(data.get('limit', 30))
-            flagged = data.get('flagged', False)
-            folder  = data.get('folder', 'INBOX')
+            # Return last N email headers (no spec filtering)
+            config       = data.get('config', {})
+            limit        = int(data.get('limit', 30))
+            flagged_only = bool(data.get('flagged_only', False))
             if not config.get('email') or not config.get('password'):
                 self._json({'error': 'Missing IMAP credentials'}, 400)
                 return
             try:
-                emails = _fetch(limit=limit, flagged=flagged, folder=folder)
-                self._json({'ok': True, 'emails': emails, 'count': len(emails)})
+                conn = connect_imap(config)
+
+                # Use explicit folder if provided, otherwise auto-detect
+                explicit_folder = data.get('folder', '').strip()
+                if explicit_folder:
+                    folders_to_try = [explicit_folder]
+                else:
+                    # Try INBOX first; if empty, try Gmail's All Mail folder
+                    folders_to_try = ['INBOX', '"[Gmail]/All Mail"', '[Gmail]/All Mail', 'INBOX.Inbox', 'Inbox']
+                selected_folder = None
+                uid_list = []
+                search_criteria = 'FLAGGED' if flagged_only else 'ALL'
+
+                for folder in folders_to_try:
+                    try:
+                        status, count_data = conn.select(folder, readonly=True)
+                        if status != 'OK':
+                            continue
+                        msg_count = int(count_data[0]) if count_data and count_data[0] else 0
+                        if msg_count == 0:
+                            continue
+                        status, uids = conn.uid('search', None, search_criteria)
+                        if status == 'OK' and uids[0]:
+                            uid_list = uids[0].split()
+                            if uid_list:
+                                selected_folder = folder
+                                break
+                    except Exception:
+                        continue
+
+                if not uid_list:
+                    conn.logout()
+                    self._json({'emails': [], 'flagged_only': flagged_only,
+                                'debug': 'No emails found in any folder'})
+                    return
+
+                uid_list = uid_list[-limit:]
+                emails = []
+                for uid in reversed(uid_list):
+                    status, data2 = conn.uid('fetch', uid, '(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE FLAGS LIST-UNSUBSCRIBE)])')
+                    if status != 'OK' or not data2 or data2[0] is None:
+                        continue
+                    raw_hdr  = data2[0][1] if isinstance(data2[0], tuple) else b''
+                    hdr      = email.message_from_bytes(raw_hdr)
+                    subject  = decode_mime(hdr.get('Subject', ''))
+                    sender   = decode_mime(hdr.get('From', ''))
+                    date_str = hdr.get('Date', '')
+                    unsub    = hdr.get('List-Unsubscribe', '')
+                    em       = re.search(r'<([^>]+)>', sender)
+                    emails.append({
+                        'uid':              uid.decode(),
+                        'subject':          subject,
+                        'sender':           sender,
+                        'sender_email':     em.group(1) if em else sender,
+                        'date':             date_str,
+                        'flagged':          True if flagged_only else False,
+                        'list_unsubscribe': unsub,
+                    })
+                conn.logout()
+                self._json({'emails': emails, 'flagged_only': flagged_only,
+                            'total_found': len(emails), 'folder': selected_folder})
             except Exception as e:
-                self._json({'error': str(e)}, 500)
+                self._json({'error': str(e)})
 
         elif path == '/headers':
-            config  = data.get('config', {})
-            limit   = int(data.get('limit', 50))
-            folder  = data.get('folder', 'INBOX')
-            if not config.get('email') or not config.get('password'):
-                self._json({'error': 'Missing credentials'}, 400)
+            # Fetch full headers for a single email (for unsubscribe detection)
+            config = data.get('config', {})
+            uid    = data.get('uid', '')
+            if not config.get('email') or not config.get('password') or not uid:
+                self._json({'error': 'Missing params'}, 400)
                 return
             try:
-                emails = _fetch(limit=limit, folder=folder)
-                self._json({'ok': True, 'emails': emails})
+                conn = connect_imap(config)
+                conn.select('INBOX', readonly=True)
+                status, data2 = conn.uid('fetch', uid.encode(), '(BODY.PEEK[HEADER])')
+                if status != 'OK' or not data2 or data2[0] is None:
+                    conn.logout()
+                    self._json({'error': 'Email not found'})
+                    return
+                raw_hdr = data2[0][1] if isinstance(data2[0], tuple) else b''
+                hdr = email.message_from_bytes(raw_hdr)
+                unsub  = hdr.get('List-Unsubscribe', '')
+                sender = decode_mime(hdr.get('From', ''))
+                em     = re.search(r'<([^>]+)>', sender)
+                conn.logout()
+                self._json({
+                    'list_unsubscribe': unsub,
+                    'sender':           sender,
+                    'sender_email':     em.group(1) if em else sender,
+                    'subject':          decode_mime(hdr.get('Subject', '')),
+                })
             except Exception as e:
-                self._json({'error': str(e)}, 500)
+                self._json({'error': str(e)})
 
         elif path == '/body':
+            # Fetch full body for a single email by UID
             config = data.get('config', {})
-            uid    = data.get('uid')
-            folder = data.get('folder', 'INBOX')
-            if not config.get('email') or not config.get('password'):
-                self._json({'error': 'Missing credentials'}, 400)
+            uid    = data.get('uid', '')
+            if not config.get('email') or not config.get('password') or not uid:
+                self._json({'error': 'Missing params'}, 400)
                 return
             try:
-                emails = _fetch(limit=200, folder=folder)
-                match  = next((e for e in emails if str(e.get('uid')) == str(uid)), None)
-                if match:
-                    self._json({'ok': True, 'body': match.get('body',''), 'email': match})
-                else:
-                    self._json({'error': 'Message not found'}, 404)
+                conn = connect_imap(config)
+                conn.select('INBOX', readonly=True)
+                status, data2 = conn.uid('fetch', uid.encode(), '(RFC822)')
+                if status != 'OK' or not data2 or data2[0] is None:
+                    conn.logout()
+                    self._json({'error': 'Email not found'})
+                    return
+                msg  = email.message_from_bytes(data2[0][1])
+                body = get_text_body(msg)
+                conn.logout()
+                self._json({'body': body})
             except Exception as e:
-                self._json({'error': str(e)}, 500)
+                self._json({'error': str(e)})
 
         elif path == '/folders':
+            # List available IMAP folders for a given account
             config = data.get('config', {})
             if not config.get('email') or not config.get('password'):
                 self._json({'error': 'Missing credentials'}, 400)
                 return
             try:
-                import imaplib as _imap
-                M = _imap.IMAP4_SSL(config['host'], int(config.get('port', 993)))
-                M.login(config['email'], config['password'])
-                typ, lst = M.list()
-                M.logout()
-                folders = [l.decode().split('"."')[-1].strip().strip('"') for l in lst if l]
-                self._json({'ok': True, 'folders': folders})
+                conn = connect_imap(config)
+                status, folder_list = conn.list()
+                conn.logout()
+                folders = []
+                if status == 'OK':
+                    for f in folder_list:
+                        if f:
+                            # Parse folder name from response like: (\HasNoChildren) "/" "INBOX"
+                            decoded = f.decode('utf-8', errors='ignore') if isinstance(f, bytes) else str(f)
+                            # Extract folder name — last quoted or unquoted token
+                            m = re.search(r'"([^"]+)"\s*$', decoded) or re.search(r'(\S+)\s*$', decoded)
+                            if m:
+                                folders.append(m.group(1))
+                self._json({'folders': folders})
             except Exception as e:
-                self._json({'error': str(e)}, 500)
+                self._json({'error': str(e)})
 
         elif path == '/scrape':
-            url = data.get('url', '')
+            url     = data.get('url', '').strip()
+            timeout = int(data.get('timeout', 15))
             if not url:
-                self._json({'error': 'No URL'}, 400)
+                self._json({'error': 'No URL provided'}, 400)
                 return
             try:
-                req = _req.Request(url, headers={'User-Agent':'Mozilla/5.0'})
-                with _req.urlopen(req, timeout=15) as r:
-                    raw = r.read().decode('utf-8','replace')
-                # Strip tags
-                text = re.sub(r'<[^>]+>', ' ', raw)
-                text = re.sub(r'\s+', ' ', text).strip()[:8000]
-                self._json({'ok': True, 'text': text})
+                import urllib.request as _ureq
+                req = _ureq.Request(url, headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                })
+                with _ureq.urlopen(req, timeout=timeout) as resp:
+                    raw_bytes = resp.read(1024 * 512)  # cap at 512KB
+                    charset = 'utf-8'
+                    ct = resp.headers.get('Content-Type', '')
+                    if 'charset=' in ct:
+                        charset = ct.split('charset=')[-1].split(';')[0].strip()
+                    raw_html = raw_bytes.decode(charset, errors='replace')
+
+                # Strip to plain text
+                clean = strip_html(raw_html)
+                # Remove excessive blank lines
+                lines = [l.strip() for l in clean.split('\n') if l.strip()]
+                clean_text = '\n'.join(lines)
+
+                self._json({
+                    'ok':   True,
+                    'text': clean_text[:40000],  # cap for Groq
+                    'len':  len(clean_text),
+                    'url':  url,
+                })
             except Exception as e:
-                self._json({'error': str(e)}, 500)
+                self._json({'ok': False, 'error': str(e), 'text': '', 'len': 0, 'url': url})
 
         elif path == '/send':
             # Send email via SMTP using the same credentials as IMAP
@@ -524,12 +633,13 @@ class IMAPHandler(BaseHTTPRequestHandler):
                 self._json({'error': str(e)}, 500)
 
         elif path == '/fetch':
-            config = data.get('config', {})
-            specs  = data.get('specs', [])
-            days   = data.get('days', 14)
+            config   = data.get('config', {})
+            specs    = data.get('specs', [])
+            days     = data.get('days', 14)
             if not config.get('email') or not config.get('password'):
                 self._json({'error': 'Missing IMAP credentials'}, 400)
                 return
+            # groq_key no longer used server-side — browser calls Groq directly
             result_box = [None]
             def run(): result_box[0] = imap_fetch(config, specs, days)
             t = threading.Thread(target=run, daemon=True)
@@ -543,7 +653,6 @@ class IMAPHandler(BaseHTTPRequestHandler):
 
         else:
             self._json({'error': 'Not found'}, 404)
-
 
     def log_message(self, fmt, *args):
         print(f'  [{args[1]}] {args[0]}')
