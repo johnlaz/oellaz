@@ -860,14 +860,14 @@
       <span class="sb-item-label">Support</span>
     </div>
 
-    <div class="sb-item" id="nav-catchup" onclick="navTo('catchup')" title="Catch Up">
+    <div class="sb-item" id="nav-catchup" onclick="navTo('catchup')" title="Dormant Contacts">
       <div class="sb-item-icon">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M7 1a6 6 0 100 12A6 6 0 007 1z" stroke="currentColor" stroke-width="1.2"/>
           <path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <span class="sb-item-label">Catch Up</span>
+      <span class="sb-item-label">Dormant Contacts</span>
       <span class="sb-badge" id="badge-catchup"></span>
     </div>
 
@@ -1664,7 +1664,7 @@
     <div class="status-box" id="connect-log"></div>
     <div id="step2-actions" class="btn-row hidden">
       <div></div>
-      <button class="btn btn-primary" id="btn-proceed-draft" onclick="actTab('draft')">
+      <button class="btn btn-primary" id="btn-proceed-draft" onclick="goToStep3()">
         Draft emails
         <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -1814,8 +1814,8 @@
           <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:500">Equipment</div>
           <div style="flex:1"></div>
           <button onclick="qbShowLocalTemplates()" class="btn btn-ghost" style="padding:3px 8px;font-size:0.72rem;margin-right:6px">My templates</button>
-          <button onclick="qbAddLine()" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-size:0.74rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">+ Add item</button>
-          <button onclick="qbOpenCatalog()" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;padding:3px 10px;font-size:0.74rem;color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;margin-left:6px">
+          <button onclick="qbAddLine()" title="Add a blank line item to the quote" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-size:0.74rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">+ Add item</button>
+          <button onclick="qbOpenCatalog()" title="Browse Odoo product catalog to add items" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;padding:3px 10px;font-size:0.74rem;color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;margin-left:6px">
             ⊞ Browse catalog
           </button>
         </div>
@@ -1825,11 +1825,15 @@
 
       <!-- Actions -->
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button onclick="qbCreate()" class="btn btn-primary" style="padding:9px 22px;font-size:0.84rem;gap:6px">
+        <button onclick="qbPrintQuote()" title="Open print-ready quote — use Print / Save PDF in the new window" class="btn btn-ghost" style="padding:9px 14px;font-size:0.84rem">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="1" width="8" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M2 4h8M1 4v5a1 1 0 001 1h8a1 1 0 001-1V4M4 8h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          Print quote
+        </button>
+        <button onclick="qbCreate()" title="Create this quote as a sale order in Odoo" class="btn btn-primary" style="padding:9px 22px;font-size:0.84rem;gap:6px">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           Create Rental Quote in Odoo
         </button>
-        <button onclick="qbClear()" class="btn btn-ghost" style="padding:9px 14px;font-size:0.84rem">Clear</button>
+        <button onclick="qbClear()" title="Clear all items from the quote" class="btn btn-ghost" style="padding:9px 14px;font-size:0.84rem">Clear</button>
         <div id="qb-status" style="font-size:0.8rem;flex:1;min-width:0"></div>
       </div>
     </div>
@@ -2163,12 +2167,12 @@
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
             <select id="laz-pipeline-user" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;cursor:pointer;max-width:220px"></select>
-            <button class="btn btn-ghost" onclick="lazDashboardLoad()" style="padding:7px 16px;font-size:0.8rem">Refresh</button>
-            <button class="btn btn-ghost" onclick="ddOpen('velocity')" style="padding:7px 14px;font-size:0.8rem;gap:5px">
+            <button class="btn btn-ghost" onclick="lazDashboardLoad()" title="Reload all dashboard stats from Odoo" style="padding:7px 16px;font-size:0.8rem">Refresh</button>
+            <button class="btn btn-ghost" onclick="ddOpen('velocity')" title="View sales velocity and deal conversion metrics" style="padding:7px 14px;font-size:0.8rem;gap:5px">
               <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 3v2.5l2 1.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
               Sales velocity
             </button>
-            <button class="btn btn-ghost" onclick="ddOpen('inbox')" style="padding:7px 14px;font-size:0.8rem">Odoo inbox</button>
+            <button class="btn btn-ghost" onclick="ddOpen('inbox')" title="View unread messages in your Odoo inbox" style="padding:7px 14px;font-size:0.8rem">Odoo inbox</button>
           </div>
           <div id="laz-dashboard" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
         <div class="laz-stat-card" id="dstat-pipeline" onclick="ddOpen('pipeline')" style="cursor:pointer" title="Click for pipeline details">
@@ -2214,6 +2218,45 @@
         </div>
       </div>
           <div id="laz-dd-container" style="margin-top:8px"></div>
+
+          <!-- ── ACCOUNTING CARDS ─────────────────────────────────── -->
+          <div style="margin-top:18px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div>
+                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:500">Accounting</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-ghost" onclick="lazAcctLoad()" title="Reload accounting data from Odoo" style="padding:5px 12px;font-size:0.78rem">Refresh</button>
+                <button class="btn btn-ghost" onclick="lazAcctReport('aged-ar')" title="Accounts receivable aging report — who owes what and how long" style="padding:5px 12px;font-size:0.78rem">Aged AR</button>
+                <button class="btn btn-ghost" onclick="lazAcctReport('top-customers')" title="Top customers ranked by revenue year-to-date" style="padding:5px 12px;font-size:0.78rem">Top Customers</button>
+                <button class="btn btn-ghost" onclick="lazAcctReport('overdue-notices')" title="Generate overdue invoice notice report per customer" style="padding:5px 12px;font-size:0.78rem">Overdue Notices</button>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px">
+              <div class="laz-stat-card" id="astat-ar" onclick="lazAcctDrill('open-ar')" style="cursor:pointer" title="Open invoices not yet paid">
+                <div class="laz-stat-label">Open AR</div>
+                <div class="laz-stat-value accent" id="astat-ar-val">—</div>
+                <div class="laz-stat-sub" id="astat-ar-sub">outstanding</div>
+              </div>
+              <div class="laz-stat-card" id="astat-overdue" onclick="lazAcctDrill('overdue')" style="cursor:pointer" title="Invoices past due date">
+                <div class="laz-stat-label">Overdue</div>
+                <div class="laz-stat-value danger" id="astat-overdue-val">—</div>
+                <div class="laz-stat-sub" id="astat-overdue-sub">past due</div>
+              </div>
+              <div class="laz-stat-card" id="astat-revenue" onclick="lazAcctDrill('revenue')" style="cursor:pointer" title="Invoiced this month">
+                <div class="laz-stat-label">Revenue MTD</div>
+                <div class="laz-stat-value" id="astat-revenue-val">—</div>
+                <div class="laz-stat-sub" id="astat-revenue-sub">invoiced</div>
+              </div>
+              <div class="laz-stat-card" id="astat-collected" onclick="lazAcctDrill('collected')" style="cursor:pointer" title="Cash collected this month">
+                <div class="laz-stat-label">Collected MTD</div>
+                <div class="laz-stat-value" id="astat-collected-val">—</div>
+                <div class="laz-stat-sub" id="astat-collected-sub">received</div>
+              </div>
+            </div>
+            <div id="laz-acct-dd" style="margin-top:6px"></div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -2253,6 +2296,12 @@
                 <label>Min expected revenue ($)</label>
                 <input type="number" id="cu-min-revenue" value="0" min="0" placeholder="0">
               </div>
+              <div class="field">
+                <label>Exclude tag (optional)</label>
+                <select id="cu-exclude-tag" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.83rem;outline:none">
+                  <option value="">No tag filter</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -2281,6 +2330,12 @@
                 <label>Search by name / company</label>
                 <input type="text" id="cu-contact-search" placeholder="e.g. Acme Corp">
               </div>
+              <div class="field">
+                <label>Exclude tag (optional)</label>
+                <select id="cu-contact-exclude-tag" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.83rem;outline:none">
+                  <option value="">No tag filter</option>
+                </select>
+              </div>
             </div>
             <div class="alert info" style="font-size:0.78rem;margin-bottom:0">
               Scans all contacts with no upcoming activities — catches orphaned contacts from departed reps, won/lost deals gone cold, and contacts with no open opportunity.
@@ -2294,7 +2349,7 @@
           </div>
 
           <div style="display:flex;gap:10px;align-items:center">
-            <button class="btn btn-primary" onclick="cuScan()" id="cu-scan-btn" style="padding:8px 20px;font-size:0.85rem">
+            <button class="btn btn-primary" onclick="cuScan()" id="cu-scan-btn" title="Scan Odoo for dormant contacts matching these filters" style="padding:8px 20px;font-size:0.85rem">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 8l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
               Find customers
             </button>
@@ -2317,6 +2372,7 @@
             <div id="cu-results-label" style="font-size:0.82rem;color:var(--muted)"></div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-ghost" onclick="cuSelectAll()" style="padding:5px 12px;font-size:0.76rem">Select all</button>
+              <button class="btn btn-ghost" onclick="cuBulkSchedule()" style="padding:5px 12px;font-size:0.76rem" title="Schedule the same follow-up activity on all selected contacts">Bulk schedule</button>
               <button class="btn btn-ghost" onclick="cuBatchDraft()" id="cu-batch-btn" style="padding:5px 12px;font-size:0.76rem;display:none">Draft selected</button>
             </div>
           </div>
@@ -2341,15 +2397,15 @@
             <div class="field"><label>Equipment / service type</label><input type="text" id="vo-equipment" placeholder="e.g. crane, forklift"></div>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="voSearch()" id="vo-search-btn" style="padding:8px 20px;font-size:0.85rem">Search Odoo vendors</button>
-            <button class="btn btn-ghost" onclick="voSearchAI()" id="vo-ai-btn" style="padding:8px 16px;font-size:0.85rem;border-color:var(--accent);color:var(--accent)">&#10022; AI suggestions</button>
+            <button class="btn btn-primary" onclick="voSearch()" title="Search your Odoo vendor contacts by state, city, and equipment type" id="vo-search-btn" style="padding:8px 20px;font-size:0.85rem">Search Odoo vendors</button>
+            <button class="btn btn-ghost" onclick="voSearchAI()" title="Use Groq AI to suggest vendor contacts in the specified location" id="vo-ai-btn" style="padding:8px 16px;font-size:0.85rem;border-color:var(--accent);color:var(--accent)">&#10022; AI suggestions</button>
             <div id="vo-status" style="font-size:0.82rem;color:var(--muted)"></div>
           </div>
         </div>
         <div class="card" style="margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:0.88rem;font-weight:500">Quote request email</div>
-            <button class="btn btn-ghost" onclick="voGenerateTemplate()" style="padding:5px 12px;font-size:0.76rem">&#10022; AI draft</button>
+            <button class="btn btn-ghost" onclick="voGenerateTemplate()" title="Generate a professional quote request email using AI" style="padding:5px 12px;font-size:0.76rem">&#10022; AI draft</button>
           </div>
           <div class="field" style="margin-bottom:8px"><label>Subject</label><input type="text" id="vo-subject" value="Quote Request - Equipment Rental"></div>
           <div class="field"><label>Message body</label>
@@ -2370,8 +2426,8 @@ Thank you</textarea>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div id="vo-results-label" style="font-size:0.82rem;color:var(--muted)"></div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-ghost" onclick="voSelectAll()" style="padding:5px 12px;font-size:0.76rem">Select all</button>
-              <button class="btn btn-primary" onclick="voBlast()" id="vo-blast-btn" style="padding:5px 16px;font-size:0.76rem;display:none">Send quote requests</button>
+              <button class="btn btn-ghost" onclick="voSelectAll()" title="Select all vendors with email addresses" style="padding:5px 12px;font-size:0.76rem">Select all</button>
+              <button class="btn btn-primary" onclick="voBlast()" title="Send quote request email to all selected vendors" id="vo-blast-btn" style="padding:5px 16px;font-size:0.76rem;display:none">Send quote requests</button>
             </div>
           </div>
           <div id="vo-results-list" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -2398,10 +2454,10 @@ Thank you</textarea>
             <button class="btn btn-ghost" onclick="docsSetTool('sign')" id="docs-tool-sign" style="padding:5px 12px;font-size:0.78rem">Signature</button>
             <button class="btn btn-ghost" onclick="docsSetTool('highlight')" id="docs-tool-highlight" style="padding:5px 12px;font-size:0.78rem">Highlight</button>
             <div style="flex:1"></div>
-            <button class="btn btn-ghost" onclick="docsUndo()" style="padding:5px 10px;font-size:0.78rem">Undo</button>
-            <button class="btn btn-ghost" onclick="docsClearPage()" style="padding:5px 10px;font-size:0.78rem">Clear page</button>
-            <button class="btn btn-ghost" onclick="docsDownload()" style="padding:5px 12px;font-size:0.78rem">Print / Save PDF</button>
-            <button class="btn btn-primary" onclick="docsEmail()" style="padding:5px 12px;font-size:0.78rem">Email</button>
+            <button class="btn btn-ghost" onclick="docsUndo()" title="Undo last annotation on this page" style="padding:5px 10px;font-size:0.78rem">Undo</button>
+            <button class="btn btn-ghost" onclick="docsClearPage()" title="Remove all annotations from current page" style="padding:5px 10px;font-size:0.78rem">Clear page</button>
+            <button class="btn btn-ghost" onclick="docsDownload()" title="Render all pages and open print dialog — use Save as PDF" style="padding:5px 12px;font-size:0.78rem">Print / Save PDF</button>
+            <button class="btn btn-primary" onclick="docsEmail()" title="Open Quick Compose pre-filled to send this document" style="padding:5px 12px;font-size:0.78rem">Email</button>
           </div>
           <div id="docs-page-nav" style="display:none;align-items:center;gap:10px;margin-bottom:10px;font-size:0.8rem;color:var(--muted)">
             <button onclick="docsChangePage(-1)" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;cursor:pointer;color:var(--muted)">Prev</button>
@@ -4563,7 +4619,11 @@ async function goToStep2() {
   updateStatusLights();
 }
 
-async function goToStep3() { navTo('activities'); actTab('draft'); await draftAllEmails(); }
+async function goToStep3() {
+  navTo('activities');
+  actTab('draft');
+  await draftAllEmails();
+}
 
 function goToStep4() { navTo('activities'); actTab('send'); renderEmailList(); }
 
@@ -4925,6 +4985,13 @@ async function draftAllEmails() {
     line.innerHTML = `<div class="dot ${type === 'loading' ? 'spin' : dotClass}"></div><div>${msg}</div>`;
     log.appendChild(line);
     return line;
+  }
+
+  if (!activities || !activities.length) {
+    if (subtitle) subtitle.textContent = 'No activities found — connect and scan first';
+    addLog('warn', 'No activities loaded. Go to the Connect tab and click "Connect & scan" first.');
+    document.getElementById('step3-actions').classList.remove('hidden');
+    return;
   }
 
   for (let i = 0; i < activities.length; i++) {
@@ -5953,7 +6020,8 @@ function voRenderVendors() {
     row += '</div>';
     row += '<div style="display:flex;gap:6px;flex-shrink:0">';
     if (hasEmail) row += '<button onclick="voSendOne('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Send</button>';
-    row += '<button onclick="voLogToOdoo('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Log</button>';
+    if (v.source === 'ai') row += '<button onclick="voSaveToOdoo('+i+')" style="background:none;border:1px solid rgba(201,168,76,0.5);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--accent);cursor:pointer" title="Create this vendor as an Odoo contact" onmouseover="this.style.background=\'var(--accent-dim)\'" onmouseout="this.style.background=\'none\'">Save to Odoo</button>';
+    row += '<button onclick="voLogToOdoo('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" title="Post a note to this vendor\'s Odoo chatter" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Log</button>';
     row += '</div></div>';
     row += '<div style="margin-top:8px;display:flex;gap:8px;align-items:center">';
     row += '<span style="font-size:0.73rem;color:var(--muted)">Rate received:</span>';
@@ -6282,6 +6350,372 @@ function docsEmail(){
 }
 
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── ACCOUNTING DASHBOARD ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function lazAcctLoad() {
+  if (!odooUid) return;
+
+  const today = new Date();
+  const monthStart = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-01';
+  const todayStr   = today.toISOString().split('T')[0];
+
+  const fmt = n => '$' + (n||0).toLocaleString('en-US', {maximumFractionDigits:0});
+
+  const setStat = (id, val, sub) => {
+    const el = document.getElementById(id+'-val');
+    const su = document.getElementById(id+'-sub');
+    if (el) el.textContent = val;
+    if (su && sub) su.textContent = sub;
+  };
+
+  try {
+    // Open AR — posted sales invoices not fully paid
+    const openInv = await odooExecute(odooUid, 'account.move', 'search_read',
+      [[['move_type','=','out_invoice'],['state','=','posted'],['payment_state','in',['not_paid','partial']]]],
+      { fields: ['amount_residual'], limit: 500 }
+    );
+    const arTotal = (openInv||[]).reduce((s,i) => s + (i.amount_residual||0), 0);
+    setStat('astat-ar', fmt(arTotal), (openInv||[]).length + ' invoice' + ((openInv||[]).length!==1?'s':''));
+
+    // Overdue — past due date
+    const overdueInv = await odooExecute(odooUid, 'account.move', 'search_read',
+      [[['move_type','=','out_invoice'],['state','=','posted'],['payment_state','=','not_paid'],['invoice_date_due','<',todayStr]]],
+      { fields: ['amount_residual'], limit: 500 }
+    );
+    const overdueTotal = (overdueInv||[]).reduce((s,i) => s + (i.amount_residual||0), 0);
+    setStat('astat-overdue', fmt(overdueTotal), (overdueInv||[]).length + ' overdue');
+
+    // Revenue MTD — invoiced this month
+    const revInv = await odooExecute(odooUid, 'account.move', 'search_read',
+      [[['move_type','=','out_invoice'],['state','=','posted'],['invoice_date','>=',monthStart]]],
+      { fields: ['amount_untaxed'], limit: 500 }
+    );
+    const revTotal = (revInv||[]).reduce((s,i) => s + (i.amount_untaxed||0), 0);
+    setStat('astat-revenue', fmt(revTotal), (revInv||[]).length + ' invoice' + ((revInv||[]).length!==1?'s':'') + ' this month');
+
+    // Collected MTD — paid invoices this month
+    const paidInv = await odooExecute(odooUid, 'account.move', 'search_read',
+      [[['move_type','=','out_invoice'],['state','=','posted'],['payment_state','in',['paid','in_payment']],['invoice_date','>=',monthStart]]],
+      { fields: ['amount_total'], limit: 500 }
+    );
+    const collectedTotal = (paidInv||[]).reduce((s,i) => s + (i.amount_total||0), 0);
+    setStat('astat-collected', fmt(collectedTotal), (paidInv||[]).length + ' payment' + ((paidInv||[]).length!==1?'s':'') + ' received');
+
+  } catch(e) {
+    console.warn('Accounting load error:', e.message);
+    ['astat-ar','astat-overdue','astat-revenue','astat-collected'].forEach(id => setStat(id,'—','unavailable'));
+  }
+}
+
+async function lazAcctDrill(type) {
+  if (!odooUid) return;
+  const dd = document.getElementById('laz-acct-dd');
+  if (!dd) return;
+
+  const today = new Date();
+  const monthStart = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-01';
+  const todayStr   = today.toISOString().split('T')[0];
+  const fmt = n => '$' + (n||0).toLocaleString('en-US', {maximumFractionDigits:0});
+
+  dd.innerHTML = '<div style="padding:8px;font-size:0.8rem;color:var(--muted)">Loading…</div>';
+
+  try {
+    let invoices = [];
+    let title = '';
+
+    if (type === 'open-ar') {
+      invoices = await odooExecute(odooUid, 'account.move', 'search_read',
+        [[['move_type','=','out_invoice'],['state','=','posted'],['payment_state','in',['not_paid','partial']]]],
+        { fields: ['name','partner_id','invoice_date_due','amount_residual'], limit: 50, order: 'invoice_date_due asc' }
+      );
+      title = 'Open Invoices';
+    } else if (type === 'overdue') {
+      invoices = await odooExecute(odooUid, 'account.move', 'search_read',
+        [[['move_type','=','out_invoice'],['state','=','posted'],['payment_state','=','not_paid'],['invoice_date_due','<',todayStr]]],
+        { fields: ['name','partner_id','invoice_date_due','amount_residual'], limit: 50, order: 'invoice_date_due asc' }
+      );
+      title = 'Overdue Invoices';
+    } else if (type === 'revenue') {
+      invoices = await odooExecute(odooUid, 'account.move', 'search_read',
+        [[['move_type','=','out_invoice'],['state','=','posted'],['invoice_date','>=',monthStart]]],
+        { fields: ['name','partner_id','invoice_date','amount_untaxed'], limit: 50, order: 'invoice_date desc' }
+      );
+      title = 'Revenue This Month';
+    } else if (type === 'collected') {
+      invoices = await odooExecute(odooUid, 'account.move', 'search_read',
+        [[['move_type','=','out_invoice'],['state','=','posted'],['payment_state','in',['paid','in_payment']],['invoice_date','>=',monthStart]]],
+        { fields: ['name','partner_id','invoice_date','amount_total'], limit: 50, order: 'invoice_date desc' }
+      );
+      title = 'Collected This Month';
+    }
+
+    if (!invoices.length) { dd.innerHTML = '<div style="padding:8px;font-size:0.8rem;color:var(--muted)">No records found</div>'; return; }
+
+    const rows = invoices.map(inv => {
+      const partner = Array.isArray(inv.partner_id) ? escHtml(inv.partner_id[1]) : '—';
+      const date    = inv.invoice_date_due || inv.invoice_date || '';
+      const amount  = fmt(inv.amount_residual || inv.amount_untaxed || inv.amount_total || 0);
+      return '<tr><td style="padding:5px 8px;font-size:0.78rem;color:var(--text)">' + escHtml(inv.name||'') + '</td>'
+           + '<td style="padding:5px 8px;font-size:0.78rem;color:var(--muted)">' + partner + '</td>'
+           + '<td style="padding:5px 8px;font-size:0.78rem;color:var(--muted)">' + date + '</td>'
+           + '<td style="padding:5px 8px;font-size:0.78rem;color:var(--accent);font-family:monospace;text-align:right">' + amount + '</td></tr>';
+    }).join('');
+
+    dd.innerHTML = '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:4px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border)">'
+      + '<span style="font-size:0.82rem;font-weight:500;color:var(--text)">' + title + '</span>'
+      + '<button onclick="this.closest(\'[id=laz-acct-dd]\').innerHTML=\'\'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem">✕</button>'
+      + '</div>'
+      + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'
+      + '<thead><tr style="border-bottom:1px solid var(--border)">'
+      + '<th style="padding:5px 8px;font-size:0.7rem;color:var(--muted);font-weight:500;text-align:left">Invoice</th>'
+      + '<th style="padding:5px 8px;font-size:0.7rem;color:var(--muted);font-weight:500;text-align:left">Customer</th>'
+      + '<th style="padding:5px 8px;font-size:0.7rem;color:var(--muted);font-weight:500;text-align:left">Date</th>'
+      + '<th style="padding:5px 8px;font-size:0.7rem;color:var(--muted);font-weight:500;text-align:right">Amount</th>'
+      + '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  } catch(e) {
+    dd.innerHTML = '<div style="padding:8px;font-size:0.8rem;color:var(--danger)">Error: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+async function lazAcctReport(type) {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const today = new Date();
+  const monthStart = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-01';
+  const todayStr   = today.toISOString().split('T')[0];
+  const fmt = n => '$' + (n||0).toLocaleString('en-US', {maximumFractionDigits:2});
+
+  try {
+    let content = '';
+    const title = type === 'aged-ar' ? 'Aged Accounts Receivable'
+                : type === 'top-customers' ? 'Top Customers by Revenue'
+                : 'Overdue Invoice Notices';
+
+    if (type === 'aged-ar') {
+      const invoices = await odooExecute(odooUid, 'account.move', 'search_read',
+        [[['move_type','=','out_invoice'],['state','=','posted'],['payment_state','in',['not_paid','partial']]]],
+        { fields: ['name','partner_id','invoice_date_due','amount_residual'], limit: 200, order: 'partner_id asc' }
+      );
+      // Group by partner
+      const byPartner = {};
+      (invoices||[]).forEach(inv => {
+        const pid = Array.isArray(inv.partner_id) ? inv.partner_id[0] : 0;
+        const pname = Array.isArray(inv.partner_id) ? inv.partner_id[1] : 'Unknown';
+        if (!byPartner[pid]) byPartner[pid] = { name: pname, current: 0, d30: 0, d60: 0, d90: 0 };
+        const daysOverdue = inv.invoice_date_due ? Math.floor((new Date(todayStr) - new Date(inv.invoice_date_due)) / 86400000) : 0;
+        const amt = inv.amount_residual || 0;
+        if (daysOverdue <= 0)       byPartner[pid].current += amt;
+        else if (daysOverdue <= 30) byPartner[pid].d30 += amt;
+        else if (daysOverdue <= 60) byPartner[pid].d60 += amt;
+        else                         byPartner[pid].d90 += amt;
+      });
+      const rows = Object.values(byPartner).map(p =>
+        '<tr><td>' + escHtml(p.name) + '</td><td>' + fmt(p.current) + '</td><td>' + fmt(p.d30) + '</td><td>' + fmt(p.d60) + '</td><td style="color:#e44">' + fmt(p.d90) + '</td><td><strong>' + fmt(p.current+p.d30+p.d60+p.d90) + '</strong></td></tr>'
+      ).join('');
+      content = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">'
+        + '<tr style="background:#f0f0f0"><th>Customer</th><th>Current</th><th>1-30 days</th><th>31-60 days</th><th>60+ days</th><th>Total</th></tr>'
+        + rows + '</table>';
+
+    } else if (type === 'top-customers') {
+      const yearStart = today.getFullYear() + '-01-01';
+      const invoices = await odooExecute(odooUid, 'account.move', 'search_read',
+        [[['move_type','=','out_invoice'],['state','=','posted'],['invoice_date','>=',yearStart]]],
+        { fields: ['partner_id','amount_untaxed'], limit: 500 }
+      );
+      const byPartner = {};
+      (invoices||[]).forEach(inv => {
+        const pid = Array.isArray(inv.partner_id) ? inv.partner_id[0] : 0;
+        const pname = Array.isArray(inv.partner_id) ? inv.partner_id[1] : 'Unknown';
+        byPartner[pid] = { name: pname, total: (byPartner[pid]?.total||0) + (inv.amount_untaxed||0) };
+      });
+      const sorted = Object.values(byPartner).sort((a,b) => b.total - a.total).slice(0,20);
+      const rows = sorted.map((p,i) =>
+        '<tr><td>' + (i+1) + '</td><td>' + escHtml(p.name) + '</td><td>' + fmt(p.total) + '</td></tr>'
+      ).join('');
+      content = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">'
+        + '<tr style="background:#f0f0f0"><th>#</th><th>Customer</th><th>Revenue YTD</th></tr>'
+        + rows + '</table>';
+
+    } else if (type === 'overdue-notices') {
+      const invoices = await odooExecute(odooUid, 'account.move', 'search_read',
+        [[['move_type','=','out_invoice'],['state','=','posted'],['payment_state','=','not_paid'],['invoice_date_due','<',todayStr]]],
+        { fields: ['name','partner_id','invoice_date_due','amount_residual','invoice_date'], limit: 100, order: 'partner_id asc' }
+      );
+      // Group by partner
+      const byPartner = {};
+      (invoices||[]).forEach(inv => {
+        const pid = Array.isArray(inv.partner_id) ? inv.partner_id[0] : 0;
+        const pname = Array.isArray(inv.partner_id) ? inv.partner_id[1] : 'Unknown';
+        if (!byPartner[pid]) byPartner[pid] = { name: pname, invoices: [] };
+        byPartner[pid].invoices.push(inv);
+      });
+      const rows = Object.values(byPartner).map(p => {
+        const total = p.invoices.reduce((s,i) => s+i.amount_residual,0);
+        const invList = p.invoices.map(i => '  • ' + i.name + ' — Due: ' + i.invoice_date_due + ' — ' + fmt(i.amount_residual)).join('<br>');
+        return '<tr><td valign="top"><strong>' + escHtml(p.name) + '</strong><br><span style="color:#888;font-size:11px">' + invList + '</span></td><td valign="top"><strong>' + fmt(total) + '</strong></td></tr>';
+      }).join('');
+      content = '<p style="color:#888;font-size:12px">Review each notice below. Use the Email buttons to send reminders.</p>'
+        + '<table border="1" cellpadding="8" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">'
+        + '<tr style="background:#f0f0f0"><th>Customer / Invoices</th><th>Total Due</th></tr>'
+        + rows + '</table>';
+    }
+
+    // Open print window
+    const pw = window.open('', '_blank');
+    pw.document.write('<!DOCTYPE html><html><head><title>' + title + ' — ' + todayStr + '</title>'
+      + '<style>body{font-family:Arial,sans-serif;padding:24px;color:#111}h2{margin-bottom:4px}p.sub{color:#888;font-size:12px;margin:0 0 16px}table{margin-top:12px}th,td{text-align:left;padding:6px 10px}tr:nth-child(even){background:#f9f9f9}@media print{button{display:none}}</style>'
+      + '</head><body>'
+      + '<h2>' + title + '</h2><p class="sub">Generated ' + todayStr + '</p>'
+      + '<button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;background:#c9a84c;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">Print / Save PDF</button>'
+      + content + '</body></html>');
+    pw.document.close();
+
+  } catch(e) {
+    alert('Report error: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── PRINT QUOTE ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+function qbPrintQuote() {
+  if (!_qbLines || !_qbLines.length) { alert('Add items to the quote first'); return; }
+
+  const customer  = document.getElementById('qb-customer-name')?.value?.trim() || '';
+  const notes     = document.getElementById('qb-notes')?.value?.trim() || '';
+  const today     = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+  const fmt       = n => '$' + (n||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const rentDays  = parseInt(document.getElementById('qb-rent-days')?.value) || 1;
+
+  const lineRows = _qbLines.map(l => {
+    const unitPrice = l.price || 0;
+    const qty       = l.qty   || 1;
+    const days      = l.rentDays || rentDays;
+    const total     = unitPrice * qty * days;
+    return '<tr><td style="padding:8px 10px;border-bottom:1px solid #eee">' + escHtml(l.productName||'Item') + '</td>'
+      + '<td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center">' + qty + '</td>'
+      + '<td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center">' + days + '</td>'
+      + '<td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right">' + fmt(unitPrice) + '</td>'
+      + '<td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right"><strong>' + fmt(total) + '</strong></td></tr>';
+  }).join('');
+
+  const subtotal = _qbLines.reduce((s,l) => s + (l.price||0)*(l.qty||1)*(l.rentDays||rentDays), 0);
+
+  const pw = window.open('', '_blank');
+  pw.document.write('<!DOCTYPE html><html><head><title>Quote — ' + (customer||'Customer') + '</title>'
+    + '<style>body{font-family:Arial,sans-serif;padding:40px;color:#111;max-width:800px;margin:0 auto}'
+    + 'h1{font-size:22px;margin-bottom:4px}h2{font-size:14px;color:#888;font-weight:normal;margin:0 0 24px}'
+    + 'table{width:100%;border-collapse:collapse;margin-top:16px}'
+    + 'th{background:#1a1a1a;color:#fff;padding:10px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em}'
+    + 'th.r{text-align:right}th.c{text-align:center}'
+    + '.total-row td{padding:10px;font-size:15px;font-weight:bold;border-top:2px solid #1a1a1a}'
+    + '.notes{margin-top:24px;padding:16px;background:#f9f9f9;border-radius:6px;font-size:13px;color:#555}'
+    + '.footer{margin-top:40px;font-size:11px;color:#aaa;text-align:center}'
+    + '@media print{.no-print{display:none}}</style></head><body>'
+    + '<div class="no-print" style="margin-bottom:20px">'
+    + '<button onclick="window.print()" style="padding:10px 20px;background:#c9a84c;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;margin-right:8px">Print / Save PDF</button>'
+    + '<button onclick="window.close()" style="padding:10px 16px;background:#eee;border:none;border-radius:6px;cursor:pointer;font-size:13px">Close</button>'
+    + '</div>'
+    + '<h1>Rental Quotation</h1>'
+    + '<h2>' + (customer ? 'Prepared for: ' + escHtml(customer) : '') + ' &nbsp; Date: ' + today + '</h2>'
+    + '<table>'
+    + '<thead><tr><th>Item / Description</th><th class="c">Qty</th><th class="c">Days</th><th class="r">Unit/Day</th><th class="r">Total</th></tr></thead>'
+    + '<tbody>' + lineRows + '</tbody>'
+    + '<tfoot><tr class="total-row"><td colspan="4" style="text-align:right;padding:10px;border-top:2px solid #1a1a1a">Total</td><td style="padding:10px;text-align:right;border-top:2px solid #1a1a1a">' + fmt(subtotal) + '</td></tr></tfoot>'
+    + '</table>'
+    + (notes ? '<div class="notes"><strong>Notes:</strong> ' + escHtml(notes) + '</div>' : '')
+    + '<div class="footer">This is a quotation only and is subject to availability and confirmation.</div>'
+    + '</body></html>');
+  pw.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── SAVE AI VENDOR TO ODOO ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function voSaveToOdoo(i) {
+  const v = _voVendors[i];
+  if (!v || !odooUid) { alert('Connect to Odoo first'); return; }
+  if (v.source !== 'ai') return;
+
+  try {
+    const vals = {
+      name:          v.name,
+      supplier_rank: 1,
+      is_company:    true,
+    };
+    if (v.email)  vals.email  = v.email;
+    if (v.phone)  vals.phone  = v.phone;
+    if (v.city)   vals.city   = v.city;
+    if (v.state)  vals.comment = 'State: ' + v.state + (v.comment ? '\n' + v.comment : '');
+    if (v.street) vals.street = v.street;
+
+    const newId = await odooExecute(odooUid, 'res.partner', 'create', [vals]);
+    // Update the vendor in memory — now it's an Odoo contact
+    _voVendors[i].id     = newId;
+    _voVendors[i].source = 'odoo';
+    const s = document.getElementById('vo-status');
+    if (s) { s.style.color='var(--success)'; s.textContent='\u2713 ' + v.name + ' saved to Odoo vendors'; setTimeout(()=>{s.textContent='';s.style.color='var(--muted)';},3000); }
+    voRenderVendors();
+  } catch(e) {
+    alert('Save error: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── BULK SCHEDULE ACTIVITY ─────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function cuBulkSchedule() {
+  const selected = _cuLeads.filter(l => l._selected);
+  if (!selected.length) { alert('Select contacts first'); return; }
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+
+  const note = prompt('Schedule follow-up for ' + selected.length + ' contact' + (selected.length!==1?'s':'') + '.\n\nNote (optional):');
+  if (note === null) return; // cancelled
+
+  const types = await loadActivityTypes().catch(() => []);
+  const typeId = types.length ? types[0].id : null;
+  if (!typeId) { alert('Could not load activity types from Odoo'); return; }
+
+  const statusEl = document.getElementById('cu-status');
+  if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.textContent='Scheduling activities…'; }
+
+  let done = 0;
+  let failed = 0;
+  const deadline = new Date(Date.now() + 7*86400000).toISOString().split('T')[0]; // 1 week out
+
+  for (const lead of selected) {
+    try {
+      const model = lead._isContact ? 'res.partner' : 'crm.lead';
+      await odooExecute(odooUid, 'mail.activity', 'create', [{
+        res_model:        model,
+        res_id:           lead.id,
+        activity_type_id: typeId,
+        summary:          'Re-engagement follow-up',
+        note:             note || '',
+        user_id:          odooUid,
+        date_deadline:    deadline,
+      }]);
+      done++;
+    } catch(e) {
+      failed++;
+      console.warn('Bulk schedule failed for', lead.name, e.message);
+    }
+  }
+
+  if (statusEl) {
+    statusEl.style.color = failed ? 'var(--warning)' : 'var(--success)';
+    statusEl.textContent = '\u2713 ' + done + ' activit' + (done!==1?'ies':'y') + ' scheduled' + (failed ? ' (' + failed + ' failed)' : '');
+    setTimeout(()=>{statusEl.textContent='';statusEl.style.color='var(--muted)';}, 3500);
+  }
+}
+
+
 // ─── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   loadCredentials();
@@ -6577,22 +7011,22 @@ async function testImapConnection() {
 
 function getImapConfig() {
   // Read from DOM first, fall back to localStorage if fields are empty
-  // (e.g. when jumping to Laz Mode without visiting Step 5 first)
   const fromDom = {
-    host:     document.getElementById('imap-host')?.value?.trim()     || '',
-    port:     document.getElementById('imap-port')?.value?.trim()     || '993',
-    email:    document.getElementById('imap-email')?.value?.trim()    || '',
-    password: document.getElementById('imap-password')?.value?.trim() || '',
+    host:      document.getElementById('imap-host')?.value?.trim()      || '',
+    port:      document.getElementById('imap-port')?.value?.trim()      || '993',
+    smtp_port: document.getElementById('imap-smtp-port')?.value?.trim() || '587',
+    email:     document.getElementById('imap-email')?.value?.trim()     || '',
+    password:  document.getElementById('imap-password')?.value?.trim()  || '',
   };
   if (fromDom.email && fromDom.password) return fromDom;
-  // Fall back to localStorage
   try {
     const saved = JSON.parse(localStorage.getItem('oel_imap_creds') || '{}');
     return {
-      host:     saved.host     || fromDom.host     || 'imap.mail.yahoo.com',
-      port:     saved.port     || fromDom.port     || '993',
-      email:    saved.email    || fromDom.email    || '',
-      password: saved.password || fromDom.password || '',
+      host:      saved.host      || fromDom.host      || 'imap.mail.yahoo.com',
+      port:      saved.port      || fromDom.port      || '993',
+      smtp_port: saved.smtp_port || fromDom.smtp_port || '587',
+      email:     saved.email     || fromDom.email     || '',
+      password:  saved.password  || fromDom.password  || '',
     };
   } catch(e) { return fromDom; }
 }
@@ -8133,6 +8567,9 @@ async function lazDashboardLoad() {
       const el = document.getElementById(id); if (el) el.textContent = '—';
     });
   }
+
+  // Also refresh accounting
+  lazAcctLoad();
 }
 
 // ── Scan inbox ────────────────────────────────────────────
@@ -16797,7 +17234,7 @@ window.navTo = function(section) {
     support:    {panel:'panel-support',    title:'Support',      hasSrc:false},
     prospect:   {panel:'panel-prospect',   title:'Prospecting',  hasSrc:false},
     reports:    {panel:'panel-reports',    title:'Reports',      hasSrc:false},
-    catchup:    {panel:'panel-catchup',    title:'Catch Up',     hasSrc:false},
+    catchup:    {panel:'panel-catchup',    title:'Dormant Contacts',     hasSrc:false},
     vendor:     {panel:'panel-vendor',     title:'Vendor Outreach', hasSrc:false},
     docs:       {panel:'panel-docs',       title:'Documents',       hasSrc:false},
   };
@@ -17261,22 +17698,26 @@ async function cuScanContacts() {
     if (userId) domain.push(['user_id','=',userId]);
     if (search) domain.push(['|',['name','ilike',search],['company_name','ilike',search]]);
 
-    // Fetch contacts
+    // Push date and activity filters into Odoo query directly
+    domain.push(['activity_ids','=',false]);
+    domain.push(['write_date','<=',cutoffStr + ' 23:59:59']);
+
     const contacts = await odooExecute(odooUid, 'res.partner', 'search_read',
       [domain],
       { fields: ['id','name','email','phone','company_name','user_id','customer_rank',
-                 'opportunity_count','activity_ids','write_date'], limit: 200, order: 'write_date asc' }
+                 'opportunity_count','activity_ids','write_date','category_id'], limit: 200, order: 'write_date asc' }
     );
 
-    // Filter: no scheduled activities AND last modified > N days ago
+    // Belt-and-suspenders: confirm no activities (Odoo 19 relational filter can be loose)
     const dormant = (contacts||[]).filter(c => {
-      const hasActivity = c.activity_ids && c.activity_ids.length > 0;
-      if (hasActivity) return false;
-      if (!c.write_date) return true;
-      return c.write_date.split(' ')[0] <= cutoffStr;
+      return !c.activity_ids || c.activity_ids.length === 0;
     });
 
-    _cuLeads = dormant.map(c => ({
+    const excludeContactTagId = parseInt(document.getElementById('cu-contact-exclude-tag')?.value) || 0;
+    const tagFiltered = excludeContactTagId
+      ? dormant.filter(c => !(c.category_id && c.category_id.some(t => (Array.isArray(t) ? t[0] : t) === excludeContactTagId)))
+      : dormant;
+    _cuLeads = tagFiltered.map(c => ({
       id:           c.id,
       name:         c.name || '',
       partner_id:   [c.id, c.name],
@@ -17292,6 +17733,7 @@ async function cuScanContacts() {
       opportunity_count: c.opportunity_count || 0,
       customer_rank: c.customer_rank || 0,
       _isContact:   true,
+      email_from:   c.email || '',   // alias so send/log code works uniformly
       _selected:    false,
       _draft:       '',
       _status:      'pending',
@@ -17311,6 +17753,8 @@ async function cuScanContacts() {
       if (container) container.style.display = 'block';
       if (typeof updateNavBadge === 'function') updateNavBadge('catchup', _cuLeads.length);
       cuRenderResults();
+        const legend = document.getElementById('cu-btn-legend');
+        if (legend) legend.style.display = _cuLeads.length ? 'block' : 'none';
     }
   } catch(e) {
     statusEl.style.color = 'var(--danger)';
@@ -17327,11 +17771,45 @@ function cuInit() {
   cuRenderTemplates();
   cuRenderSearchChips();
 
-  // Populate stage and user dropdowns
+  // Populate stage, user, and tag dropdowns
   if (odooUid) {
     cuPopulateStages();
     cuPopulateUsers();
+    cuLoadTags();
   }
+}
+
+async function cuLoadTags() {
+  try {
+    // Load CRM lead tags
+    const crmTags = await odooExecute(odooUid, 'crm.tag', 'search_read',
+      [[]], { fields: ['id','name'], limit: 100, order: 'name asc' }
+    );
+    const oppSel = document.getElementById('cu-exclude-tag');
+    if (oppSel && crmTags?.length) {
+      oppSel.innerHTML = '<option value="">No tag filter</option>';
+      (crmTags||[]).forEach(t => {
+        const o = document.createElement('option');
+        o.value = t.id;
+        o.textContent = t.name;
+        oppSel.appendChild(o);
+      });
+    }
+    // Load partner/contact tags (res.partner.category)
+    const partnerTags = await odooExecute(odooUid, 'res.partner.category', 'search_read',
+      [[]], { fields: ['id','name'], limit: 100, order: 'name asc' }
+    );
+    const contactSel = document.getElementById('cu-contact-exclude-tag');
+    if (contactSel && partnerTags?.length) {
+      contactSel.innerHTML = '<option value="">No tag filter</option>';
+      (partnerTags||[]).forEach(t => {
+        const o = document.createElement('option');
+        o.value = t.id;
+        o.textContent = t.name;
+        contactSel.appendChild(o);
+      });
+    }
+  } catch(e) { console.warn('Could not load tags:', e.message); }
 }
 
 async function cuPopulateStages() {
@@ -17381,27 +17859,30 @@ async function cuScan() {
     cutoff.setDate(cutoff.getDate() - days);
     const cutoffStr = cutoff.toISOString().split('T')[0];
 
-    // Build domain
+    // Build domain — push date and activity filter into Odoo query directly
     const domain = [
       ['type','=','opportunity'],
       ['active','=',true],
       ['probability','<',100],
-      ['activity_ids','=',false],  // no scheduled activities
+      ['activity_ids','=',false],   // no scheduled activities (Many2many empty check)
+      ['write_date','<=',cutoffStr + ' 23:59:59'],  // dormant for N+ days
     ];
     if (stageId) domain.push(['stage_id','=',stageId]);
     if (userId)  domain.push(['user_id','=',userId]);
     if (minRev > 0) domain.push(['expected_revenue','>=',minRev]);
 
+    // Also read tag_ids so we can filter by them
     const leads = await odooExecute(odooUid, 'crm.lead', 'search_read',
       [domain],
       { fields: ['id','name','partner_id','user_id','stage_id','expected_revenue','date_deadline',
-                 'write_date','description','partner_name','email_from','phone'], limit: 100, order: 'write_date asc' }
+                 'write_date','description','partner_name','email_from','phone','tag_ids','priority'], limit: 200, order: 'write_date asc' }
     );
 
-    // Filter by last write_date (last modification > N days ago)
+    // Client-side: also verify activity_ids truly empty (belt-and-suspenders for Odoo 19)
+    const excludeTagId = parseInt(document.getElementById('cu-exclude-tag')?.value) || 0;
     _cuLeads = (leads||[]).filter(l => {
-      if (!l.write_date) return true;
-      return l.write_date.split(' ')[0] <= cutoffStr;
+      if (excludeTagId && l.tag_ids && l.tag_ids.includes(excludeTagId)) return false;
+      return true;
     }).map(l => ({
       ...l,
       _selected: false,
@@ -17435,6 +17916,7 @@ function cuRenderResults() {
   if (!listEl) return;
   listEl.innerHTML = _cuLeads.map((lead, i) => {
     const name     = escHtml(lead.name || 'Unnamed');
+    const wasSent  = !!lead._sent;
     const partner  = escHtml(Array.isArray(lead.partner_id) ? lead.partner_id[1] : (lead.partner_name || ''));
     const rep      = escHtml(Array.isArray(lead.user_id) ? lead.user_id[1] : '');
     const stage    = escHtml(Array.isArray(lead.stage_id) ? lead.stage_id[1] : '');
@@ -17447,7 +17929,7 @@ function cuRenderResults() {
       <div style="display:flex;align-items:flex-start;gap:10px">
         <input type="checkbox" ${lead._selected?'checked':''} style="accent-color:var(--accent);margin-top:3px;flex-shrink:0" onchange="cuToggle(${i},this.checked)">
         <div style="flex:1;min-width:0">
-          <div style="font-size:0.88rem;font-weight:500;color:var(--text);margin-bottom:3px">${name}</div>
+          <div style="font-size:0.88rem;font-weight:500;color:var(--text);margin-bottom:3px">${name}${wasSent ? ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:10px;background:rgba(80,200,120,0.15);color:var(--success);border:1px solid rgba(80,200,120,0.3)">Sent</span>' : ''}</div>
           <div style="font-size:0.75rem;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap">
             ${lead._isContact ? (lead.company_name ? `<span>${escHtml(lead.company_name)}</span>` : '') : (partner ? `<span>${partner}</span>` : '')}
             ${lead._isContact ? (lead.opportunity_count > 0 ? `<span style="color:var(--warning)">${lead.opportunity_count} opp${lead.opportunity_count!==1?'s':''}</span>` : '<span style="color:var(--muted)">No open opps</span>') : (stage ? `<span class="spec-pill">${stage}</span>` : '')}
@@ -17459,10 +17941,10 @@ function cuRenderResults() {
           ${lead._isContact && lead.phone ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace">${escHtml(lead.phone)}</div>` : ''}
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn btn-ghost" onclick="cuDraftOne(${i})" style="padding:5px 10px;font-size:0.75rem" ${hasDraft?'style="border-color:var(--accent);color:var(--accent)"':''}>
+          <button class="btn btn-ghost" id="cu-draft-btn-${i}" onclick="cuDraftOne(${i})" style="padding:5px 10px;font-size:0.75rem" title="Generate an AI follow-up email draft using Groq" ${hasDraft?'style="border-color:var(--accent);color:var(--accent)"':''}>
             ${hasDraft ? '✓ Drafted' : '✦ Draft'}
           </button>
-          <button class="btn btn-ghost" onclick="cuScheduleActivity(${i})" style="padding:5px 10px;font-size:0.75rem">Schedule</button>
+          <button class="btn btn-ghost" onclick="cuScheduleActivity(${i})" style="padding:5px 10px;font-size:0.75rem" title="Schedule a follow-up activity in Odoo CRM">Schedule</button>
           <a href="${(document.getElementById('odoo-url')?.value||'').replace(/\/+$/,'')+'/odoo/crm/'+lead.id}" target="_blank" class="btn btn-ghost" style="padding:5px 10px;font-size:0.75rem">Open ↗</a>
         </div>
       </div>
@@ -17472,9 +17954,9 @@ function cuRenderResults() {
         <textarea style="width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Mono',monospace;font-size:0.79rem;line-height:1.6;resize:vertical;min-height:100px" onchange="_cuLeads[${i}]._draft=this.value">${escHtml(lead._draft)}</textarea>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn btn-ghost" onclick="cuCopyDraft(${i})" style="padding:4px 10px;font-size:0.74rem">Copy</button>
-          <button class="btn btn-ghost" onclick="cuSendDraft(${i})" style="padding:4px 10px;font-size:0.74rem;color:var(--success);border-color:var(--success)">Send email</button>
+          <button class="btn btn-ghost" onclick="cuSendDraft(${i})" style="padding:4px 10px;font-size:0.74rem;color:var(--success);border-color:var(--success)" title="Send via IMAP server and auto-log to Odoo (falls back to Quick Compose if server offline)">Send email</button>
           <button class="btn btn-ghost" onclick="cuSaveAsTemplate(${i})" style="padding:4px 10px;font-size:0.74rem">Save as template</button>
-          <button class="btn btn-ghost" onclick="cuLogNote(${i})" style="padding:4px 10px;font-size:0.74rem">Log to Odoo</button>
+          <button class="btn btn-ghost" onclick="cuLogNote(${i})" style="padding:4px 10px;font-size:0.74rem" title="Post the draft as an internal note on this lead in Odoo (does not send email)">Log to Odoo</button>
         </div>
       </div>` : ''}
     </div>`;
@@ -17503,13 +17985,17 @@ async function cuDraftOne(i) {
   const groqKey = document.getElementById('gemini-key')?.value?.trim();
   if (!groqKey) { alert('Groq key required for AI drafts'); return; }
 
-  const btn = document.querySelector(`#cu-card-${i} button`);
+  // Show loading state on the Draft button
+  const draftBtn = document.getElementById(`cu-draft-btn-${i}`);
+  if (draftBtn) { draftBtn.disabled = true; draftBtn.textContent = '...'; }
+  const statusEl = document.getElementById('cu-status');
+  if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.textContent='Generating draft...'; }
 
   // Get last chatter note for context
   let lastNote = '';
   try {
     const msgs = await odooExecute(odooUid, 'mail.message', 'search_read',
-      [[['res_id','=',lead.id],['model','=','crm.lead'],['message_type','in',['comment','email']]]],
+      [[['res_id','=',lead.id],['model','=', lead._isContact ? 'res.partner' : 'crm.lead'],['message_type','in',['comment','email']]]],
       { fields: ['body','date','author_id'], limit: 1, order: 'date desc' }
     );
     if (msgs && msgs[0]) {
@@ -17562,8 +18048,11 @@ Write a 3-4 sentence email: acknowledge the gap, briefly reference the deal cont
     });
     const d = await r.json();
     _cuLeads[i]._draft = d.choices?.[0]?.message?.content?.trim() || '';
+    if (statusEl) { statusEl.style.color='var(--accent)'; statusEl.textContent='Draft ready'; setTimeout(()=>{statusEl.textContent='';statusEl.style.color='var(--muted)';},2000); }
     cuRenderResults();
   } catch(e) {
+    if (draftBtn) { draftBtn.disabled = false; draftBtn.textContent = '\u2756 Draft'; }
+    if (statusEl) { statusEl.textContent=''; }
     alert('Draft error: ' + e.message);
   }
 }
@@ -17584,29 +18073,76 @@ function cuCopyDraft(i) {
 }
 
 async function cuSendDraft(i) {
-  const lead = _cuLeads[i];
-  if (!lead.email_from) { alert('No email address for this lead'); return; }
-  if (!lead._draft) { alert('Draft first'); return; }
-  // Open in quick compose
-  if (typeof openQuickCompose === 'function') {
-    openQuickCompose(lead.email_from, `Following up on ${lead.name}`, lead._draft);
+  const lead     = _cuLeads[i];
+  const statusEl = document.getElementById('cu-status');
+
+  const _sendTo = lead.email_from || lead.email || '';
+  if (!_sendTo) { alert('No email address for ' + (lead.name||'this lead')); return; }
+  if (!lead._draft)     { alert('Generate a draft first'); return; }
+
+  const subject = 'Following up on ' + (lead.name || 'your inquiry');
+  const body    = lead._draft;
+  const cfg     = getImapConfig();
+
+  // Try IMAP server /send endpoint first
+  if (cfg.email && cfg.password) {
+    try {
+      if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.textContent='Sending...'; }
+      const r = await fetch(IMAP_SERVER + '/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: cfg, to: _sendTo, subject, body }),
+        signal: AbortSignal.timeout(20000),
+      });
+      const d = await r.json();
+      if (d.error) throw new Error(d.error);
+
+      // Sent — log to Odoo automatically using correct model
+      if (odooUid && lead.id) {
+        try {
+          const model = lead._isContact ? 'res.partner' : 'crm.lead';
+          await odooExecute(odooUid, model, 'message_post', [[lead.id]], {
+            body: '<p><strong>Follow-up email sent to ' + escHtml(_sendTo) + '</strong></p><p>' + escHtml(body).replace(/\n/g,'<br>') + '</p>',
+            message_type: 'comment',
+            subtype_xmlid: 'mail.mt_note',
+          });
+        } catch(logErr) { if (statusEl) { statusEl.style.color='var(--warning)'; statusEl.textContent='Email sent but Odoo log failed: ' + logErr.message; } console.warn('Auto-log failed:', logErr.message); }
+      }
+
+      if (statusEl) { statusEl.style.color='var(--success)'; statusEl.textContent='\u2713 Email sent and logged to Odoo'; setTimeout(()=>{statusEl.textContent='';statusEl.style.color='var(--muted)';},3500); }
+      // Visually mark as sent
+      _cuLeads[i]._sent = true;
+      cuRenderResults();
+      return;
+    } catch(e) {
+      console.warn('Direct send failed:', e.message);
+      if (statusEl) { statusEl.style.color='var(--warning)'; statusEl.textContent='Server send failed (' + e.message + ') — opening Quick Compose'; setTimeout(()=>{statusEl.textContent='';statusEl.style.color='var(--muted)';},3000); }
+    }
   } else {
-    // Fallback: mailto
-    window.open(`mailto:${lead.email_from}?subject=${encodeURIComponent('Following up on '+lead.name)}&body=${encodeURIComponent(lead._draft)}`);
+    if (statusEl) { statusEl.style.color='var(--warning)'; statusEl.textContent='No IMAP credentials — opening Quick Compose'; setTimeout(()=>{statusEl.textContent='';statusEl.style.color='var(--muted)';},2500); }
+  }
+
+  // Fallback: Quick Compose pre-filled
+  if (typeof openQuickCompose === 'function') {
+    openQuickCompose(lead.email_from, subject, body);
+  } else {
+    window.open('mailto:' + lead.email_from + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body));
   }
 }
 
 async function cuLogNote(i) {
-  const lead = _cuLeads[i];
-  if (!lead._draft || !odooUid) return;
+  const lead  = _cuLeads[i];
+  const model = lead._isContact ? 'res.partner' : 'crm.lead';
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  if (!lead._draft) { alert('Generate a draft first, then log it'); return; }
   try {
-    await odooExecute(odooUid, 'mail.message', 'create', [{
-      res_id: lead.id, model: 'crm.lead',
-      message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+    await odooExecute(odooUid, model, 'message_post', [[lead.id]], {
       body: '<p>' + escHtml(lead._draft).replace(/\n/g,'<br>') + '</p>',
-    }]);
+      message_type: 'comment',
+      subtype_xmlid: 'mail.mt_note',
+    });
     const s = document.getElementById('cu-status');
-    if (s) { s.style.color='var(--success)'; s.textContent='Logged to Odoo'; setTimeout(()=>s.textContent='',2500); }
+    if (s) { s.style.color='var(--success)'; s.textContent='\u2713 Note logged to Odoo'; setTimeout(()=>{s.textContent='';s.style.color='var(--muted)';},2500); }
   } catch(e) { alert('Log error: ' + e.message); }
 }
 
@@ -17619,8 +18155,9 @@ async function cuScheduleActivity(i) {
   const note = prompt(`Schedule follow-up for "${lead.name}"?\nNote:`);
   if (note === null) return;
   try {
+    const actModel = lead._isContact ? 'res.partner' : 'crm.lead';
     await odooExecute(odooUid, 'mail.activity', 'create', [{
-      res_model: 'crm.lead', res_id: lead.id,
+      res_model: actModel, res_id: lead.id,
       activity_type_id: typeId, summary: 'Re-engagement follow-up',
       note: note || '', user_id: odooUid,
       date_deadline: new Date(Date.now() + 86400000).toISOString().split('T')[0],
