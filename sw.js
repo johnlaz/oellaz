@@ -1,4 +1,4 @@
-const CACHE = 'oel-v1';
+const CACHE = 'oel-v8.0';
 const ASSETS = [
   '/',
   '/index.html',
@@ -24,26 +24,34 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch — cache-first for app assets, network-first for API calls
+// Fetch — network-first for HTML (always get latest), cache-first for other assets
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Never intercept: Odoo API, Groq API, CORS proxies, Google Fonts
+  // Never intercept: APIs, proxies, fonts, localhost
   const passThrough = [
-    'api.groq.com',
-    'corsproxy.io',
-    'allorigins.win',
-    'cors.sh',
-    'cors-anywhere.herokuapp.com',
-    'fonts.googleapis.com',
-    'fonts.gstatic.com',
-    'localhost'
+    'api.groq.com', 'corsproxy.io', 'allorigins.win', 'cors.sh',
+    'cors-anywhere.herokuapp.com', 'fonts.googleapis.com',
+    'fonts.gstatic.com', 'localhost', 'maps.googleapis.com',
+    'cdnjs.cloudflare.com'
   ];
-  if (passThrough.some(h => url.hostname.includes(h))) {
-    return; // let browser handle it
+  if (passThrough.some(h => url.hostname.includes(h))) return;
+
+  // Network-first for index.html so updates always reach the user
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    e.respondWith(
+      fetch(e.request).then(resp => {
+        if (resp && resp.status === 200) {
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return resp;
+      }).catch(() => caches.match('/index.html'))
+    );
+    return;
   }
 
-  // Cache-first for same-origin assets
+  // Cache-first for other same-origin assets (icons, manifest)
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;

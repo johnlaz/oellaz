@@ -2504,6 +2504,7 @@ Thank you</textarea>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div id="vo-results-label" style="font-size:0.82rem;color:var(--muted)"></div>
             <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" onclick="voSaveAllToOdoo()" title="Save all new AI-extracted vendors to Odoo as supplier contacts" style="padding:5px 12px;font-size:0.76rem;border-color:rgba(201,168,76,0.5);color:var(--accent)">⬆ Save all to Odoo</button>
               <button class="btn btn-ghost" onclick="voSelectAll()" title="Select all vendors with email addresses" style="padding:5px 12px;font-size:0.76rem">Select all</button>
               <button class="btn btn-primary" onclick="voBlast()" title="Send quote request email to all selected vendors" id="vo-blast-btn" style="padding:5px 16px;font-size:0.76rem;display:none">Send quote requests</button>
             </div>
@@ -2567,6 +2568,32 @@ Thank you</textarea>
             <label style="font-size:0.76rem;color:var(--muted)">Color:</label>
             <input type="color" id="docs-text-color" value="#000000" style="width:28px;height:24px;border:none;cursor:pointer">
           </div>
+        </div>
+      </div>
+    </div>
+
+        <!-- ── NOTES CLEANUP MODAL ──────────────────────────────────────────── -->
+    <div id="notes-cleanup-modal" class="modal-overlay hidden">
+      <div class="modal" style="max-width:600px">
+        <div class="modal-header">
+          <div class="modal-header-text">
+            <div class="record">✦ AI Note Cleanup</div>
+            <div class="contact">Review suggested improvements before applying</div>
+          </div>
+          <button class="modal-close" onclick="document.getElementById('notes-cleanup-modal').classList.add('hidden')">✕</button>
+        </div>
+        <div class="modal-body" style="padding:0">
+          <div style="padding:10px 16px;border-bottom:1px solid var(--border);font-size:0.78rem;color:var(--muted)" id="notes-cleanup-subtitle"></div>
+          <div id="notes-cleanup-list" style="min-height:120px;max-height:55vh;overflow-y:auto;padding:12px 16px">
+            <div style="color:var(--muted);font-size:0.84rem">Processing notes...</div>
+          </div>
+          <div id="notes-cleanup-status" style="padding:6px 16px;font-size:0.78rem;color:var(--muted)"></div>
+        </div>
+        <div class="modal-footer">
+          <span id="notes-cleanup-count" style="font-size:0.79rem;color:var(--muted)"></span>
+          <div style="flex:1"></div>
+          <button class="btn btn-ghost" onclick="document.getElementById('notes-cleanup-modal').classList.add('hidden')" style="padding:6px 14px;font-size:0.82rem">Cancel</button>
+          <button class="btn btn-primary" onclick="notesCleanupApproveAll ? notesCleanupApproveAll() : notesApplyCleanup()" style="padding:6px 16px;font-size:0.82rem">Apply selected</button>
         </div>
       </div>
     </div>
@@ -6023,54 +6050,112 @@ async function voSearch() {
 }
 
 async function voSearchAI() {
-  const btn      = document.getElementById('vo-ai-btn');
-  const statusEl = document.getElementById('vo-status');
-  const equip    = document.getElementById('vo-equipment')?.value?.trim() || '';
-  const city     = document.getElementById('vo-city')?.value?.trim() || '';
-  const state    = document.getElementById('vo-state')?.value || '';
-  const groqKey  = document.getElementById('gemini-key')?.value?.trim();
+  const equip  = document.getElementById('vo-equipment')?.value?.trim() || '';
+  const city   = document.getElementById('vo-city')?.value?.trim() || '';
+  const state  = document.getElementById('vo-state')?.value || '';
+  const groqKey = document.getElementById('gemini-key')?.value?.trim();
+  if (!groqKey) { alert('Groq API key required'); return; }
+  if (!equip && !city) { alert('Enter equipment type and/or location first'); return; }
 
-  if (!groqKey) { alert('Groq API key required - enter it in Settings'); return; }
-  if (!equip && !city) { alert('Enter equipment type and/or location'); return; }
+  const location = [city, state].filter(Boolean).join(', ');
+  const q        = encodeURIComponent((equip || 'equipment rental') + ' ' + location);
 
-  if (btn) btn.disabled = true;
-  if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.innerHTML='<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Finding vendors with AI...'; }
+  // Show the paste-and-parse panel
+  let panel = document.getElementById('vo-ai-paste-panel');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'vo-ai-paste-panel';
+    panel.style.cssText = 'margin-top:12px;padding:14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px';
+    const btn = document.getElementById('vo-ai-btn');
+    btn?.parentNode?.insertBefore(panel, btn.parentNode.querySelector('#vo-results-container') || btn.nextSibling);
+  }
+
+  panel.innerHTML =
+    '<div style="font-size:0.82rem;font-weight:500;color:var(--text);margin-bottom:10px">🔍 Find Real Vendors</div>'
+    + '<div style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">Open a directory, find companies, then paste the text here for AI to extract contact info.</div>'
+    + '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">'
+    + '<a href="https://www.yellowpages.com/search?search_terms=' + q + '" target="_blank" style="padding:5px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:0.76rem;color:var(--text);text-decoration:none;cursor:pointer">📒 YellowPages</a>'
+    + '<a href="https://www.yelp.com/search?find_desc=' + q + '&find_loc=' + encodeURIComponent(location) + '" target="_blank" style="padding:5px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:0.76rem;color:var(--text);text-decoration:none;cursor:pointer">⭐ Yelp</a>'
+    + '<a href="https://www.google.com/search?q=' + q + '" target="_blank" style="padding:5px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:0.76rem;color:var(--text);text-decoration:none;cursor:pointer">🔎 Google</a>'
+    + '<a href="https://www.thomasnet.com/search/?what=' + encodeURIComponent(equip) + '&where=' + encodeURIComponent(location) + '" target="_blank" style="padding:5px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:0.76rem;color:var(--text);text-decoration:none;cursor:pointer">🏭 ThomasNet</a>'
+    + '</div>'
+    + '<textarea id="vo-paste-area" placeholder="Paste company names, addresses, phone numbers from search results here… AI will extract and add them to your vendor list." style="width:100%;min-height:100px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:0.8rem;resize:vertical;outline:none;box-sizing:border-box"></textarea>'
+    + '<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
+    + '<button onclick="voPasteExtract()" class="btn btn-primary" style="padding:6px 16px;font-size:0.8rem">✦ Extract contacts</button>'
+    + '<button onclick="document.getElementById(\'vo-ai-paste-panel\').remove()" class="btn btn-ghost" style="padding:6px 12px;font-size:0.8rem">Close</button>'
+    + '<span id="vo-paste-status" style="font-size:0.76rem;color:var(--muted)"></span>'
+    + '</div>';
+
+  panel.style.display = 'block';
+  document.getElementById('vo-paste-area')?.focus();
+}
+
+async function voPasteExtract() {
+  const text    = document.getElementById('vo-paste-area')?.value?.trim();
+  const statusEl = document.getElementById('vo-paste-status');
+  const groqKey = document.getElementById('gemini-key')?.value?.trim();
+  const city    = document.getElementById('vo-city')?.value?.trim() || '';
+  const state   = document.getElementById('vo-state')?.value || '';
+
+  if (!text) { alert('Paste some text first'); return; }
+  if (!groqKey) { alert('Groq API key required'); return; }
+
+  if (statusEl) { statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:4px"></div> Extracting…'; }
 
   try {
-    const location = [city,state].filter(Boolean).join(', ') || 'the US';
-    const prompt = 'Generate 8-10 realistic equipment rental companies in ' + location + ' that provide ' + (equip||'construction equipment') + ' rental. Return ONLY a JSON array with objects: name, city, state, phone, email, comment. Realistic business names for that region. Raw JSON only, no markdown.';
+    const prompt = 'Extract company contact information from the following text. '
+      + 'Return a JSON array of objects with fields: name, phone, email (empty string if not found), '
+      + 'city (default: ' + (city||'unknown') + '), state (default: ' + (state||'unknown') + '), comment (one line about what they do). '
+      + 'Only include real companies that clearly appear in the text. Max 20 results. '
+      + 'Raw JSON array only, no markdown, no explanation.\n\nTEXT:\n' + text.slice(0, 8000);
+
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
-      body: JSON.stringify({ model: document.getElementById('gemini-model')?.value || 'llama-3.3-70b-versatile', max_tokens: 800, temperature: 0.4, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({
+        model: document.getElementById('gemini-model')?.value || 'llama-3.3-70b-versatile',
+        max_tokens: 1500, temperature: 0.1,
+        messages: [{ role: 'user', content: prompt }]
+      }),
       signal: AbortSignal.timeout(25000)
     });
     const d = await r.json();
-    let raw = (d.choices?.[0]?.message?.content||'[]').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
-    let suggestions = [];
-    try { suggestions = JSON.parse(raw); } catch(e) { throw new Error('Could not parse AI response'); }
+    let raw = (d.choices?.[0]?.message?.content || '[]').trim()
+      .replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
+    let results = [];
+    try { results = JSON.parse(raw); } catch(e) {
+      const mm = raw.match(/\[[\s\S]+\]/);
+      if (mm) try { results = JSON.parse(mm[0]); } catch(e2) {}
+    }
+
+    if (!Array.isArray(results) || !results.length) {
+      if (statusEl) statusEl.textContent = 'No contacts found — try pasting more text';
+      return;
+    }
 
     const ts = Date.now();
-    const aiVendors = (suggestions||[]).map(function(s, idx) {
-      return { id:'ai_'+ts+'_'+idx, name:s.name||'Unknown', email:s.email||'', phone:s.phone||'',
-        city:s.city||city, state:s.state||state, street:'', comment:s.comment||'',
-        source:'ai', _selected:false, _sent:false, _rate:'' };
+    const newVendors = results.map(function(s, idx) {
+      return { id:'ai_'+ts+'_'+idx, name:s.name||'Unknown', email:s.email||'',
+               phone:s.phone||'', city:s.city||city, state:s.state||state,
+               street:'', comment:s.comment||'', source:'ai',
+               _selected:false, _sent:false, _rate:'' };
     });
 
-    var existingIds = new Set(_voVendors.map(function(v) { return v.id; }));
-    var newOnes = aiVendors.filter(function(v) { return !existingIds.has(v.id); });
-    _voVendors = _voVendors.concat(newOnes);
+    const existingIds = new Set(_voVendors.map(function(v){return v.id;}));
+    const added = newVendors.filter(function(v){return !existingIds.has(v.id);});
+    _voVendors = _voVendors.concat(added);
 
-    var container = document.getElementById('vo-results-container');
-    var label     = document.getElementById('vo-results-label');
+    const container = document.getElementById('vo-results-container');
+    const label     = document.getElementById('vo-results-label');
     if (container) container.style.display = 'block';
-    if (label) label.textContent = _voVendors.length + ' vendors total (' + newOnes.length + ' AI suggestions)';
-    if (statusEl) { statusEl.style.color='var(--accent)'; statusEl.textContent = newOnes.length + ' AI vendor suggestions added'; }
+    if (label) label.textContent = _voVendors.length + ' vendors (' + added.length + ' extracted from paste)';
+    if (statusEl) statusEl.textContent = '✓ ' + added.length + ' vendors added';
+    document.getElementById('vo-paste-area').value = '';
     voRenderVendors();
+
   } catch(e) {
-    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent='AI error: ' + e.message; }
+    if (statusEl) statusEl.textContent = 'Error: ' + e.message;
   }
-  if (btn) btn.disabled = false;
 }
 
 function voRenderVendors() {
@@ -6738,7 +6823,7 @@ async function voSaveToOdoo(i) {
     if (s) { s.style.color='var(--success)'; s.textContent='\u2713 ' + v.name + ' saved to Odoo vendors'; setTimeout(()=>{s.textContent='';s.style.color='var(--muted)';},3000); }
     voRenderVendors();
   } catch(e) {
-    alert('Save error: ' + e.message);
+    alert('Save to Odoo failed: ' + e.message + '\n\nCheck that Odoo is connected (Settings tab) and server.py is running on port 7842.');
   }
 }
 
@@ -6871,6 +6956,76 @@ function rdpSendInvite() {
     openQuickCompose({ to: '', subject: subject, body: body });
   } else {
     navigator.clipboard?.writeText(body).then(() => alert('Invite copied to clipboard'));
+  }
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── COMPOSE PREVIEW ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+function qcPreview() {
+  const to      = document.getElementById('qc-to')?.value || '';
+  const subject = document.getElementById('qc-subject')?.value || '(No subject)';
+  const body    = document.getElementById('qc-body')?.value || '';
+
+  // Inline modal — avoids popup blocker
+  let prev = document.getElementById('qc-preview-overlay');
+  if (!prev) {
+    prev = document.createElement('div');
+    prev.id = 'qc-preview-overlay';
+    prev.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    prev.onclick = function(e) { if (e.target === prev) prev.remove(); };
+    document.body.appendChild(prev);
+  }
+  const bodyHtml = (body||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>');
+  prev.innerHTML =
+    '<div style="background:#1a1a1a;border:1px solid var(--border);border-radius:14px;max-width:660px;width:100%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)">'
+    + '<span style="font-size:0.82rem;font-weight:500;color:var(--text)">Email Preview</span>'
+    + '<button onclick="document.getElementById(\'qc-preview-overlay\').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem">✕</button>'
+    + '</div>'
+    + '<div style="padding:16px 20px;border-bottom:1px solid var(--border)">'
+    + '<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px">To</div>'
+    + '<div style="font-size:0.84rem;color:var(--text);margin-bottom:10px;font-family:\'DM Mono\',monospace">' + (to || '(no recipient)') + '</div>'
+    + '<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:3px">Subject</div>'
+    + '<div style="font-size:0.88rem;font-weight:600;color:var(--text)">' + (subject || '(no subject)') + '</div>'
+    + '</div>'
+    + '<div style="padding:18px 20px;overflow-y:auto;font-size:0.84rem;line-height:1.75;color:var(--text);white-space:pre-wrap">' + (bodyHtml || '<span style="color:var(--muted)">(empty)</span>') + '</div>'
+    + '</div>';
+  prev.style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── IMAP TRASH / DELETE ─────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function imapMoveToTrash(uid, src) {
+  const cfg = getImapConfig();
+  if (!cfg.email || !cfg.password) { alert('No IMAP credentials — configure in Lead Capture settings'); return false; }
+  if (!uid) { alert('No UID on this email — cannot trash'); return false; }
+
+  try {
+    const r = await fetch(IMAP_SERVER + '/trash', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: cfg, uid: String(uid) }),
+      signal: AbortSignal.timeout(20000),
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      throw new Error('Server ' + r.status + ': ' + t.slice(0, 120));
+    }
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    return true;
+  } catch(e) {
+    alert('Trash error: ' + e.message);
+    console.warn('Trash failed:', e.message);
+    return false;
   }
 }
 
@@ -8099,6 +8254,28 @@ function _renderInboxRow(em, src, idx) {
   };
   actions.appendChild(actBtn);
 
+  // Trash button
+  const trashBtn = document.createElement('button');
+  trashBtn.textContent = '🗑';
+  trashBtn.title = 'Move to Trash on IMAP server';
+  trashBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:5px;padding:3px 7px;font-size:0.78rem;color:var(--muted);cursor:pointer;transition:all 0.15s';
+  trashBtn.onmouseover = function() { trashBtn.style.color='var(--danger)'; trashBtn.style.borderColor='var(--danger)'; };
+  trashBtn.onmouseout  = function() { trashBtn.style.color='var(--muted)';  trashBtn.style.borderColor='var(--border)'; };
+  trashBtn.onclick = async function() {
+    if (!em.uid) { alert('No UID — can only trash IMAP emails'); return; }
+    if (!confirm('Move this email to Trash?')) return;
+    trashBtn.disabled = true; trashBtn.textContent = '…';
+    const ok = await imapMoveToTrash(em.uid, src);
+    if (ok) {
+      wrapper.style.opacity = '0.4';
+      setTimeout(() => wrapper.remove(), 600);
+    } else {
+      trashBtn.disabled = false; trashBtn.textContent = '🗑';
+      // error already alerted by imapMoveToTrash
+    }
+  };
+  if (em.uid) actions.appendChild(trashBtn);
+
   row.appendChild(cb);
   row.appendChild(meta);
   row.appendChild(actions);
@@ -8709,6 +8886,7 @@ async function _loadTurbifyPanel(listEl, statusEl) {
       date: em.date,
       flagged: em.flagged,
       list_unsubscribe: em.list_unsubscribe,
+      uid: em.uid,
     }, 'turbify', i)));
     // Cache for AI drafting
     window._turbifyEmails = emails;
@@ -19000,6 +19178,11 @@ function inboxTab(tab) {
 
   // Trigger personal inbox load if switching to personal
   if (tab === 'personal' && typeof persRenderPanes === 'function') persRenderPanes();
+  // Load templates when switching to templates tab
+  if (tab === 'templates') {
+    if (typeof loadLazTemplates === 'function') loadLazTemplates();
+    if (typeof rebuildLazTemplateSelector === 'function') rebuildLazTemplateSelector();
+  }
 }
 
 // ── Activities sub-tab switcher ───────────────────────────────────────────
@@ -19119,6 +19302,10 @@ window.persTab = function(tab) {
           <button class="btn btn-ghost" onclick="qcCopy()" style="gap:5px">
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.2"></rect><path d="M1 7V1h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"></path></svg>
             Copy
+          </button>
+          <button class="btn btn-ghost" onclick="qcPreview()" style="gap:5px" title="Preview email as it will appear to recipient">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" stroke-width="1.2"/><path d="M3 5.5c0 0 1-2 2.5-2s2.5 2 2.5 2-1 2-2.5 2S3 5.5 3 5.5z" stroke="currentColor" stroke-width="1.1"/><circle cx="5.5" cy="5.5" r="1" fill="currentColor"/></svg>
+            Preview
           </button>
           <button class="btn btn-primary" onclick="qcSend()" style="gap:5px">
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 4.5L1 10V6.5l6-2-6-2V1z" fill="currentColor"></path></svg>
