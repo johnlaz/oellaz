@@ -8859,7 +8859,7 @@ async function lnmSearchContact(query) {
   resultsEl.innerHTML = '<div style="padding:8px 10px;font-size:0.76rem;color:var(--muted)">Searching…</div>';
   try {
     const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
-      [[['active','=',true],['|',['name','ilike',query],['email','ilike',query]]]],
+      [[['active','=',true],'|',['name','ilike',query],['email','ilike',query]]],
       { fields: ['id','name','email','company_name'], limit: 8, order: 'name asc' }
     );
     if (!partners || !partners.length) {
