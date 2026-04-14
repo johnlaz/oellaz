@@ -6884,6 +6884,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('oelTheme') || 'lime';
   setTheme(savedTheme, true);
   if (savedTheme === 'custom') lazLoadCustomColor();
+  // Load lead capture specs and IMAP creds on every startup — not just when tab is visited
+  if (typeof loadLeadSpecs  === 'function') loadLeadSpecs();
+  if (typeof loadImapCreds  === 'function') loadImapCreds();
   // Update lights after credentials are restored
   setTimeout(updateStatusLights, 800);
 });
@@ -7967,6 +7970,7 @@ function _renderInboxRow(em, src, idx) {
   const wrapper = document.createElement('div');
   wrapper.style.cssText = 'margin-bottom:6px';
   wrapper.id = 'inbox-row-'+src+'-'+idx;
+  wrapper._em = em;
 
   const row = document.createElement('div');
   row.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:9px 10px;border:1px solid var(--border);border-left:3px solid '+color+';border-radius:8px;transition:background 0.12s;background:var(--surface)';
@@ -7984,14 +7988,15 @@ function _renderInboxRow(em, src, idx) {
       window._panelSelected[src].delete(uid);
       row.style.background = 'var(--surface)';
     }
-    _updatePanelDraftBtn(src);
+    _updatePanelActionBar(src);
   };
 
   const meta = document.createElement('div');
   meta.style.cssText = 'flex:1;min-width:0;cursor:pointer';
   meta.innerHTML =
     '<div style="font-size:0.82rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
-      +escHtml(subject)+(em.flagged?' 🚩':'')+'</div>'+
+      +escHtml(subject)+(em.flagged?' 🚩':'')+
+    '</div>'+
     '<div style="font-size:0.73rem;color:var(--muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap">'+
       (sender?'<span>'+escHtml(sender)+'</span>':'')+
       (record?'<span style="opacity:0.6">'+escHtml(record)+'</span>':'')+
@@ -7999,46 +8004,11 @@ function _renderInboxRow(em, src, idx) {
     '</div>';
   meta.onclick = () => { cb.checked = !cb.checked; cb.onchange(); };
 
-  // Action buttons
+  // ── Action buttons ──────────────────────────────────────────────────────
   const actions = document.createElement('div');
   actions.style.cssText = 'display:flex;gap:4px;flex-shrink:0;align-items:center';
 
-  const draftBtn = document.createElement('button');
-  draftBtn.textContent = '✦ Draft';
-  draftBtn.title = 'AI draft reply';
-  draftBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:0.71rem;color:var(--muted);cursor:pointer;white-space:nowrap';
-  draftBtn.onmouseover = () => { draftBtn.style.borderColor=color; draftBtn.style.color=color; };
-  draftBtn.onmouseout  = () => {
-    if (!draftBtn._drafted) { draftBtn.style.borderColor='var(--border)'; draftBtn.style.color='var(--muted)'; }
-  };
-  draftBtn.onclick = async (e) => {
-    e.stopPropagation();
-    draftBtn.textContent = '⏳';
-    draftBtn.disabled = true;
-    try {
-      // Get body — for Turbify/Gmail use body field; for Odoo use subject
-      const body = em.body || em.preview || em.subject || '';
-      const result = await lazGenerateDraft(
-        { sender: emailTo||sender, subject: subject, date: em.date||'' },
-        body
-      );
-      // lazGenerateDraft returns {email, body, bullets, subject, draft}
-      const draftText = result && typeof result === 'object'
-        ? (result.draft || result.subject || JSON.stringify(result))
-        : String(result||'Error generating draft');
-      if (!draftText || draftText === 'undefined') throw new Error('Empty draft returned');
-      draftBtn._drafted = true;
-      draftBtn.textContent = '✓ Draft';
-      draftBtn.style.color = color;
-      draftBtn.style.borderColor = color;
-      // Show inline draft area
-      _showInlineDraft(wrapper, draftText, emailTo, subject, src, idx);
-    } catch(err) {
-      draftBtn.textContent = '✗';
-      draftBtn.disabled = false;
-    }
-  };
-
+  // Reply button
   if (emailTo) {
     const replyBtn = document.createElement('button');
     replyBtn.textContent = 'Reply';
@@ -8051,7 +8021,84 @@ function _renderInboxRow(em, src, idx) {
     };
     actions.appendChild(replyBtn);
   }
+
+  // Draft button — fetches full body before AI generate
+  const draftBtn = document.createElement('button');
+  draftBtn.textContent = '✦ Draft';
+  draftBtn.title = 'AI draft reply using email content';
+  draftBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:0.71rem;color:var(--muted);cursor:pointer;white-space:nowrap';
+  draftBtn.onmouseover = () => { draftBtn.style.borderColor=color; draftBtn.style.color=color; };
+  draftBtn.onmouseout  = () => {
+    if (!draftBtn._drafted) { draftBtn.style.borderColor='var(--border)'; draftBtn.style.color='var(--muted)'; }
+  };
+  draftBtn.onclick = async (e) => {
+    e.stopPropagation();
+    draftBtn.textContent = '⏳';
+    draftBtn.disabled = true;
+    try {
+      let body = em.body || em.preview || '';
+      if (!body && em.uid && src === 'turbify') {
+        try {
+          const br = await fetch(IMAP_SERVER+'/body', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ config: getImapConfig(), uid: em.uid }),
+            signal: AbortSignal.timeout(15000)
+          });
+          const bd = await br.json();
+          if (bd.body) { body = bd.body; em.body = body; }
+        } catch(_) {}
+      }
+      if (!body) body = subject;
+      const result = await lazGenerateDraft(
+        { sender: emailTo||sender, subject: subject, date: em.date||'' },
+        body
+      );
+      const draftText = result && typeof result === 'object'
+        ? (result.draft || result.subject || JSON.stringify(result))
+        : String(result||'Error generating draft');
+      if (!draftText || draftText === 'undefined') throw new Error('Empty draft returned');
+      draftBtn._drafted = true;
+      draftBtn.textContent = '✓ Draft';
+      draftBtn.style.color = color;
+      draftBtn.style.borderColor = color;
+      _showInlineDraft(wrapper, draftText, emailTo, subject, src, idx, result);
+    } catch(err) {
+      draftBtn.textContent = '✗ Draft';
+      draftBtn.disabled = false;
+    }
+  };
   actions.appendChild(draftBtn);
+
+  // Log Note button
+  const logBtn = document.createElement('button');
+  logBtn.textContent = '📋 Log';
+  logBtn.title = 'Log email to Odoo contact note';
+  logBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:0.71rem;color:var(--muted);cursor:pointer;white-space:nowrap';
+  logBtn.onmouseover = () => { logBtn.style.borderColor='#c9a84c'; logBtn.style.color='#c9a84c'; };
+  logBtn.onmouseout  = () => {
+    if (!logBtn._logged) { logBtn.style.borderColor='var(--border)'; logBtn.style.color='var(--muted)'; }
+  };
+  logBtn.onclick = (e) => {
+    e.stopPropagation();
+    _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapper, logBtn });
+  };
+  actions.appendChild(logBtn);
+
+  // Schedule Activity button
+  const actBtn = document.createElement('button');
+  actBtn.textContent = '📅';
+  actBtn.title = 'Schedule Odoo activity on contact';
+  actBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:5px;padding:3px 7px;font-size:0.71rem;color:var(--muted);cursor:pointer;white-space:nowrap';
+  actBtn.onmouseover = () => { actBtn.style.borderColor='#5b8dd9'; actBtn.style.color='#5b8dd9'; };
+  actBtn.onmouseout  = () => {
+    if (!actBtn._scheduled) { actBtn.style.borderColor='var(--border)'; actBtn.style.color='var(--muted)'; }
+  };
+  actBtn.onclick = (e) => {
+    e.stopPropagation();
+    _openScheduleActivityModal({ em, emailTo, subject, sender, src, idx, wrapper, actBtn });
+  };
+  actions.appendChild(actBtn);
 
   row.appendChild(cb);
   row.appendChild(meta);
@@ -8063,14 +8110,30 @@ function _renderInboxRow(em, src, idx) {
   return wrapper;
 }
 
-function _showInlineDraft(wrapper, draftText, toEmail, subject, src, idx) {
-  // Remove existing draft area if any
+function _showInlineDraft(wrapper, draftText, toEmail, subject, src, idx, resultObj) {
   const existing = wrapper.querySelector('.inline-draft-area');
   if (existing) existing.remove();
+
+  const em = wrapper._em || {};
 
   const draftDiv = document.createElement('div');
   draftDiv.className = 'inline-draft-area';
   draftDiv.style.cssText = 'margin-top:6px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;animation:fadeUp 0.2s ease both';
+
+  // AI summary bullets
+  const bullets = resultObj && Array.isArray(resultObj.bullets) && resultObj.bullets.length ? resultObj.bullets : [];
+  if (bullets.length) {
+    const summDiv = document.createElement('div');
+    summDiv.style.cssText = 'margin-bottom:8px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px';
+    const summLabel = document.createElement('div');
+    summLabel.style.cssText = 'font-size:0.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;font-weight:600;margin-bottom:4px';
+    summLabel.textContent = 'AI Summary';
+    const summList = document.createElement('ul');
+    summList.style.cssText = 'margin:0;padding-left:16px;font-size:0.75rem;color:var(--text);line-height:1.5';
+    bullets.forEach(b => { const li = document.createElement('li'); li.textContent = b; summList.appendChild(li); });
+    summDiv.append(summLabel, summList);
+    draftDiv.appendChild(summDiv);
+  }
 
   const label = document.createElement('div');
   label.style.cssText = 'font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;font-weight:500';
@@ -8083,24 +8146,47 @@ function _showInlineDraft(wrapper, draftText, toEmail, subject, src, idx) {
   const btns = document.createElement('div');
   btns.style.cssText = 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap';
 
-  const copyBtn  = _makeSmallBtn('Copy', () => navigator.clipboard.writeText(ta.value));
-  const sendBtn  = _makeSmallBtn('Send', () => {
+  const copyBtn = _makeSmallBtn('Copy', () => navigator.clipboard.writeText(ta.value));
+
+  const sendBtn = _makeSmallBtn('Send', () => {
     if (window.openQuickCompose) openQuickCompose({ to: toEmail, subject: 'Re: '+subject, body: ta.value });
   }, 'var(--success)');
+
+  const logDraftBtn = _makeSmallBtn('Log to Odoo', () => {
+    _openLogNoteModal({
+      em, emailTo: toEmail, subject, sender: toEmail, src, idx, wrapper,
+      prefillNote: 'AI Draft Reply:\n' + ta.value
+    });
+  }, '#c9a84c');
+
   const regenBtn = _makeSmallBtn('Regenerate', async () => {
     regenBtn.textContent = '⏳';
     regenBtn.disabled = true;
-    const body = ta.value;
     try {
-      const regenResult = await lazGenerateDraft({ sender: toEmail, subject, date: '' }, body);
+      let regenBody = em.body || em.preview || '';
+      if (!regenBody && em.uid && src === 'turbify') {
+        try {
+          const br = await fetch(IMAP_SERVER+'/body', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ config: getImapConfig(), uid: em.uid }),
+            signal: AbortSignal.timeout(15000)
+          });
+          const bd = await br.json();
+          if (bd.body) { regenBody = bd.body; em.body = regenBody; }
+        } catch(_) {}
+      }
+      if (!regenBody) regenBody = subject;
+      const regenResult = await lazGenerateDraft({ sender: toEmail, subject, date: em.date||'' }, regenBody);
       ta.value = typeof regenResult === 'object' ? (regenResult.draft || '') : String(regenResult||'');
-    } catch(e) {}
+    } catch(e) { ta.value = '[Regeneration failed: ' + e.message + ']'; }
     regenBtn.textContent = 'Regenerate';
     regenBtn.disabled = false;
   });
+
   const closeBtn = _makeSmallBtn('✕', () => draftDiv.remove());
 
-  btns.append(copyBtn, sendBtn, regenBtn, closeBtn);
+  btns.append(copyBtn, sendBtn, logDraftBtn, regenBtn, closeBtn);
   draftDiv.append(label, ta, btns);
   wrapper.appendChild(draftDiv);
 }
@@ -8116,25 +8202,65 @@ function _makeSmallBtn(text, onClick, accentColor) {
   return btn;
 }
 
-function _updatePanelDraftBtn(src) {
-  const hdr = document.getElementById(INBOX_SOURCES[src]?.panel);
-  if (!hdr) return;
-  let batchBtn = document.getElementById('panel-batch-draft-'+src);
-  const sel = window._panelSelected[src];
+function _updatePanelActionBar(src) {
+  const panelEl = document.getElementById(INBOX_SOURCES[src]?.panel);
+  if (!panelEl) return;
+  const sel   = window._panelSelected[src];
   const count = sel ? sel.size : 0;
-  if (!batchBtn && count > 0) {
-    batchBtn = document.createElement('button');
-    batchBtn.id = 'panel-batch-draft-'+src;
-    batchBtn.style.cssText = 'background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 10px;font-size:0.73rem;color:var(--accent);cursor:pointer;white-space:nowrap';
-    batchBtn.onclick = () => _batchDraftPanel(src);
-    const hdrBar = hdr.querySelector('.inbox-float-header');
-    if (hdrBar) hdrBar.insertBefore(batchBtn, hdrBar.querySelector('button[title="Refresh"]'));
+  let bar = document.getElementById('panel-action-bar-'+src);
+
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'panel-action-bar-'+src;
+    bar.style.cssText = 'display:none;align-items:center;gap:6px;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:wrap';
+
+    const selLabel = document.createElement('span');
+    selLabel.id = 'panel-action-count-'+src;
+    selLabel.style.cssText = 'font-size:0.72rem;color:var(--muted);margin-right:4px;white-space:nowrap';
+
+    const draftAllBtn = document.createElement('button');
+    draftAllBtn.textContent = '✦ Draft all';
+    draftAllBtn.style.cssText = 'background:none;border:1px solid var(--accent);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--accent);cursor:pointer;white-space:nowrap';
+    draftAllBtn.onclick = () => _batchDraftPanel(src);
+
+    const logAllBtn = document.createElement('button');
+    logAllBtn.textContent = '📋 Log all to Odoo';
+    logAllBtn.style.cssText = 'background:none;border:1px solid #c9a84c;border-radius:5px;padding:3px 9px;font-size:0.72rem;color:#c9a84c;cursor:pointer;white-space:nowrap';
+    logAllBtn.onclick = () => _batchLogNotePanel(src);
+
+    const schedAllBtn = document.createElement('button');
+    schedAllBtn.textContent = '📅 Schedule activity';
+    schedAllBtn.style.cssText = 'background:none;border:1px solid #5b8dd9;border-radius:5px;padding:3px 9px;font-size:0.72rem;color:#5b8dd9;cursor:pointer;white-space:nowrap';
+    schedAllBtn.onclick = () => _batchScheduleActivityPanel(src);
+
+    const clearBtn = document.createElement('button');
+    clearBtn.textContent = '✕ Clear selection';
+    clearBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:0.72rem;color:var(--muted);cursor:pointer;white-space:nowrap;margin-left:auto';
+    clearBtn.onclick = () => {
+      window._panelSelected[src] = new Map();
+      const listEl = document.getElementById(INBOX_SOURCES[src]?.list);
+      if (listEl) {
+        listEl.querySelectorAll('input[type=checkbox]').forEach(cb => {
+          cb.checked = false;
+          const rowEl = cb.closest('div[style*="border-left"]');
+          if (rowEl) rowEl.style.background = 'var(--surface)';
+        });
+      }
+      _updatePanelActionBar(src);
+    };
+
+    bar.append(selLabel, draftAllBtn, logAllBtn, schedAllBtn, clearBtn);
+    const hdrBar = panelEl.querySelector('.inbox-float-header');
+    if (hdrBar) hdrBar.insertAdjacentElement('afterend', bar);
   }
-  if (batchBtn) {
-    batchBtn.textContent = count > 0 ? 'Draft '+count+' selected' : '';
-    batchBtn.style.display = count > 0 ? 'inline-block' : 'none';
-  }
+
+  const countLabel = document.getElementById('panel-action-count-'+src);
+  if (countLabel) countLabel.textContent = count + ' selected  ';
+  bar.style.display = count > 0 ? 'flex' : 'none';
 }
+
+// keep old name as alias so any old callers still work
+window._updatePanelDraftBtn = _updatePanelActionBar;
 
 async function _batchDraftPanel(src) {
   const sel = window._panelSelected[src];
@@ -8143,14 +8269,364 @@ async function _batchDraftPanel(src) {
     const idx = uid.replace(src+'_','');
     const wrapper = document.getElementById('inbox-row-'+src+'-'+idx);
     if (!wrapper) continue;
-    const body = em.body || em.preview || em.subject || '';
+    let body = em.body || em.preview || '';
+    if (!body && em.uid && src === 'turbify') {
+      try {
+        const br = await fetch(IMAP_SERVER+'/body', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config: getImapConfig(), uid: em.uid }),
+          signal: AbortSignal.timeout(15000)
+        });
+        const bd = await br.json();
+        if (bd.body) { body = bd.body; em.body = body; }
+      } catch(_) {}
+    }
+    if (!body) body = em.subject || '';
     try {
-      const draft = await lazGenerateDraft({ sender: em.email_from||em.sender||'', subject: em.subject||'', date: em.date||'' }, body);
-      _showInlineDraft(wrapper, draftText, em.email_from||em.sender||'', em.subject||'', src, idx);
+      const result = await lazGenerateDraft({ sender: em.email_from||em.sender||'', subject: em.subject||'', date: em.date||'' }, body);
+      const draftText = result && typeof result === 'object' ? (result.draft || '') : String(result||'');
+      _showInlineDraft(wrapper, draftText, em.email_from||em.sender_email||em.sender||'', em.subject||'', src, idx, result);
     } catch(e) {}
-    await new Promise(r => setTimeout(r, 600)); // rate limit
+    await new Promise(r => setTimeout(r, 800));
   }
 }
+
+async function _batchLogNotePanel(src) {
+  const sel = window._panelSelected[src];
+  if (!sel || !sel.size) return;
+  const entries = Array.from(sel.entries());
+  const [uid, firstEm] = entries[0];
+  const idx = uid.replace(src+'_','');
+  const wrapper = document.getElementById('inbox-row-'+src+'-'+idx);
+  _openLogNoteModal({
+    em: firstEm,
+    emailTo: firstEm.email_from||firstEm.sender_email||firstEm.sender||'',
+    subject: firstEm.subject||'',
+    sender: firstEm.sender_name||firstEm.sender||'',
+    src, idx, wrapper,
+    batchEntries: entries,
+    batchSrc: src,
+  });
+}
+
+async function _batchScheduleActivityPanel(src) {
+  const sel = window._panelSelected[src];
+  if (!sel || !sel.size) return;
+  const entries = Array.from(sel.entries());
+  const [uid, firstEm] = entries[0];
+  const idx = uid.replace(src+'_','');
+  const wrapper = document.getElementById('inbox-row-'+src+'-'+idx);
+  _openScheduleActivityModal({
+    em: firstEm,
+    emailTo: firstEm.email_from||firstEm.sender_email||firstEm.sender||'',
+    subject: firstEm.subject||'',
+    sender: firstEm.sender_name||firstEm.sender||'',
+    src, idx, wrapper,
+    batchEntries: entries,
+    batchSrc: src,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── LOG NOTE + SCHEDULE ACTIVITY MODALS ────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function _findPartnerByEmail(email) {
+  if (!email || !window.odooUid) return null;
+  const emailClean = email.trim().toLowerCase();
+  try {
+    const ps = await odooExecute(odooUid, 'res.partner', 'search_read',
+      [[['email','ilike',emailClean],['active','=',true]]],
+      { fields: ['id','name','email'], limit: 5 }
+    );
+    if (ps && ps.length) return ps[0];
+    const domain = emailClean.split('@')[1];
+    if (domain) {
+      const byDomain = await odooExecute(odooUid, 'res.partner', 'search_read',
+        [[['email','ilike','@'+domain],['active','=',true]]],
+        { fields: ['id','name','email'], limit: 3 }
+      );
+      if (byDomain && byDomain.length) return byDomain[0];
+    }
+  } catch(e) {}
+  return null;
+}
+
+function _ensureModalOverlay() {
+  let ov = document.getElementById('inbox-action-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'inbox-action-overlay';
+    ov.style.cssText = 'display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center';
+    ov.onclick = (e) => { if (e.target === ov) _closeInboxModal(); };
+    document.body.appendChild(ov);
+  }
+  return ov;
+}
+
+function _closeInboxModal() {
+  const ov = document.getElementById('inbox-action-overlay');
+  if (ov) { ov.style.display = 'none'; ov.innerHTML = ''; }
+}
+
+// ── Log Note Modal ──────────────────────────────────────────────────────────
+async function _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapper, logBtn, prefillNote, batchEntries, batchSrc }) {
+  if (!window.odooUid) { alert('Connect to Odoo first to log notes.'); return; }
+  const ov = _ensureModalOverlay();
+  const isBatch = batchEntries && batchEntries.length > 1;
+  const count   = isBatch ? batchEntries.length : 1;
+  const defaultNote = prefillNote || ('Email from: ' + (sender||emailTo) + '\nSubject: ' + subject + '\n\n[Add note here]');
+
+  ov.innerHTML = '';
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;min-width:360px;max-width:480px;width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.4)';
+  modal.onclick = e => e.stopPropagation();
+
+  const typeOpts = [
+    ['note','Internal note'],['bounce','Bounce / No delivery'],
+    ['reply','Customer reply'],['auto','Auto-generated reply']
+  ].map(([v,l]) => '<option value="'+v+'">'+l+'</option>').join('');
+
+  modal.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+      '<div>' +
+        '<div style="font-size:0.92rem;font-weight:600;color:var(--text)">&#128203; Log to Odoo Contact Note</div>' +
+        '<div style="font-size:0.74rem;color:var(--muted);margin-top:2px">' + (isBatch ? count + ' emails selected' : escHtml(sender||emailTo||'Unknown')) + '</div>' +
+      '</div>' +
+      '<button onclick="_closeInboxModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:2px 8px">&#x2715;</button>' +
+    '</div>' +
+    '<div id="lnm-contact-status" style="padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:0.78rem;color:var(--muted);margin-bottom:12px">Looking up contact&#8230;</div>' +
+    '<div style="margin-bottom:10px">' +
+      '<label style="font-size:0.7rem;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;font-weight:500;display:block;margin-bottom:4px">Note</label>' +
+      '<textarea id="lnm-note" style="width:100%;min-height:100px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;color:var(--text);font-size:0.8rem;line-height:1.5;resize:vertical;outline:none;box-sizing:border-box"></textarea>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">' +
+      '<label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:500;white-space:nowrap">Note type:</label>' +
+      '<select id="lnm-type" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:0.78rem">' + typeOpts + '</select>' +
+    '</div>' +
+    '<div id="lnm-result" style="display:none;padding:7px 10px;border-radius:6px;font-size:0.78rem;margin-bottom:10px"></div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+      '<button onclick="_closeInboxModal()" style="background:none;border:1px solid var(--border);border-radius:7px;padding:7px 16px;font-size:0.82rem;color:var(--muted);cursor:pointer">Cancel</button>' +
+      '<button id="lnm-submit" style="background:#c9a84c;border:none;border-radius:7px;padding:7px 18px;font-size:0.82rem;color:#000;font-weight:600;cursor:pointer;opacity:0.4" disabled>Log Note</button>' +
+    '</div>';
+
+  ov.appendChild(modal);
+  ov.style.display = 'flex';
+
+  // Set textarea value after inserting into DOM
+  const noteEl = document.getElementById('lnm-note');
+  if (noteEl) noteEl.value = defaultNote;
+
+  let resolvedPartner = null;
+  const statusEl  = document.getElementById('lnm-contact-status');
+  const submitBtn = document.getElementById('lnm-submit');
+  const lookupEmail = emailTo || (em && (em.email_from || em.sender_email || em.sender)) || '';
+
+  try {
+    resolvedPartner = await _findPartnerByEmail(lookupEmail);
+    if (resolvedPartner) {
+      statusEl.innerHTML = '<span style="color:var(--success)">&#10003; Found: <strong>' + escHtml(resolvedPartner.name) + '</strong> &mdash; ' + escHtml(resolvedPartner.email||'') + '</span>';
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    } else {
+      statusEl.innerHTML = '<span style="color:var(--warning)">&#9888; No Odoo contact found for <em>' + escHtml(lookupEmail) + '</em></span>';
+    }
+  } catch(e) {
+    statusEl.innerHTML = '<span style="color:var(--danger)">Error: ' + escHtml(e.message) + '</span>';
+  }
+
+  submitBtn.onclick = async () => {
+    if (!resolvedPartner) return;
+    const noteText = (document.getElementById('lnm-note')||{}).value||'';
+    const noteType = (document.getElementById('lnm-type')||{}).value||'note';
+    if (!noteText.trim()) { alert('Add a note before logging.'); return; }
+    const resultEl = document.getElementById('lnm-result');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '&#8987;';
+    resultEl.style.display = 'none';
+    const typeLabel = { note:'Internal Note', bounce:'Bounce/No Delivery', reply:'Customer Reply', auto:'Auto-Generated Reply' }[noteType] || 'Note';
+    const htmlBody = '<p><strong>[' + typeLabel + ']</strong> ' +
+      (isBatch ? count + ' emails' : 'Re: ' + escHtml(subject)) +
+      '</p><pre style="white-space:pre-wrap;font-size:0.85em">' + escHtml(noteText.trim()) + '</pre>';
+    try {
+      const targets = isBatch ? batchEntries : [[null, em]];
+      let ok = 0, fail = 0;
+      for (const [, bEm] of targets) {
+        try {
+          const bEmail = (bEm && (bEm.email_from || bEm.sender_email || bEm.sender)) || lookupEmail;
+          let partner = isBatch ? await _findPartnerByEmail(bEmail) : resolvedPartner;
+          if (!partner) { fail++; continue; }
+          await odooExecute(odooUid, 'res.partner', 'message_post', [[partner.id]], {
+            body: htmlBody, message_type: 'comment', subtype_xmlid: 'mail.mt_note'
+          });
+          ok++;
+        } catch(_) { fail++; }
+      }
+      resultEl.style.display = 'block';
+      resultEl.style.background = 'rgba(0,200,100,0.1)';
+      resultEl.style.color = 'var(--success)';
+      resultEl.textContent = '&#10003; Logged ' + ok + ' note' + (ok!==1?'s':'') + (fail?' ('+fail+' not found)':'');
+      submitBtn.textContent = '&#10003; Done';
+      if (logBtn) { logBtn._logged=true; logBtn.textContent='&#10003; Logged'; logBtn.style.color='#c9a84c'; logBtn.style.borderColor='#c9a84c'; }
+      setTimeout(() => _closeInboxModal(), 1800);
+    } catch(e) {
+      resultEl.style.display = 'block';
+      resultEl.style.background = 'rgba(220,50,50,0.1)';
+      resultEl.style.color = 'var(--danger)';
+      resultEl.textContent = 'Error: ' + e.message;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Log Note';
+    }
+  };
+}
+
+// ── Schedule Activity Modal ─────────────────────────────────────────────────
+async function _openScheduleActivityModal({ em, emailTo, subject, sender, src, idx, wrapper, actBtn, batchEntries, batchSrc }) {
+  if (!window.odooUid) { alert('Connect to Odoo first.'); return; }
+  const ov = _ensureModalOverlay();
+  const isBatch = batchEntries && batchEntries.length > 1;
+  const count   = isBatch ? batchEntries.length : 1;
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  const defaultDate = tomorrow.toISOString().split('T')[0];
+
+  let activityTypes = [], reps = [];
+  try {
+    [activityTypes, reps] = await Promise.all([
+      odooExecute(odooUid, 'mail.activity.type', 'search_read', [[]], { fields: ['id','name'], limit: 20 }),
+      odooExecute(odooUid, 'res.users', 'search_read', [[['active','=',true]]], { fields: ['id','name'], limit: 60 })
+    ]);
+  } catch(e) {}
+
+  const typeOpts = activityTypes.map(t => '<option value="'+t.id+'">'+escHtml(t.name)+'</option>').join('') || '<option value="">-- none --</option>';
+  const repOpts  = reps.map(r => '<option value="'+r.id+'">'+escHtml(r.name)+'</option>').join('') || '<option value="">-- none --</option>';
+
+  ov.innerHTML = '';
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;min-width:360px;max-width:460px;width:90vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.4)';
+  modal.onclick = e => e.stopPropagation();
+
+  modal.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+      '<div>' +
+        '<div style="font-size:0.92rem;font-weight:600;color:var(--text)">&#128197; Schedule Activity</div>' +
+        '<div style="font-size:0.74rem;color:var(--muted);margin-top:2px">' + (isBatch ? count + ' contacts' : escHtml(sender||emailTo||'Unknown')) + '</div>' +
+      '</div>' +
+      '<button onclick="_closeInboxModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:2px 8px">&#x2715;</button>' +
+    '</div>' +
+    '<div id="sam-contact-status" style="padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:0.78rem;color:var(--muted);margin-bottom:12px">Looking up contact&#8230;</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">' +
+      '<div><label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:500;display:block;margin-bottom:4px">Activity Type</label>' +
+        '<select id="sam-type" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:0.78rem">' + typeOpts + '</select></div>' +
+      '<div><label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:500;display:block;margin-bottom:4px">Due Date</label>' +
+        '<input id="sam-date" type="date" value="' + defaultDate + '" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:0.78rem;box-sizing:border-box"></div>' +
+    '</div>' +
+    '<div style="margin-bottom:10px"><label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:500;display:block;margin-bottom:4px">Assign To (Rep)</label>' +
+      '<select id="sam-rep" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:0.78rem">' + repOpts + '</select></div>' +
+    '<div style="margin-bottom:10px"><label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:500;display:block;margin-bottom:4px">Summary</label>' +
+      '<input id="sam-summary" type="text" placeholder="Activity summary&#8230;" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:0.79rem;outline:none;box-sizing:border-box"></div>' +
+    '<div style="margin-bottom:12px"><label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:500;display:block;margin-bottom:4px">Notes</label>' +
+      '<textarea id="sam-notes" placeholder="Additional notes&#8230;" style="width:100%;min-height:56px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:0.79rem;resize:vertical;outline:none;box-sizing:border-box"></textarea></div>' +
+    '<div id="sam-result" style="display:none;padding:7px 10px;border-radius:6px;font-size:0.78rem;margin-bottom:10px"></div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+      '<button onclick="_closeInboxModal()" style="background:none;border:1px solid var(--border);border-radius:7px;padding:7px 14px;font-size:0.82rem;color:var(--muted);cursor:pointer">Cancel</button>' +
+      '<button id="sam-clear" style="background:none;border:1px solid #e05555;border-radius:7px;padding:7px 12px;font-size:0.82rem;color:#e05555;cursor:pointer">Clear Activity</button>' +
+      '<button id="sam-submit" style="background:#5b8dd9;border:none;border-radius:7px;padding:7px 18px;font-size:0.82rem;color:#fff;font-weight:600;cursor:pointer;opacity:0.4" disabled>Schedule</button>' +
+    '</div>';
+
+  ov.appendChild(modal);
+  ov.style.display = 'flex';
+
+  // Set summary default after DOM insert
+  const sumEl = document.getElementById('sam-summary');
+  if (sumEl) sumEl.value = 'Follow up re: ' + subject;
+
+  let resolvedPartner = null;
+  const statusEl  = document.getElementById('sam-contact-status');
+  const submitBtn = document.getElementById('sam-submit');
+  const clearBtn  = document.getElementById('sam-clear');
+  const lookupEmail = emailTo || (em && (em.email_from || em.sender_email || em.sender)) || '';
+
+  try {
+    resolvedPartner = await _findPartnerByEmail(lookupEmail);
+    if (resolvedPartner) {
+      statusEl.innerHTML = '<span style="color:var(--success)">&#10003; Found: <strong>' + escHtml(resolvedPartner.name) + '</strong> &mdash; ' + escHtml(resolvedPartner.email||'') + '</span>';
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    } else {
+      statusEl.innerHTML = '<span style="color:var(--warning)">&#9888; No Odoo contact found for <em>' + escHtml(lookupEmail) + '</em></span>';
+    }
+  } catch(e) {
+    statusEl.innerHTML = '<span style="color:var(--danger)">Error: ' + escHtml(e.message) + '</span>';
+  }
+
+  clearBtn.onclick = async () => {
+    if (!resolvedPartner) return;
+    if (!confirm('Clear all activities for ' + resolvedPartner.name + '?')) return;
+    try {
+      const acts = await odooExecute(odooUid, 'mail.activity', 'search',
+        [[['res_model','=','res.partner'],['res_id','=',resolvedPartner.id]]]);
+      if (acts && acts.length) await odooExecute(odooUid, 'mail.activity', 'unlink', [acts]);
+      const resultEl = document.getElementById('sam-result');
+      resultEl.style.display = 'block';
+      resultEl.style.background = 'rgba(0,200,100,0.1)';
+      resultEl.style.color = 'var(--success)';
+      resultEl.textContent = '&#10003; Cleared ' + (acts ? acts.length : 0) + ' activities for ' + resolvedPartner.name;
+      if (actBtn) { actBtn._scheduled=false; actBtn.textContent='&#128197;'; actBtn.style.color='var(--muted)'; actBtn.style.borderColor='var(--border)'; }
+      setTimeout(() => _closeInboxModal(), 1600);
+    } catch(e) { alert('Error clearing: ' + e.message); }
+  };
+
+  submitBtn.onclick = async () => {
+    if (!resolvedPartner) return;
+    const typeId  = parseInt((document.getElementById('sam-type')||{}).value)||null;
+    const dueDate = (document.getElementById('sam-date')||{}).value||'';
+    const repId   = parseInt((document.getElementById('sam-rep')||{}).value)||null;
+    const summary = ((document.getElementById('sam-summary')||{}).value||'').trim();
+    const notes   = ((document.getElementById('sam-notes')||{}).value||'').trim();
+    const resultEl = document.getElementById('sam-result');
+    if (!dueDate) { alert('Set a due date.'); return; }
+    submitBtn.disabled = true;
+    submitBtn.textContent = '&#8987;';
+    resultEl.style.display = 'none';
+    try {
+      const targets = isBatch ? batchEntries : [[null, em]];
+      let ok = 0, fail = 0;
+      for (const [, bEm] of targets) {
+        try {
+          const bEmail = (bEm && (bEm.email_from || bEm.sender_email || bEm.sender)) || lookupEmail;
+          let partner = isBatch ? await _findPartnerByEmail(bEmail) : resolvedPartner;
+          if (!partner) { fail++; continue; }
+          const vals = {
+            res_model: 'res.partner',
+            res_id: partner.id,
+            summary: summary || 'Follow up re: ' + ((bEm && bEm.subject) || subject),
+            note: notes ? '<p>' + escHtml(notes) + '</p>' : '',
+            date_deadline: dueDate,
+          };
+          if (typeId) vals.activity_type_id = typeId;
+          if (repId)  vals.user_id = repId;
+          await odooExecute(odooUid, 'mail.activity', 'create', [vals]);
+          ok++;
+        } catch(_) { fail++; }
+      }
+      resultEl.style.display = 'block';
+      resultEl.style.background = 'rgba(91,141,217,0.12)';
+      resultEl.style.color = '#5b8dd9';
+      resultEl.textContent = '&#10003; Scheduled ' + ok + ' activit' + (ok!==1?'ies':'y') + (fail?' ('+fail+' not found)':'');
+      submitBtn.textContent = '&#10003; Done';
+      if (actBtn) { actBtn._scheduled=true; actBtn.textContent='&#10003; Activity'; actBtn.style.color='#5b8dd9'; actBtn.style.borderColor='#5b8dd9'; }
+      setTimeout(() => _closeInboxModal(), 1800);
+    } catch(e) {
+      resultEl.style.display = 'block';
+      resultEl.style.background = 'rgba(220,50,50,0.1)';
+      resultEl.style.color = 'var(--danger)';
+      resultEl.textContent = 'Error: ' + e.message;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Schedule';
+    }
+  };
+}
+
 
 // ── Odoo inbox loader ─────────────────────────────────────────────────────────
 async function _loadOdooPanel(listEl, statusEl) {
