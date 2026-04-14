@@ -1683,7 +1683,7 @@ Thanks for reaching out about {{subject}}.
 
     <div id="step3-actions" class="btn-row hidden">
       <button class="btn btn-ghost" onclick="navTo('activities')">← Back</button>
-      <button class="btn btn-primary" onclick="navTo('activities');actTab('send')">
+      <button class="btn btn-primary" onclick="goToStep4()">
         Review &amp; send
         <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
       </button>
@@ -2236,7 +2236,7 @@ Support Team"></textarea>
           <div class="card-title" style="font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:6px">Dashboard</div>
           <div class="card-subtitle" style="margin-bottom:16px">Pipeline, opportunities, and team performance from Odoo.</div>
           <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px">
-            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v8.0</span>
+            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v9.0</span>
             <span style="font-size:0.68rem;color:var(--muted)">Built by Lazzaro</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
@@ -4728,6 +4728,55 @@ async function goToStep3() {
   await draftAllEmails();
 }
 
+// ── Activity draft → Quick Compose / Log Note ──────────────────────────────
+function actDraftToCompose(idx) {
+  const em = draftedEmails[idx];
+  if (!em) return;
+  if (!em.contact_email) { alert('No email address for ' + em.record_name); return; }
+  // Open Quick Compose pre-filled with the AI draft
+  if (typeof openQuickCompose === 'function') {
+    openQuickCompose({
+      to:      em.contact_email,
+      subject: em.subject,
+      body:    em.body,
+    });
+  } else {
+    // Fallback: mailto link
+    const mailto = 'mailto:' + encodeURIComponent(em.contact_email)
+      + '?subject=' + encodeURIComponent(em.subject)
+      + '&body='    + encodeURIComponent(em.body);
+    window.open(mailto);
+  }
+}
+
+async function actLogNote(idx) {
+  const em = draftedEmails[idx];
+  if (!em) return;
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+
+  const badge = document.getElementById('badge-' + idx);
+  if (badge) { badge.textContent = 'logging…'; badge.style.background = 'rgba(201,168,76,0.15)'; }
+
+  try {
+    const noteText = '<p><strong>Draft email prepared:</strong></p>'
+      + '<p><strong>Subject:</strong> ' + escHtml(em.subject) + '</p>'
+      + '<p>' + escHtml(em.body).replace(/\n/g,'<br>') + '</p>';
+
+    await odooExecute(odooUid, em.res_model, 'message_post', [[em.res_id]], {
+      body:           noteText,
+      message_type:   'comment',
+      subtype_xmlid:  'mail.mt_note',
+    });
+
+    if (badge) { badge.textContent = 'logged ✓'; badge.style.background = 'rgba(100,200,100,0.15)'; badge.style.color = 'var(--success)'; }
+    const card = document.getElementById('email-card-' + idx);
+    if (card) card.style.opacity = '0.6';
+  } catch(e) {
+    if (badge) { badge.textContent = 'error'; badge.style.background = 'rgba(220,50,50,0.15)'; }
+    alert('Log note failed: ' + e.message);
+  }
+}
+
 function goToStep4() { navTo('activities'); actTab('send'); renderEmailList(); }
 
 // ─── Odoo XML-RPC (multi-proxy fallback + local server) ──
@@ -5385,12 +5434,18 @@ function renderEmailList() {
       </div>
       <div class="email-subject">${escHtml(em.subject)}</div>
       <div class="email-body-preview">${escHtml(bodyPreview)}</div>
-      <div class="email-actions">
-        <button class="btn btn-primary" style="padding:8px 16px;font-size:0.82rem" onclick="openModal(${idx})">
+      <div class="email-actions" style="flex-wrap:wrap;gap:6px">
+        <button class="btn btn-primary" style="padding:8px 14px;font-size:0.82rem" onclick="openModal(${idx})" title="Review and edit the draft before sending">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 8.5V10h1.5l4.4-4.4-1.5-1.5L2 8.5zm7.1-4.6a.4.4 0 000-.57L8 2.2a.4.4 0 00-.57 0l-.93.93 1.5 1.5.93-.93z" fill="currentColor"/></svg>
           Review & edit
         </button>
-        <button class="btn btn-ghost" id="skip-btn-${idx}" style="padding:8px 16px;font-size:0.82rem" onclick="skipEmail(${idx})">Skip</button>
+        <button class="btn btn-ghost" style="padding:8px 14px;font-size:0.82rem" onclick="actDraftToCompose(${idx})" title="Open in Quick Compose to edit and send via IMAP">
+          ✉ Draft email
+        </button>
+        <button class="btn btn-ghost" style="padding:8px 14px;font-size:0.82rem" onclick="actLogNote(${idx})" title="Log this draft as a note on the Odoo contact without sending">
+          📋 Log note
+        </button>
+        <button class="btn btn-ghost" id="skip-btn-${idx}" style="padding:8px 14px;font-size:0.82rem" onclick="skipEmail(${idx})">Skip</button>
         <div style="flex:1"></div>
         <div style="font-size:0.75rem;color:var(--muted)">${escHtml(em.contact_name)}</div>
       </div>
@@ -5963,7 +6018,8 @@ async function voSearch() {
   btn.disabled = true;
   statusEl.style.color = 'var(--muted)';
   statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Searching...';
-  _voVendors = [];
+  // Keep AI-extracted vendors — only replace Odoo-sourced ones
+  _voVendors = _voVendors.filter(function(v) { return v.source === 'ai'; });
 
   try {
     const domain = [['supplier_rank','>',0],['active','=',true]];
@@ -6161,36 +6217,79 @@ async function voPasteExtract() {
 function voRenderVendors() {
   var list = document.getElementById('vo-results-list');
   if (!list) return;
-  list.innerHTML = _voVendors.map(function(v, i) {
-    var hasEmail    = !!v.email;
-    var location    = [v.city,v.state].filter(Boolean).join(', ');
-    var alreadySent = _voTracker.some(function(t) { return t.vendorId === v.id; });
-    var srcBadge    = v.source==='ai' ? ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:10px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(201,168,76,0.3)">AI</span>' : '';
-    var sentBadge   = alreadySent ? ' <span style="font-size:0.68rem;padding:1px 6px;border-radius:10px;background:rgba(201,168,76,0.15);color:var(--accent)">Sent</span>' : '';
-    var row = '<div class="lead-card ' + (v._selected?'selected':'') + '" id="vo-card-'+i+'">';
-    row += '<div style="display:flex;align-items:flex-start;gap:10px">';
-    row += '<input type="checkbox" '+(v._selected?'checked':'')+' style="accent-color:var(--accent);margin-top:3px;flex-shrink:0" onchange="voToggle('+i+',this.checked)">';
-    row += '<div style="flex:1;min-width:0">';
-    row += '<div style="font-size:0.88rem;font-weight:500;color:var(--text)">'+escHtml(v.name)+srcBadge+sentBadge+'</div>';
-    row += '<div style="font-size:0.75rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px">';
-    if (location) row += '<span>' + escHtml(location) + '</span>';
-    row += v.email ? '<span style="font-family:monospace">'+escHtml(v.email)+'</span>' : '<span style="color:var(--danger)">No email</span>';
-    if (v.phone) row += '<span>'+escHtml(v.phone)+'</span>';
-    row += '</div>';
-    if (v.comment) row += '<div style="font-size:0.72rem;color:var(--muted);margin-top:3px">'+escHtml(v.comment.slice(0,80))+'</div>';
-    row += '</div>';
-    row += '<div style="display:flex;gap:6px;flex-shrink:0">';
-    if (hasEmail) row += '<button onclick="voSendOne('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Send</button>';
-    if (v.source === 'ai') row += '<button onclick="voSaveToOdoo('+i+')" style="background:none;border:1px solid rgba(201,168,76,0.5);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--accent);cursor:pointer" title="Create this vendor as an Odoo contact" onmouseover="this.style.background=\'var(--accent-dim)\'" onmouseout="this.style.background=\'none\'">Save to Odoo</button>';
-    row += '<button onclick="voLogToOdoo('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" title="Post a note to this vendor\'s Odoo chatter" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Log</button>';
-    row += '</div></div>';
-    row += '<div style="margin-top:8px;display:flex;gap:8px;align-items:center">';
-    row += '<span style="font-size:0.73rem;color:var(--muted)">Rate received:</span>';
-    row += '<input type="text" placeholder="e.g. $450/day" value="'+escHtml(v._rate||'')+'" onchange="_voVendors['+i+']._rate=this.value;voSaveRate('+i+')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:monospace;font-size:0.78rem;outline:none">';
-    row += '<button onclick="voAddToQuote('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Add to quote</button>';
-    row += '</div></div>';
-    return row;
-  }).join('');
+
+  // Separate AI (pending) from Odoo (saved) vendors
+  var aiVendors   = _voVendors.filter(function(v,i){v._idx=i; return v.source==='ai';});
+  var odooVendors = _voVendors.filter(function(v,i){v._idx=i; return v.source!=='ai';});
+
+  var html = '';
+
+  // ── Pending vendors (extracted, not yet in Odoo) ──────────────────────────
+  if (aiVendors.length) {
+    html += '<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);font-weight:600;padding:8px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">'
+          + '<span>⬆ Pending — not yet in Odoo (' + aiVendors.length + ')</span>'
+          + '<button onclick="voSaveAllToOdoo()" style="background:var(--accent-dim);border:1px solid rgba(201,168,76,0.5);border-radius:6px;padding:3px 12px;font-size:0.72rem;color:var(--accent);cursor:pointer;font-weight:500">Push all to Odoo</button>'
+          + '</div>';
+    aiVendors.forEach(function(v) {
+      var i = v._idx;
+      var location = [v.city, v.state].filter(Boolean).join(', ');
+      html += '<div class="lead-card" id="vo-card-'+i+'" style="border-left:2px solid var(--accent)">';
+      html += '<div style="display:flex;align-items:flex-start;gap:10px">';
+      html += '<input type="checkbox" '+(v._selected?'checked':'')+' style="accent-color:var(--accent);margin-top:3px;flex-shrink:0" onchange="voToggle('+i+',this.checked)">';
+      html += '<div style="flex:1;min-width:0">';
+      html += '<div style="font-size:0.88rem;font-weight:500;color:var(--text)">'+escHtml(v.name)
+             +' <span style="font-size:0.65rem;padding:1px 6px;border-radius:10px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(201,168,76,0.3)">Not in Odoo</span></div>';
+      html += '<div style="font-size:0.75rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px">';
+      if (location) html += '<span>'+escHtml(location)+'</span>';
+      html += v.email ? '<span style="font-family:monospace">'+escHtml(v.email)+'</span>' : '<span style="color:var(--warning)">No email</span>';
+      if (v.phone) html += '<span>'+escHtml(v.phone)+'</span>';
+      html += '</div>';
+      if (v.comment) html += '<div style="font-size:0.72rem;color:var(--muted);margin-top:3px">'+escHtml(v.comment.slice(0,120))+'</div>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:6px;flex-shrink:0;align-items:center">';
+      html += '<button onclick="voSaveToOdoo('+i+')" style="background:var(--accent-dim);border:1px solid rgba(201,168,76,0.5);border-radius:5px;padding:4px 10px;font-size:0.76rem;color:var(--accent);cursor:pointer;font-weight:500" title="Add to Odoo purchase/vendors">⬆ Push to Odoo</button>';
+      if (v.email) html += '<button onclick="voSendOne('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Send</button>';
+      html += '</div></div></div>';
+    });
+  }
+
+  // ── Odoo vendors (already in Odoo purchase/vendors) ───────────────────────
+  if (odooVendors.length) {
+    html += '<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;padding:8px 0 6px;border-bottom:1px solid var(--border);margin-bottom:8px;margin-top:'+(aiVendors.length?'14px':'0')+'">Odoo Vendors ('+odooVendors.length+')</div>';
+    odooVendors.forEach(function(v) {
+      var i = v._idx;
+      var location    = [v.city, v.state].filter(Boolean).join(', ');
+      var alreadySent = _voTracker.some(function(t){ return t.vendorId===v.id; });
+      var sentBadge   = alreadySent ? ' <span style="font-size:0.68rem;padding:1px 6px;border-radius:10px;background:rgba(201,168,76,0.15);color:var(--accent)">Sent</span>' : '';
+      html += '<div class="lead-card '+(v._selected?'selected':'')+'" id="vo-card-'+i+'">';
+      html += '<div style="display:flex;align-items:flex-start;gap:10px">';
+      html += '<input type="checkbox" '+(v._selected?'checked':'')+' style="accent-color:var(--accent);margin-top:3px;flex-shrink:0" onchange="voToggle('+i+',this.checked)">';
+      html += '<div style="flex:1;min-width:0">';
+      html += '<div style="font-size:0.88rem;font-weight:500;color:var(--text)">'+escHtml(v.name)+sentBadge+'</div>';
+      html += '<div style="font-size:0.75rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px">';
+      if (location) html += '<span>'+escHtml(location)+'</span>';
+      html += v.email ? '<span style="font-family:monospace">'+escHtml(v.email)+'</span>' : '<span style="color:var(--danger)">No email</span>';
+      if (v.phone) html += '<span>'+escHtml(v.phone)+'</span>';
+      html += '</div>';
+      if (v.comment) html += '<div style="font-size:0.72rem;color:var(--muted);margin-top:3px">'+escHtml(v.comment.slice(0,80))+'</div>';
+      html += '</div>';
+      html += '<div style="display:flex;gap:6px;flex-shrink:0">';
+      if (v.email) html += '<button onclick="voSendOne('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Send</button>';
+      html += '<button onclick="voLogToOdoo('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" title="Post note to Odoo chatter" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Log</button>';
+      html += '</div></div>';
+      html += '<div style="margin-top:8px;display:flex;gap:8px;align-items:center">';
+      html += '<span style="font-size:0.73rem;color:var(--muted)">Rate received:</span>';
+      html += '<input type="text" placeholder="e.g. $450/day" value="'+escHtml(v._rate||'')+'" onchange="_voVendors['+i+']._rate=this.value;voSaveRate('+i+')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:monospace;font-size:0.78rem;outline:none">';
+      html += '<button onclick="voAddToQuote('+i+')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:0.72rem;color:var(--muted);cursor:pointer" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--muted)\'">Add to quote</button>';
+      html += '</div></div>';
+    });
+  }
+
+  if (!aiVendors.length && !odooVendors.length) {
+    html = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:0.82rem">No vendors yet — search Odoo vendors or use Find Vendors to paste and extract.</div>';
+  }
+
+  list.innerHTML = html;
 }
 
 function voToggle(i, checked) {
@@ -6797,6 +6896,44 @@ function qbPrintQuote() {
 // ═══════════════════════════════════════════════════════════════════════════
 // ── SAVE AI VENDOR TO ODOO ─────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════
+
+async function voSaveAllToOdoo() {
+  if (!odooUid) { alert('Connect to Odoo first (Settings tab)'); return; }
+  const pending = _voVendors.filter(function(v) { return v.source === 'ai'; });
+  if (!pending.length) { alert('No pending vendors to push'); return; }
+
+  const statusEl = document.getElementById('vo-status');
+  if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.innerHTML='<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Pushing ' + pending.length + ' vendors to Odoo…'; }
+
+  var saved = 0, failed = 0;
+  for (var idx = 0; idx < _voVendors.length; idx++) {
+    var v = _voVendors[idx];
+    if (v.source !== 'ai') continue;
+    try {
+      var vals = { name: v.name, supplier_rank: 1, is_company: true };
+      if (v.email)  vals.email   = v.email;
+      if (v.phone)  vals.phone   = v.phone;
+      if (v.city)   vals.city    = v.city;
+      if (v.street) vals.street  = v.street;
+      if (v.state)  vals.comment = (v.comment ? v.comment + '\n' : '') + 'State: ' + v.state;
+      var newId = await odooExecute(odooUid, 'res.partner', 'create', [vals]);
+      _voVendors[idx].id     = newId;
+      _voVendors[idx].source = 'odoo';
+      saved++;
+    } catch(e) {
+      console.warn('Save failed for', v.name, ':', e.message);
+      failed++;
+    }
+  }
+
+  if (statusEl) {
+    statusEl.style.color = failed && !saved ? 'var(--danger)' : saved ? 'var(--success)' : 'var(--warning)';
+    statusEl.textContent = saved + ' vendor' + (saved!==1?'s':'') + ' pushed to Odoo'
+      + (failed ? ' — ' + failed + ' failed' : '');
+    setTimeout(function(){ statusEl.textContent=''; statusEl.style.color='var(--muted)'; }, 4000);
+  }
+  voRenderVendors();
+}
 
 async function voSaveToOdoo(i) {
   const v = _voVendors[i];
@@ -8156,7 +8293,33 @@ function _renderInboxRow(em, src, idx) {
       (record?'<span style="opacity:0.6">'+escHtml(record)+'</span>':'')+
       (date?'<span>'+escHtml(date)+'</span>':'')+
     '</div>';
-  meta.onclick = () => { cb.checked = !cb.checked; cb.onchange(); };
+  // Click meta: toggle checkbox + expand/show email body below the row
+  meta.onclick = async () => {
+    cb.checked = !cb.checked;
+    cb.onchange();
+    // Toggle body preview
+    let preview = wrapper.querySelector('.email-body-preview');
+    if (preview) { preview.remove(); return; }  // collapse if already open
+    preview = document.createElement('div');
+    preview.className = 'email-body-preview';
+    preview.style.cssText = 'padding:10px 14px 12px 36px;font-size:0.8rem;color:var(--text);line-height:1.7;border-top:1px solid var(--border);background:var(--surface2);white-space:pre-wrap;word-break:break-word;max-height:420px;overflow-y:auto;border-radius:0 0 8px 8px';
+    preview.textContent = 'Loading…';
+    wrapper.appendChild(preview);
+    let body = em.body || '';
+    if (!body && em.uid) {
+      try {
+        const br = await fetch(IMAP_SERVER + '/body', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ config: getImapConfig(), uid: em.uid }),
+          signal: AbortSignal.timeout(15000)
+        });
+        const bd = await br.json();
+        if (bd.body) { body = bd.body; em.body = body; }
+      } catch(e) { body = '(Could not fetch body: ' + e.message + ')'; }
+    }
+    const clean = (body || '(No body available)').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    preview.textContent = clean.slice(0, 5000) + (clean.length > 5000 ? '\n\n[…truncated]' : '');
+  };
 
   // ── Action buttons ──────────────────────────────────────────────────────
   const actions = document.createElement('div');
@@ -8233,9 +8396,28 @@ function _renderInboxRow(em, src, idx) {
   logBtn.onmouseout  = () => {
     if (!logBtn._logged) { logBtn.style.borderColor='var(--border)'; logBtn.style.color='var(--muted)'; }
   };
-  logBtn.onclick = (e) => {
+  logBtn.onclick = async (e) => {
     e.stopPropagation();
-    _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapper, logBtn });
+    logBtn.disabled = true;
+    logBtn.textContent = '⏳';
+    // Fetch body if not already loaded
+    let body = em.body || '';
+    if (!body && em.uid) {
+      try {
+        const br = await fetch(IMAP_SERVER + '/body', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ config: getImapConfig(), uid: em.uid }),
+          signal: AbortSignal.timeout(15000)
+        });
+        const bd = await br.json();
+        if (bd.body) { body = bd.body; em.body = body; }
+      } catch(_) {}
+    }
+    logBtn.disabled = false;
+    logBtn.textContent = '📋 Log';
+    const prefill = 'Email from: ' + (sender||emailTo) + '\nSubject: ' + subject
+      + (body ? '\n\n--- Email body ---\n' + body.slice(0, 1200).replace(/<[^>]+>/g,' ').trim() : '\n\n[No body fetched]');
+    _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapper, logBtn, prefillNote: prefill });
   };
   actions.appendChild(logBtn);
 
@@ -8546,7 +8728,9 @@ function _closeInboxModal() {
 }
 
 // ── Log Note Modal ──────────────────────────────────────────────────────────
-async function _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapper, logBtn, prefillNote, batchEntries, batchSrc }) {
+async function _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapper, logBtn, prefillNote, batchEntries, batchSrc }
+
+) {
   if (!window.odooUid) { alert('Connect to Odoo first to log notes.'); return; }
   const ov = _ensureModalOverlay();
   const isBatch = batchEntries && batchEntries.length > 1;
@@ -8571,7 +8755,14 @@ async function _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapp
       '</div>' +
       '<button onclick="_closeInboxModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:2px 8px">&#x2715;</button>' +
     '</div>' +
-    '<div id="lnm-contact-status" style="padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:0.78rem;color:var(--muted);margin-bottom:12px">Looking up contact&#8230;</div>' +
+    '<div id="lnm-contact-status" style="padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:0.78rem;color:var(--muted);margin-bottom:6px">Looking up contact&#8230;</div>' +
+    '<div style="margin-bottom:12px">' +
+      '<div style="display:flex;gap:6px;align-items:center">' +
+        '<input id="lnm-search" type="text" placeholder="Search different contact…" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:0.78rem;outline:none" oninput="lnmSearchContact(this.value)">' +
+        '<button onclick="lnmSearchContact(document.getElementById(\'lnm-search\').value)" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);font-size:0.76rem;cursor:pointer">Search</button>' +
+      '</div>' +
+      '<div id="lnm-search-results" style="display:none;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;max-height:140px;overflow-y:auto"></div>' +
+    '</div>' +
     '<div style="margin-bottom:10px">' +
       '<label style="font-size:0.7rem;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;font-weight:500;display:block;margin-bottom:4px">Note</label>' +
       '<textarea id="lnm-note" style="width:100%;min-height:100px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;color:var(--text);font-size:0.8rem;line-height:1.5;resize:vertical;outline:none;box-sizing:border-box"></textarea>' +
@@ -8593,6 +8784,7 @@ async function _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapp
   const noteEl = document.getElementById('lnm-note');
   if (noteEl) noteEl.value = defaultNote;
 
+  window._lnmResolvedPartner = null;
   let resolvedPartner = null;
   const statusEl  = document.getElementById('lnm-contact-status');
   const submitBtn = document.getElementById('lnm-submit');
@@ -8601,6 +8793,7 @@ async function _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapp
   try {
     resolvedPartner = await _findPartnerByEmail(lookupEmail);
     if (resolvedPartner) {
+      window._lnmResolvedPartner = resolvedPartner;
       statusEl.innerHTML = '<span style="color:var(--success)">&#10003; Found: <strong>' + escHtml(resolvedPartner.name) + '</strong> &mdash; ' + escHtml(resolvedPartner.email||'') + '</span>';
       submitBtn.disabled = false;
       submitBtn.style.opacity = '1';
@@ -8612,7 +8805,8 @@ async function _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapp
   }
 
   submitBtn.onclick = async () => {
-    if (!resolvedPartner) return;
+    resolvedPartner = window._lnmResolvedPartner;
+    if (!resolvedPartner) { alert('No contact selected — search and pick a contact first'); return; }
     const noteText = (document.getElementById('lnm-note')||{}).value||'';
     const noteType = (document.getElementById('lnm-type')||{}).value||'note';
     if (!noteText.trim()) { alert('Add a note before logging.'); return; }
@@ -8654,6 +8848,57 @@ async function _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapp
       submitBtn.textContent = 'Log Note';
     }
   };
+}
+async function lnmSearchContact(query) {
+  query = (query||'').trim();
+  const resultsEl = document.getElementById('lnm-search-results');
+  if (!resultsEl) return;
+  if (!query || query.length < 2) { resultsEl.style.display='none'; return; }
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '<div style="padding:8px 10px;font-size:0.76rem;color:var(--muted)">Searching…</div>';
+  try {
+    const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
+      [[['active','=',true],['|',['name','ilike',query],['email','ilike',query]]]],
+      { fields: ['id','name','email','company_name'], limit: 8, order: 'name asc' }
+    );
+    if (!partners || !partners.length) {
+      resultsEl.innerHTML = '<div style="padding:8px 10px;font-size:0.76rem;color:var(--muted)">No contacts found</div>';
+      return;
+    }
+    // Store partners for click handler
+    window._lnmSearchResults = partners;
+    resultsEl.innerHTML = partners.map(function(p, idx) {
+      var company = p.company_name ? ' — ' + escHtml(p.company_name) : '';
+      var email   = p.email ? ' | ' + escHtml(p.email) : '';
+      return '<div data-idx="' + idx + '" onclick="lnmPickResult(this)"'
+        + ' style="padding:8px 10px;cursor:pointer;font-size:0.78rem;color:var(--text);border-bottom:1px solid var(--border)"'
+        + ' onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'\'">'
+        + escHtml(p.name) + '<span style="color:var(--muted)">' + escHtml(company + email) + '</span>'
+        + '</div>';
+    }).join('');
+  } catch(e) {
+    resultsEl.innerHTML = '<div style="padding:8px 10px;font-size:0.76rem;color:var(--danger)">Error: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+function lnmPickResult(el) {
+  const idx = parseInt(el.dataset.idx);
+  const p   = (window._lnmSearchResults || [])[idx];
+  if (!p) return;
+  lnmSelectContact(p.id, p.name, p.email || '');
+}
+
+function lnmSelectContact(id, name, email) {
+  window._lnmResolvedPartner = { id: id, name: name, email: email };
+  const statusEl  = document.getElementById('lnm-contact-status');
+  const submitBtn = document.getElementById('lnm-submit');
+  const searchEl  = document.getElementById('lnm-search');
+  const resultsEl = document.getElementById('lnm-search-results');
+  if (statusEl) statusEl.innerHTML = '<span style="color:var(--success)">&#10003; Selected: <strong>' + escHtml(name) + '</strong>' + (email ? ' &mdash; ' + escHtml(email) : '') + '</span>';
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+  if (searchEl)  searchEl.value = '';
+  if (resultsEl) resultsEl.style.display = 'none';
 }
 
 // ── Schedule Activity Modal ─────────────────────────────────────────────────
