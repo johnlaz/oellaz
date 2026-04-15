@@ -859,6 +859,16 @@
       <span class="sb-item-label">Support</span>
     </div>
 
+    <div class="sb-item" id="nav-help" onclick="navTo('help')" title="Help &amp; Guide">
+      <div class="sb-item-icon">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M7 10v-.5M7 4.5c0-1 .8-1.5 1.5-1S9.5 5 7 6.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="sb-item-label">Help</span>
+    </div>
+
     <div class="sb-item" id="nav-catchup" onclick="navTo('catchup')" title="Dormant Contacts">
       <div class="sb-item-icon">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -2132,6 +2142,143 @@ Support Team"></textarea>
       </div>
     </div>
 
+    <!-- ── HELP ──────────────────────────────────────────────────────────── -->
+    <div class="section-panel" id="panel-help">
+      <div class="section-scroll" style="padding:20px 24px">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div>
+            <div style="font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--text)">OEL Command</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:2px">Quick Reference Guide · v9.1</div>
+          </div>
+          <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace">v9.1</span>
+        </div>
+
+        <!-- Setup -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">⚙ Setup & Connection</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+            <p style="margin:0 0 8px"><strong style="color:var(--text)">Required servers (run before opening app):</strong></p>
+            <div style="background:var(--surface2);border-radius:8px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:0.76rem;margin-bottom:10px">
+              python imap_server.py &nbsp;→ port 7843<br>
+              python server.py &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ port 7842
+            </div>
+            <p style="margin:0 0 6px">Or double-click <strong style="color:var(--text)">start.bat</strong> to launch both.</p>
+            <p style="margin:0 0 6px"><strong style="color:var(--text)">Settings tab:</strong> Enter Odoo URL, database, username, API key, and Groq API key. Export credentials as a JSON backup and re-import on any device.</p>
+            <p style="margin:0"><strong style="color:var(--text)">Connection modes:</strong> Local Server (recommended — fastest, requires Python running) or Proxy (no Python needed, slower).</p>
+          </div>
+        </div>
+
+        <!-- Inbox -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">✉ Inbox</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+            <p style="margin:0 0 6px">Unified inbox for <strong style="color:var(--text)">Turbify/IMAP</strong>, <strong style="color:var(--text)">Odoo</strong>, and <strong style="color:var(--text)">Gmail</strong> messages.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Click any email row</strong> — expands body preview inline. Click again to collapse.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Reply</strong> — opens Quick Compose pre-filled to sender.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">✦ Draft</strong> — fetches full body, generates AI reply draft using your Groq key.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">📋 Log</strong> — fetches body, opens note modal. Auto-finds Odoo contact by sender email. Use the search field to override and pick a different contact manually.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">📅</strong> — schedule an Odoo activity on the contact.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">🗑</strong> — move to Trash on IMAP server (Turbify/IMAP only). Requires imap_server.py running.</p>
+            <p style="margin:0"><strong style="color:var(--text)">Bounce emails:</strong> When a delivery failure is detected, the undeliverable address is automatically extracted and pre-filled in the contact search so you can log the bounce to the correct contact.</p>
+          </div>
+        </div>
+
+        <!-- Activities -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">⚡ Activities</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+            <p style="margin:0 0 6px">Scans your Odoo activities due today and drafts follow-up emails using AI.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Connect tab</strong> — enter Odoo credentials and click Connect & Scan.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Draft tab</strong> — AI drafts a personalized email for each due activity using deal context and last chatter note. Waits 4 seconds between drafts to stay within Groq rate limits.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Send tab</strong> — Review drafted emails. Each card has:</p>
+            <div style="padding-left:14px;margin-bottom:4px">
+              • <strong style="color:var(--text)">Review & edit</strong> — full modal with send via IMAP, log to Odoo, attachment, assign rep<br>
+              • <strong style="color:var(--text)">✉ Draft email</strong> — opens Quick Compose pre-filled<br>
+              • <strong style="color:var(--text)">📋 Log note</strong> — posts draft text directly to Odoo chatter<br>
+              • <strong style="color:var(--text)">Skip</strong> — skips this email
+            </div>
+            <p style="margin:0"><strong style="color:var(--text)">Follow-up Tracker tab</strong> — shows leads you previously pushed to Odoo that have no activity scheduled. Click Schedule to assign one. Requires Odoo connection.</p>
+          </div>
+        </div>
+
+        <!-- Lead Capture -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">📥 Lead Capture</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+            <p style="margin:0 0 6px">Scans your IMAP inbox for inbound leads matching your configured specs and pushes them to Odoo CRM.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Specs</strong> — define what a lead looks like (keywords, minimum budget, exclusions). Multiple specs supported. Set a default.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Scan</strong> — reads recent emails, AI extracts contact name, phone, email, and notes. Shows a preview card for each match.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Push to Odoo</strong> — creates crm.lead, res.partner, logs a chatter note, schedules a follow-up activity. All in one click.</p>
+            <p style="margin:0"><strong style="color:var(--text)">Follow-up Tracker</strong> — tracks pushed leads and shows which ones are missing a scheduled activity in Odoo. Must be connected to Odoo to check.</p>
+          </div>
+        </div>
+
+        <!-- Dormant Contacts -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">💤 Dormant Contacts</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+            <p style="margin:0 0 6px">Finds contacts or open opportunities with no scheduled activity and no recent movement.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Open Opportunities tab</strong> — searches crm.lead for deals inactive for N+ days with no activities. Filter by stage, rep, revenue, or exclude a tag.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">All Contacts tab</strong> — searches res.partner for contacts inactive for N+ days. Filter by type, rep, or exclude a tag.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">✦ Draft</strong> — AI writes a warm re-engagement email per contact. Uses saved templates or a default prompt.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Send email</strong> — sends via IMAP and auto-logs to Odoo chatter.</p>
+            <p style="margin:0"><strong style="color:var(--text)">Bulk schedule</strong> — select multiple contacts and schedule a follow-up activity on all of them at once.</p>
+          </div>
+        </div>
+
+        <!-- Vendor Outreach -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">🏭 Vendor Outreach</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+            <p style="margin:0 0 6px">Find subcontractors and vendors, send quote requests, and track responses.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Search Odoo vendors</strong> — queries your Odoo contacts with supplier_rank > 0. Filter by state, city, and equipment type.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">🔍 Find vendors</strong> — opens direct links to YellowPages, Yelp, Google, and ThomasNet pre-filled with your search. Copy results and paste into the extract panel. AI extracts name, phone, email, city into vendor cards.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Pending section</strong> (gold border) — extracted vendors not yet in Odoo. Click <strong style="color:var(--accent)">⬆ Push to Odoo</strong> per card or <strong style="color:var(--accent)">Push all to Odoo</strong> to save all as res.partner with supplier_rank=1.</p>
+            <p style="margin:0"><strong style="color:var(--text)">Blast email</strong> — sends a quote request to all selected vendors with email addresses via IMAP. Tracks who was contacted.</p>
+          </div>
+        </div>
+
+        <!-- Dashboard / Reports -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">📊 Dashboard & Reports</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">CRM cards</strong> — Pipeline value, Open Opps, Won This Month, Due Today, Odoo Inbox, Stalled Deals, Closing This Month, Lost This Month. Click any card for drill-down details.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--accent)">⚡ Daily Briefing</strong> — AI-generated briefing of your pipeline, due activities, recent wins, and stale deals. Enable <strong style="color:var(--text)">Over Achiever mode</strong> to also scan flagged emails and add action items. Send to yourself via email.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Accounting cards</strong> — Open AR, Overdue, Revenue MTD, Collected MTD. Click for invoice drill-down.</p>
+            <p style="margin:0"><strong style="color:var(--text)">Quick reports</strong> — Aged AR (by aging bucket), Top Customers (YTD revenue), Overdue Notices (per customer). All open in a print-ready window with a Save as PDF button.</p>
+          </div>
+        </div>
+
+        <!-- Quick Compose -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">✉ Quick Compose & Templates</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Quick Compose</strong> — floating email composer accessible from anywhere. Sends via your IMAP/SMTP server. Supports AI draft, saved templates, contact book, and preview before sending.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Templates tab</strong> — save and manage reusable email templates. Use the wizard to build templates from real inbox emails.</p>
+            <p style="margin:0"><strong style="color:var(--text)">Preview button</strong> — renders the composed email in a modal before sending.</p>
+          </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">🔧 Troubleshooting</div>
+          <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">App not updating after deploy?</strong> — Hard refresh with Ctrl+Shift+R. The service worker cache key increments with each version (currently oel-v9.0) which forces a fresh load.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">Odoo calls failing?</strong> — Confirm server.py is running on port 7842. In Local Server mode, all Odoo XML-RPC calls route through it. Check the status lights in Settings.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">IMAP not working?</strong> — Confirm imap_server.py is running on port 7843. Check IMAP credentials in Lead Capture settings. Gmail requires an App Password, not your login password.</p>
+            <p style="margin:0 0 4px"><strong style="color:var(--text)">AI drafts not generating?</strong> — Confirm your Groq API key is entered in Settings. The app uses llama-3.3-70b-versatile by default. Check the model selector if hitting rate limits.</p>
+            <p style="margin:0"><strong style="color:var(--text)">Credentials lost after refresh?</strong> — Use Export Credentials to save a JSON backup. Import on any device to restore all settings, specs, and templates.</p>
+          </div>
+        </div>
+
+        <div style="text-align:center;font-size:0.72rem;color:var(--muted);padding:12px 0">
+          OEL Command v9.1 · Built by Lazzaro · Powered by Groq AI + Odoo 19
+        </div>
+
+      </div>
+    </div>
+
     <!-- ── PROSPECTING ───────────────────────────────────────────────────── -->
     <div class="section-panel" id="panel-prospect">
       <div class="section-scroll">
@@ -2236,7 +2383,7 @@ Support Team"></textarea>
           <div class="card-title" style="font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:6px">Dashboard</div>
           <div class="card-subtitle" style="margin-bottom:16px">Pipeline, opportunities, and team performance from Odoo.</div>
           <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px">
-            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v9.0</span>
+            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v9.1</span>
             <span style="font-size:0.68rem;color:var(--muted)">Built by Lazzaro</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
@@ -4003,12 +4150,16 @@ function lftTrack(leadName, leadId) {
 }
 
 async function lftLoad() {
-  const statusEl = document.getElementById('lft-status');
-  const listEl   = document.getElementById('lft-list');
+  // Support both locations: Lead Capture (legacy IDs) and Activities tab (main IDs)
+  const statusEl = document.getElementById('lft-status') || document.getElementById('lft-status-legacy');
+  const listEl   = document.getElementById('lft-list')   || document.getElementById('lft-list-legacy');
   if (!statusEl || !listEl) return;
   const stored = JSON.parse(localStorage.getItem('oel_lft') || '[]');
-  if (!stored.length) { statusEl.textContent = 'No leads tracked yet — push some leads first'; listEl.innerHTML = ''; return; }
-  if (!odooUid) { statusEl.textContent = 'Connect to Odoo first'; return; }
+  if (!stored.length) { statusEl.innerHTML = '<span style="color:var(--muted)">No leads tracked yet — push leads from the Lead Capture tab and they will appear here.</span>'; listEl.innerHTML = ''; return; }
+  if (!odooUid) {
+    statusEl.innerHTML = '<span style="color:var(--warning)">⚠ Connect to Odoo first — go to Settings and connect, then come back and click Check Odoo.</span>';
+    return;
+  }
 
   statusEl.innerHTML = '<span style="color:var(--muted)">Checking activities…</span>';
   listEl.innerHTML = '';
@@ -8317,7 +8468,11 @@ function _renderInboxRow(em, src, idx) {
         if (bd.body) { body = bd.body; em.body = body; }
       } catch(e) { body = '(Could not fetch body: ' + e.message + ')'; }
     }
-    const clean = (body || '(No body available)').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    // Preserve angle-bracket emails before stripping HTML
+    const cleanedForPreview = (body || '(No body available)')
+      .replace(/<([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>/g, '[$1]')
+      .replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    const clean = cleanedForPreview;
     preview.textContent = clean.slice(0, 5000) + (clean.length > 5000 ? '\n\n[…truncated]' : '');
   };
 
@@ -8415,8 +8570,38 @@ function _renderInboxRow(em, src, idx) {
     }
     logBtn.disabled = false;
     logBtn.textContent = '📋 Log';
-    const prefill = 'Email from: ' + (sender||emailTo) + '\nSubject: ' + subject
-      + (body ? '\n\n--- Email body ---\n' + body.slice(0, 1200).replace(/<[^>]+>/g,' ').trim() : '\n\n[No body fetched]');
+    // Extract emails from angle brackets BEFORE stripping HTML tags
+    // <email@domain> looks like an HTML tag and gets stripped by /<[^>]+>/g
+    const angleEmails = [];
+        // Match both <email> (raw) and [email] (server-converted) formats
+    const angleRe = /[<\x5b]([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})[>\x5d]/g;
+    let angleMatch;
+    while ((angleMatch = angleRe.exec(body || '')) !== null) {
+      if (!angleEmails.includes(angleMatch[1])) angleEmails.push(angleMatch[1]);
+    }
+
+    // Detect bounce-back emails
+    const isBounce = /undeliverable|delivery.fail|mail delivery|failure notice|bounce|could not deliver|relay access denied|recipient address rejected|no such user|returned mail/i.test(subject + ' ' + (body||''));
+
+    // Clean body for display
+    const cleanBody = (body||'').replace(/<[^>]+>/g, ' ').replace(/\s+/g,' ').trim();
+
+    // Build prefill — surface bounce info prominently
+    let prefill = 'Email from: ' + (sender||emailTo) + '\nSubject: ' + subject;
+
+    if (isBounce && angleEmails.length) {
+      prefill += '\n\n⚠ BOUNCE — Undeliverable address' + (angleEmails.length > 1 ? 'es' : '') + ':\n';
+      prefill += angleEmails.map(function(e) { return '  • ' + e; }).join('\n');
+      prefill += '\n\nAction: Search for this contact above and log the bounce.';
+    } else if (body) {
+      prefill += '\n\n--- Email body ---\n' + cleanBody.slice(0, 1200);
+    } else {
+      prefill += '\n\n[No body fetched]';
+    }
+
+    // If bounce, pre-populate the contact search with undeliverable address
+    // Attach bounce info to em so modal can use it
+    if (isBounce && angleEmails.length) em._bounceEmail = angleEmails[0];
     _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapper, logBtn, prefillNote: prefill });
   };
   actions.appendChild(logBtn);
@@ -8783,6 +8968,15 @@ async function _openLogNoteModal({ em, emailTo, subject, sender, src, idx, wrapp
   // Set textarea value after inserting into DOM
   const noteEl = document.getElementById('lnm-note');
   if (noteEl) noteEl.value = defaultNote;
+
+  // If this is a bounce, pre-populate the contact search field
+  if (em && em._bounceEmail) {
+    const searchEl = document.getElementById('lnm-search');
+    if (searchEl) {
+      searchEl.value = em._bounceEmail;
+      lnmSearchContact(em._bounceEmail);
+    }
+  }
 
   window._lnmResolvedPartner = null;
   let resolvedPartner = null;

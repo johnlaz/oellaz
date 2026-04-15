@@ -53,6 +53,10 @@ def decode_mime(value):
     return ' '.join(out)
 
 def strip_html(text):
+    # Preserve angle-bracket email addresses BEFORE stripping tags
+    # e.g. <user@domain.com> would be removed by the tag stripper otherwise
+    text = re.sub(r'<([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>',
+                  r'[\1]', text)
     text = re.sub(r'<(style|script)[^>]*>.*?</\1>', '', text, flags=re.DOTALL | re.IGNORECASE)
     text = re.sub(r'<(br|p|div|tr|li|h[1-6])\b[^>]*>', '\n', text, flags=re.IGNORECASE)
     text = re.sub(r'</(p|div|tr|li|h[1-6])>', '\n', text, flags=re.IGNORECASE)

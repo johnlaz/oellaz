@@ -1,4 +1,4 @@
-const CACHE = 'oel-v9.0';
+const CACHE = 'oel-v9.1';
 const ASSETS = [
   '/',
   '/index.html',
