@@ -1,12 +1,12 @@
 {
   "name": "OEL Command",
   "short_name": "OEL",
-  "description": "AI-powered CRM follow-up emails \u2014 works with any email client",
+  "description": "AI-powered sales operations command center \u2014 unified inbox, Odoo CRM, email drafting, vendor outreach, and more.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0f0f0f",
-  "theme_color": "#c8f04e",
+  "theme_color": "#c9a84c",
   "orientation": "any",
   "icons": [
     {
@@ -44,6 +44,5 @@
     "business",
     "productivity"
   ],
-  "screenshots": [],
-  "version": "9.1.0"
+  "version": "9.3.0"
 }

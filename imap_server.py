@@ -9,9 +9,7 @@ Also auto-starts server.py (CORS proxy on port 7842) if not already running.
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
-import json, imaplib, email, ssl, sys, os, subprocess, time, threading, re, smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import json, imaplib, email, ssl, sys, os, subprocess, time, threading, re
 import urllib.request as _req
 import urllib.error   as _err
 from email.header import decode_header
@@ -54,7 +52,6 @@ def decode_mime(value):
 
 def strip_html(text):
     # Preserve angle-bracket email addresses BEFORE stripping tags
-    # e.g. <user@domain.com> would be removed by the tag stripper otherwise
     text = re.sub(r'<([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>',
                   r'[\1]', text)
     text = re.sub(r'<(style|script)[^>]*>.*?</\1>', '', text, flags=re.DOTALL | re.IGNORECASE)
@@ -586,117 +583,6 @@ class IMAPHandler(BaseHTTPRequestHandler):
                 })
             except Exception as e:
                 self._json({'ok': False, 'error': str(e), 'text': '', 'len': 0, 'url': url})
-
-        elif path == '/send':
-            # Send email via SMTP using the same credentials as IMAP
-            config  = data.get('config', {})
-            to      = data.get('to', '')
-            subject = data.get('subject', '')
-            body    = data.get('body', '')
-
-            if not config.get('email') or not config.get('password'):
-                self._json({'error': 'No email credentials configured — check Settings > Mail Account'}, 400)
-                return
-            if not to:
-                self._json({'error': 'No recipient specified'}, 400)
-                return
-            try:
-                imap_host = config.get('host', '')
-                # Derive SMTP host from IMAP host
-                smtp_host = imap_host.replace('imap.', 'smtp.', 1)
-                if not smtp_host or smtp_host == imap_host:
-                    if 'gmail' in imap_host:
-                        smtp_host = 'smtp.gmail.com'
-                    elif 'yahoo' in imap_host:
-                        smtp_host = 'smtp.mail.yahoo.com'
-                    elif 'outlook' in imap_host or 'hotmail' in imap_host or 'office365' in imap_host:
-                        smtp_host = 'smtp.office365.com'
-                    else:
-                        smtp_host = imap_host.replace('imap', 'smtp')
-
-                smtp_port = int(config.get('smtp_port', 587))
-                sender    = config.get('email', '')
-                password  = config.get('password', '')
-
-                msg = MIMEMultipart('alternative')
-                msg['From']    = sender
-                msg['To']      = to
-                msg['Subject'] = subject
-                msg.attach(MIMEText(body, 'plain'))
-                html_body = '<p>' + body.replace('\n', '</p><p>') + '</p>'
-                msg.attach(MIMEText(html_body, 'html'))
-
-                with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as srv:
-                    srv.ehlo()
-                    srv.starttls()
-                    srv.login(sender, password)
-                    srv.sendmail(sender, [to], msg.as_string())
-
-                self._json({'ok': True, 'smtp_host': smtp_host})
-            except Exception as e:
-                self._json({'error': str(e)}, 500)
-
-        elif path == '/trash':
-            # Move email to Trash
-            config = data.get('config', {})
-            uid    = str(data.get('uid', '')).strip()
-            if not config.get('email') or not config.get('password') or not uid:
-                self._json({'error': 'Missing params'}, 400)
-                return
-            try:
-                conn = connect_imap(config)
-
-                # List all folders and find trash by keyword match
-                trash_keywords = ['trash', 'deleted items', 'deleted messages',
-                                   'bin', 'junk']  # ordered by preference
-                trash_folder   = None
-                typ, folder_list = conn.list()
-                folders_decoded = []
-                if typ == 'OK':
-                    for f in (folder_list or []):
-                        decoded = f.decode('utf-8', 'ignore') if isinstance(f, bytes) else str(f)
-                        # Extract folder name — last token, quoted or unquoted
-                        nm = re.search(r'"([^"]+)"\s*$', decoded)
-                        if not nm:
-                            nm = re.search(r'([^\s"]+)\s*$', decoded)
-                        if nm:
-                            folders_decoded.append(nm.group(1))
-
-                # Match by keyword (case-insensitive)
-                for kw in trash_keywords:
-                    for fname in folders_decoded:
-                        if kw in fname.lower():
-                            trash_folder = fname
-                            break
-                    if trash_folder:
-                        break
-
-                # Select INBOX (not readonly so we can store flags)
-                conn.select('INBOX')
-                uid_bytes = uid.encode() if isinstance(uid, str) else uid
-
-                if trash_folder:
-                    # IMAP requires folder names with spaces to be quoted
-                    quoted = '"' + trash_folder + '"' if ' ' in trash_folder else trash_folder
-                    res = conn.uid('COPY', uid_bytes, quoted)
-                    if res[0] == 'OK':
-                        conn.uid('STORE', uid_bytes, '+FLAGS', '(\\Deleted)')
-                        conn.expunge()
-                        conn.logout()
-                        self._json({'ok': True, 'method': 'move_to_trash',
-                                    'folder': trash_folder})
-                        return
-                    # COPY failed — log reason and fall through to expunge
-                    sp(message=f'COPY to {trash_folder} failed: {res}')
-
-                # Fallback: mark deleted + expunge (permanent delete)
-                conn.uid('STORE', uid_bytes, '+FLAGS', '(\\Deleted)')
-                conn.expunge()
-                conn.logout()
-                self._json({'ok': True, 'method': 'expunge',
-                            'note': 'No trash folder found — email permanently deleted'})
-            except Exception as e:
-                self._json({'error': str(e)}, 500)
 
         elif path == '/fetch':
             config   = data.get('config', {})

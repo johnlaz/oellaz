@@ -1,8 +1,9 @@
 @echo off
-:: Odoo Email Link - Start
-:: Double-click to launch. Runs as administrator automatically.
+:: OEL Command v9.3 — Start
+:: Double-click to launch both background servers and open the app.
+:: Registers itself to auto-start with Windows (runs silently in background).
 
-:: ── Reliable UAC self-elevation ──────────────────────────────────────────────
+:: ── Self-elevate to Administrator ─────────────────────────────────────────
 >nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
 if '%errorlevel%' NEQ '0' (
     echo Requesting administrator privileges...
@@ -19,33 +20,39 @@ if '%errorlevel%' NEQ '0' (
 :GotAdmin
     pushd "%~dp0"
 
-:: ── Python check ─────────────────────────────────────────────────────────────
+:: ── Python check ──────────────────────────────────────────────────────────
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo Python not found. Install from https://python.org
+    echo Python not found. Please install from https://python.org
     pause
     exit /b 1
 )
 
-:: ── Auto-startup registration (runs once, silently) ──────────────────────────
+:: ── Auto-startup registration (once, silent) ──────────────────────────────
 set STARTUP_DIR=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
-set SHORTCUT=%STARTUP_DIR%\OdooEmailLink.lnk
+set SHORTCUT=%STARTUP_DIR%\OELCommand.lnk
 if not exist "%SHORTCUT%" (
-    powershell -WindowStyle Hidden -Command "$ws=New-Object -ComObject WScript.Shell; $s=$ws.CreateShortcut('%SHORTCUT%'); $s.TargetPath='%~dpnx0'; $s.WorkingDirectory='%~dp0'; $s.WindowStyle=7; $s.Description='OdooEmailLink background servers'; $s.Save()" >nul 2>&1
+    powershell -WindowStyle Hidden -Command "$ws=New-Object -ComObject WScript.Shell; $s=$ws.CreateShortcut('%SHORTCUT%'); $s.TargetPath='%~dpnx0'; $s.WorkingDirectory='%~dp0'; $s.WindowStyle=7; $s.Description='OEL Command background servers'; $s.Save()" >nul 2>&1
 )
 
-:: ── Stop any existing instances ──────────────────────────────────────────────
+:: ── Kill any existing instances on ports 7842 / 7843 ─────────────────────
 powershell -WindowStyle Hidden -Command "Stop-Process -Id (Get-NetTCPConnection -LocalPort 7843 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue" >nul 2>&1
 powershell -WindowStyle Hidden -Command "Stop-Process -Id (Get-NetTCPConnection -LocalPort 7842 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue" >nul 2>&1
 timeout /t 1 /nobreak >nul
 
-:: ── Start servers ─────────────────────────────────────────────────────────────
+:: ── Start imap_server.py  (port 7843 — IMAP, SMTP, lead capture) ─────────
 powershell -WindowStyle Hidden -Command "Start-Process pythonw -ArgumentList 'imap_server.py' -WorkingDirectory '%~dp0' -WindowStyle Hidden -ErrorAction SilentlyContinue"
 if errorlevel 1 (
     powershell -WindowStyle Hidden -Command "Start-Process python -ArgumentList 'imap_server.py' -WorkingDirectory '%~dp0' -WindowStyle Hidden"
 )
 
-:: ── Wait then open app ───────────────────────────────────────────────────────
+:: ── Start server.py  (port 7842 — Odoo XML-RPC CORS proxy) ───────────────
+powershell -WindowStyle Hidden -Command "Start-Process pythonw -ArgumentList 'server.py' -WorkingDirectory '%~dp0' -WindowStyle Hidden -ErrorAction SilentlyContinue"
+if errorlevel 1 (
+    powershell -WindowStyle Hidden -Command "Start-Process python -ArgumentList 'server.py' -WorkingDirectory '%~dp0' -WindowStyle Hidden"
+)
+
+:: ── Wait for servers to initialise, then open app ─────────────────────────
 timeout /t 3 /nobreak >nul
 set "FILE_URL=file:///%~dp0index.html"
 set "FILE_URL=%FILE_URL:\=/%"

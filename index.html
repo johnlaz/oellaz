@@ -836,6 +836,16 @@
       <span class="sb-item-label">Quotes</span>
     </div>
 
+    <div class="sb-item" id="nav-templates" onclick="navTo('templates')" title="Email Templates">
+      <div class="sb-item-icon">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1.5" y="1.5" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M4 5h6M4 7.5h4M4 10h5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="sb-item-label">Templates</span>
+    </div>
+
     <div class="sb-divider"></div>
     <div class="sb-section-label">MORE</div>
 
@@ -859,14 +869,15 @@
       <span class="sb-item-label">Support</span>
     </div>
 
-    <div class="sb-item" id="nav-help" onclick="navTo('help')" title="Help &amp; Guide">
+    <div class="sb-item" id="nav-bounces" onclick="navTo('bounces')" title="Bounce Manager — handle undeliverable emails">
       <div class="sb-item-icon">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/>
-          <path d="M7 10v-.5M7 4.5c0-1 .8-1.5 1.5-1S9.5 5 7 6.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M2 4l5 4 5-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="1" y="2.5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M6 9l-2 2M8 9l2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
         </svg>
       </div>
-      <span class="sb-item-label">Help</span>
+      <span class="sb-item-label">Bounces</span>
     </div>
 
     <div class="sb-item" id="nav-catchup" onclick="navTo('catchup')" title="Dormant Contacts">
@@ -907,6 +918,15 @@
       <span class="sb-item-label">Reports</span>
     </div>
 
+    <div class="sb-item" id="nav-help" onclick="navTo('help')" title="Help &amp; Guide">
+      <div class="sb-item-icon">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M7 10v-.5M7 4.5c0-1 .8-1.5 1.5-1S9.5 5 7 6.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="sb-item-label">Help</span>
+    </div>
     <div class="sb-divider"></div>
 
     <div class="sb-item" id="nav-settings" onclick="openSettings()" title="Settings">
@@ -973,7 +993,6 @@
     <div class="section-panel active" id="panel-inbox">
       <div class="section-tabs" id="inbox-tabs">
         <button class="sec-tab active" id="sec-tab-inbox-assistant" onclick="inboxTab('assistant')">Inbox</button>
-        <button class="sec-tab" id="sec-tab-templates" onclick="inboxTab('templates')">Templates</button>
       </div>
       <div class="section-scroll" id="inbox-scroll" style="position:relative;display:flex;flex-direction:column;gap:0;padding:0">
 
@@ -1121,60 +1140,7 @@
     </div>
         </div>
         <!-- ── Templates ── -->
-        <div id="inbox-sub-templates" class="sub-panel">
-    <div id="laz-templates" style="padding:20px 24px">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
-        <select id="laz-tmpl-selector" onchange="lazLoadTemplate()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;flex:1;outline:none;cursor:pointer">
-          <option value="">— Select a template to edit —</option>
-        </select>
-        <button class="btn btn-ghost" onclick="lazNewTemplate()" style="padding:7px 14px;font-size:0.8rem">+ New</button>
-        <button class="btn btn-ghost" onclick="openLazTemplateWizard()" style="padding:7px 14px;font-size:0.8rem;gap:5px">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="margin-right:3px"><path d="M6 1l1.2 3.6L11 5.5l-2.9 2.7.7 3.8L6 10.2l-2.8 1.8.7-3.8L1 5.5l3.8-.9z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"></path></svg>
-          Wizard
-        </button>
-        <button class="btn btn-ghost" onclick="lazDeleteTemplate()" style="padding:7px 14px;font-size:0.8rem;color:var(--danger);border-color:var(--danger);opacity:0.7">Delete</button>
-      </div>
-
-      <div id="laz-tmpl-editor" style="border-top:1px solid var(--border);padding-top:16px">
-        <div class="form-grid" style="margin-bottom:14px">
-          <div class="form-group">
-            <label>Template name</label>
-            <input type="text" id="laz-tmpl-name" placeholder="e.g. Rental Quote Response">
-          </div>
-          <div class="form-group">
-            <label>Trigger keywords <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(comma-separated)</span></label>
-            <input type="text" id="laz-tmpl-keywords" placeholder="e.g. quote, pricing, rental rate">
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:8px">
-          <label>Template body</label>
-          <textarea id="laz-tmpl-body" class="laz-draft-area" style="min-height:200px" placeholder="Hi {{customer_name}},
-
-Thanks for reaching out about {{subject}}.
-
-..."></textarea>
-        </div>
-        <div style="font-size:0.74rem;color:var(--muted);margin-bottom:14px;line-height:1.7">
-          Available variables:
-          <span class="laz-var-pill">{{customer_name}}</span>
-          <span class="laz-var-pill">{{subject}}</span>
-          <span class="laz-var-pill">{{date}}</span>
-          <span class="laz-var-pill">{{my_name}}</span>
-          <span class="laz-var-pill">{{sender_email}}</span>
-          — add your own as <span class="laz-var-pill">{{variable_name}}</span>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <button class="btn btn-primary" onclick="lazSaveTemplate()" style="padding:8px 20px;font-size:0.82rem">Save template</button>
-          <div id="laz-tmpl-save-status" style="font-size:0.8rem;color:var(--muted)"></div>
-        </div>
-      </div>
-
-      <!-- Default templates hint if none saved -->
-      <div id="laz-tmpl-empty" style="font-size:0.8rem;color:var(--muted);padding:10px 0">
-        No templates yet — click + New to create one, or use AI drafting without a template.
-      </div>
-    </div>
-        </div>
+        
         <!-- ── Personal Gmail ── -->
         <div id="inbox-sub-personal" class="sub-panel" style="position:relative">
           <div id="step-6-personal">
@@ -2142,6 +2108,161 @@ Support Team"></textarea>
       </div>
     </div>
 
+
+    <!-- ── TEMPLATES ────────────────────────────────────────────────────── -->
+    <div class="section-panel" id="panel-templates">
+      <div style="display:flex;height:100%;overflow:hidden">
+
+        <!-- Left: template card list -->
+        <div style="width:240px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column">
+          <div style="padding:14px 14px 10px;border-bottom:1px solid var(--border);display:flex;gap:6px;align-items:center">
+            <span style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;flex:1">Saved Templates</span>
+            <button class="btn btn-primary" onclick="lazNewTemplate()" style="padding:4px 12px;font-size:0.76rem">+ New</button>
+          </div>
+          <div id="laz-tmpl-list" style="flex:1;overflow-y:auto;padding:8px"></div>
+          <div style="padding:10px 12px;border-top:1px solid var(--border)">
+            <button class="btn btn-ghost" onclick="openLazTemplateWizard()" style="width:100%;padding:7px;font-size:0.78rem;gap:5px;justify-content:center">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.2 3.6L11 5.5l-2.9 2.7.7 3.8L6 10.2l-2.8 1.8.7-3.8L1 5.5l3.8-.9z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+              Build from inbox email
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: editor + AI composer -->
+        <div style="flex:1;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:18px">
+
+          <!-- Empty / welcome state -->
+          <div id="laz-tmpl-empty" style="text-align:center;padding:60px 20px 30px;color:var(--muted)">
+            <div style="font-size:2rem;margin-bottom:12px">📋</div>
+            <div style="font-size:0.92rem;font-weight:500;color:var(--text);margin-bottom:8px">No templates yet</div>
+            <div style="font-size:0.8rem;margin-bottom:20px;max-width:300px;margin-left:auto;margin-right:auto">Click <strong>+ New</strong> to write one manually, or use the <strong>AI Composer</strong> below to generate one from a description.</div>
+            <button class="btn btn-primary" onclick="lazNewTemplate()" style="padding:9px 22px;font-size:0.83rem">+ Create first template</button>
+          </div>
+
+          <!-- Editor (shown when template selected) -->
+          <div id="laz-tmpl-editor" style="display:none">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+              <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);font-weight:600;flex:1" id="laz-tmpl-editing-label">New Template</div>
+              <button class="btn btn-ghost" onclick="lazDeleteTemplate()" style="padding:4px 10px;font-size:0.76rem;color:var(--danger);border-color:rgba(220,50,50,0.4)">Delete</button>
+              <button class="btn btn-ghost" onclick="lazTmplClear()" style="padding:4px 10px;font-size:0.76rem">Cancel</button>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px">
+              <div>
+                <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:5px">Template name</label>
+                <input type="text" id="laz-tmpl-name" placeholder="e.g. Rental Quote Response"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+              </div>
+              <div>
+                <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:5px">Trigger keywords <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.7rem">(comma-separated)</span></label>
+                <input type="text" id="laz-tmpl-keywords" placeholder="e.g. quote, pricing, rental rate"
+                  style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+              </div>
+            </div>
+
+            <div style="margin-bottom:10px">
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:5px">Template body</label>
+              <textarea id="laz-tmpl-body"
+                style="width:100%;min-height:240px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-size:0.83rem;font-family:'DM Sans',sans-serif;line-height:1.75;resize:vertical;outline:none;box-sizing:border-box"
+                placeholder="Hi {{customer_name}},&#10;&#10;Thanks for reaching out about {{subject}}.&#10;&#10;..."></textarea>
+            </div>
+
+            <div style="font-size:0.73rem;color:var(--muted);margin-bottom:14px;line-height:2">
+              Variables:
+              <span style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-family:monospace;font-size:0.71rem;cursor:pointer" onclick="lazInsertVar('{{customer_name}}')">{{customer_name}}</span>
+              <span style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-family:monospace;font-size:0.71rem;cursor:pointer" onclick="lazInsertVar('{{subject}}')">{{subject}}</span>
+              <span style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-family:monospace;font-size:0.71rem;cursor:pointer" onclick="lazInsertVar('{{date}}')">{{date}}</span>
+              <span style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-family:monospace;font-size:0.71rem;cursor:pointer" onclick="lazInsertVar('{{my_name}}')">{{my_name}}</span>
+              <span style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 7px;font-family:monospace;font-size:0.71rem;cursor:pointer" onclick="lazInsertVar('{{sender_email}}')">{{sender_email}}</span>
+              <span style="color:var(--muted)">— click to insert</span>
+            </div>
+
+            <div style="display:flex;gap:10px;align-items:center">
+              <button class="btn btn-primary" onclick="lazSaveTemplate()" style="padding:9px 22px;font-size:0.83rem">Save template</button>
+              <div id="laz-tmpl-save-status" style="font-size:0.8rem;color:var(--muted)"></div>
+            </div>
+          </div>
+
+          <!-- AI Composer -->
+          <div style="border:1px solid var(--border);border-radius:12px;padding:18px 20px;background:var(--surface2)">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1l1 3L11 5.5l-3 1-1 3-1-3-3-1 3-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+              <span style="font-size:0.76rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text);font-weight:600">AI Composer</span>
+              <span style="font-size:0.74rem;color:var(--muted)">Describe what you need — AI writes the template</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <label style="font-size:0.71rem;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Template purpose</label>
+                <input type="text" id="ai-tmpl-purpose" placeholder="e.g. Reply to rental quote request"
+                  style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-size:0.81rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+              </div>
+              <div>
+                <label style="font-size:0.71rem;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Tone</label>
+                <select id="ai-tmpl-tone" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-size:0.81rem;outline:none;font-family:'DM Sans',sans-serif">
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly &amp; warm</option>
+                  <option value="concise">Short &amp; direct</option>
+                  <option value="formal">Formal</option>
+                  <option value="sales">Sales-focused</option>
+                </select>
+              </div>
+            </div>
+            <textarea id="ai-tmpl-context" placeholder="Extra context: your company name, specific details to include, things to avoid…"
+              style="width:100%;min-height:58px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:0.8rem;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;box-sizing:border-box;margin-bottom:10px"></textarea>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button class="btn btn-primary" onclick="lazAICompose()" id="ai-tmpl-btn" style="padding:7px 18px;font-size:0.81rem;gap:5px">
+                <svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M6.5 1l1 3L11 5.5l-3 1-1 3-1-3-3-1 3-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                Compose with AI
+              </button>
+              <span id="ai-tmpl-status" style="font-size:0.78rem;color:var(--muted)"></span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BOUNCE MANAGER ───────────────────────────────────────────────── -->
+    <div class="section-panel" id="panel-bounces">
+      <div class="section-scroll" style="padding:20px 24px">
+
+        <!-- Upload bar -->
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">📭 Bounce / Undeliverable Email Manager</div>
+          <div class="card-subtitle">Upload a .txt or .csv of undeliverable email addresses. Each is matched against Odoo contacts so you can log a note, clear activities, or reschedule follow-ups.</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
+            <label id="bounce-upload-label" style="display:inline-flex;align-items:center;gap:7px;padding:8px 18px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.82rem;color:var(--text);transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3 5l3.5-4L10 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 10h11" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Upload .txt / .csv
+              <input type="file" id="bounce-file-input" accept=".txt,.csv" style="display:none" onchange="bounceHandleUpload(this)">
+            </label>
+            <input type="text" id="bounce-manual-input" placeholder="Or paste emails separated by comma/newline…" style="flex:1;min-width:200px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.82rem;outline:none;font-family:'DM Sans',sans-serif">
+            <button class="btn btn-ghost" onclick="bounceAddManual()" style="padding:8px 14px;font-size:0.82rem">Add</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+            <span id="bounce-count" style="font-size:0.78rem;color:var(--muted)">No emails loaded</span>
+            <div style="flex:1"></div>
+            <button class="btn btn-ghost" onclick="bounceScanAll()" id="bounce-scan-btn" style="padding:6px 14px;font-size:0.8rem;display:none">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.2"/><path d="M8 8l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Scan all in Odoo
+            </button>
+            <button class="btn btn-ghost" onclick="bounceLogAllNotes()" id="bounce-log-all-btn" style="padding:6px 14px;font-size:0.8rem;display:none;border-color:rgba(201,168,76,0.5);color:var(--accent)">📋 Log note on all matched</button>
+            <button class="btn btn-ghost" onclick="bounceClearAll()" style="padding:6px 14px;font-size:0.8rem;color:var(--muted)">Clear all</button>
+          </div>
+        </div>
+
+        <!-- Note template -->
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;font-weight:500">Note to log on matched contacts</div>
+          <textarea id="bounce-note-template" style="width:100%;min-height:56px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.82rem;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;box-sizing:border-box">⚠ Email address on file is undeliverable and should be updated. Please verify contact information.</textarea>
+        </div>
+
+        <!-- Card stack -->
+        <div id="bounce-cards" style="display:flex;flex-direction:column;gap:10px"></div>
+
+      </div>
+    </div>
+
     <!-- ── HELP ──────────────────────────────────────────────────────────── -->
     <div class="section-panel" id="panel-help">
       <div class="section-scroll" style="padding:20px 24px">
@@ -2273,7 +2394,7 @@ Support Team"></textarea>
         </div>
 
         <div style="text-align:center;font-size:0.72rem;color:var(--muted);padding:12px 0">
-          OEL Command v9.1 · Built by Lazzaro · Powered by Groq AI + Odoo 19
+          OEL Command v9.3 · Built by Lazzaro · Powered by Groq AI + Odoo 19
         </div>
 
       </div>
@@ -2383,7 +2504,7 @@ Support Team"></textarea>
           <div class="card-title" style="font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:6px">Dashboard</div>
           <div class="card-subtitle" style="margin-bottom:16px">Pipeline, opportunities, and team performance from Odoo.</div>
           <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px">
-            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v9.1</span>
+            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v9.3</span>
             <span style="font-size:0.68rem;color:var(--muted)">Built by Lazzaro</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
@@ -7318,6 +7439,425 @@ async function imapMoveToTrash(uid, src) {
 }
 
 
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── BOUNCE MANAGER ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _bounceEmails = []; // [{email, status:'pending'|'matched'|'nomatch'|'logged', partner:null}]
+
+function bounceHandleUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    bounceParseAndAdd(text);
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function bounceAddManual() {
+  const input = document.getElementById('bounce-manual-input');
+  const text = (input?.value || '').trim();
+  if (!text) return;
+  bounceParseAndAdd(text);
+  if (input) input.value = '';
+}
+
+function bounceParseAndAdd(text) {
+  // Extract emails from text — handles CSV, newline, comma, semicolon separated
+  const emailRe = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+  const found = text.match(emailRe) || [];
+  const existing = new Set(_bounceEmails.map(function(e) { return e.email.toLowerCase(); }));
+  let added = 0;
+  found.forEach(function(email) {
+    if (!existing.has(email.toLowerCase())) {
+      _bounceEmails.push({ email: email.toLowerCase(), status: 'pending', partner: null, activities: [] });
+      existing.add(email.toLowerCase());
+      added++;
+    }
+  });
+  bounceUpdateCount();
+  bounceRenderCards();
+  if (added && odooUid) bounceScanAll();
+}
+
+function bounceClearAll() {
+  if (_bounceEmails.length && !confirm('Clear all ' + _bounceEmails.length + ' emails?')) return;
+  _bounceEmails = [];
+  bounceUpdateCount();
+  bounceRenderCards();
+}
+
+function bounceUpdateCount() {
+  const el = document.getElementById('bounce-count');
+  const scanBtn = document.getElementById('bounce-scan-btn');
+  const logBtn  = document.getElementById('bounce-log-all-btn');
+  if (!el) return;
+  if (!_bounceEmails.length) {
+    el.textContent = 'No emails loaded';
+    if (scanBtn) scanBtn.style.display = 'none';
+    if (logBtn)  logBtn.style.display  = 'none';
+    return;
+  }
+  const matched  = _bounceEmails.filter(function(e) { return e.status === 'matched' || e.status === 'logged'; }).length;
+  const noMatch  = _bounceEmails.filter(function(e) { return e.status === 'nomatch'; }).length;
+  const pending  = _bounceEmails.filter(function(e) { return e.status === 'pending'; }).length;
+  el.textContent = _bounceEmails.length + ' emails — ' + matched + ' matched, ' + noMatch + ' not found' + (pending ? ', ' + pending + ' pending' : '');
+  if (scanBtn) scanBtn.style.display = 'inline-flex';
+  if (logBtn)  logBtn.style.display  = matched > 0 ? 'inline-flex' : 'none';
+}
+
+async function bounceScanAll() {
+  if (!odooUid) { alert('Connect to Odoo first (Settings)'); return; }
+  const btn = document.getElementById('bounce-scan-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Scanning…'; }
+
+  for (let i = 0; i < _bounceEmails.length; i++) {
+    const entry = _bounceEmails[i];
+    if (entry.status !== 'pending') continue;
+    try {
+      // Search res.partner by exact email first, then fuzzy by local part
+      let partners = await odooExecute(odooUid, 'res.partner', 'search_read',
+        [[['email','ilike',entry.email],['active','=',true]]],
+        { fields: ['id','name','email','phone','company_name','activity_ids'], limit: 5 }
+      );
+      // If no exact match, try matching local part (before @)
+      if (!partners || !partners.length) {
+        const localPart = entry.email.split('@')[0];
+        partners = await odooExecute(odooUid, 'res.partner', 'search_read',
+          [[['email','ilike',localPart],['active','=',true]]],
+          { fields: ['id','name','email','phone','company_name','activity_ids'], limit: 5 }
+        );
+      }
+      if (partners && partners.length) {
+        // Load activities for the best match
+        const best = partners[0];
+        let activities = [];
+        if (best.activity_ids && best.activity_ids.length) {
+          activities = await odooExecute(odooUid, 'mail.activity', 'search_read',
+            [[['res_model','=','res.partner'],['res_id','=',best.id]]],
+            { fields: ['id','summary','activity_type_id','date_deadline','user_id'], limit: 10 }
+          );
+        }
+        _bounceEmails[i].status     = 'matched';
+        _bounceEmails[i].partner    = best;
+        _bounceEmails[i].allMatches = partners;
+        _bounceEmails[i].activities = activities || [];
+      } else {
+        _bounceEmails[i].status = 'nomatch';
+      }
+    } catch(e) {
+      _bounceEmails[i].status = 'error';
+      _bounceEmails[i].error  = e.message;
+    }
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Rescan'; btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5" cy="5" r="4" stroke="currentColor" stroke-width="1.2"/><path d="M8 8l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Rescan all'; }
+  bounceUpdateCount();
+  bounceRenderCards();
+}
+
+async function bounceLogNote(idx) {
+  const entry = _bounceEmails[idx];
+  if (!entry || !entry.partner) return;
+  const note = document.getElementById('bounce-note-template')?.value?.trim()
+    || '⚠ Email address on file is undeliverable.';
+  const btn = document.getElementById('bounce-action-' + idx);
+  if (btn) { btn.disabled = true; btn.textContent = 'Logging…'; }
+  try {
+    await odooExecute(odooUid, 'res.partner', 'message_post', [[entry.partner.id]], {
+      body: '<p>' + escHtml(note) + '</p><p><small>Bounced email: ' + escHtml(entry.email) + '</small></p>',
+      message_type: 'comment',
+      subtype_xmlid: 'mail.mt_note',
+    });
+    _bounceEmails[idx].status = 'logged';
+    bounceUpdateCount();
+    bounceRenderCards();
+  } catch(e) {
+    alert('Log failed: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Log note'; }
+  }
+}
+
+async function bounceLogAllNotes() {
+  const matched = _bounceEmails.filter(function(e,i) {
+    e._idx = i; return e.status === 'matched';
+  });
+  if (!matched.length) { alert('No matched contacts to log to'); return; }
+  if (!confirm('Log bounce note on all ' + matched.length + ' matched contacts?')) return;
+  for (const entry of matched) {
+    await bounceLogNote(entry._idx);
+  }
+}
+
+async function bounceClearActivities(idx) {
+  const entry = _bounceEmails[idx];
+  if (!entry || !entry.partner || !entry.activities.length) return;
+  if (!confirm('Cancel all ' + entry.activities.length + ' scheduled activit' + (entry.activities.length!==1?'ies':'y') + ' for ' + entry.partner.name + '?')) return;
+  const btn = document.getElementById('bounce-clear-act-' + idx);
+  if (btn) { btn.disabled = true; btn.textContent = 'Clearing…'; }
+  try {
+    const ids = entry.activities.map(function(a) { return a.id; });
+    await odooExecute(odooUid, 'mail.activity', 'unlink', [ids]);
+    _bounceEmails[idx].activities = [];
+    bounceRenderCards();
+  } catch(e) {
+    alert('Error: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Clear activities'; }
+  }
+}
+
+async function bounceReschedule(idx) {
+  const entry = _bounceEmails[idx];
+  if (!entry || !entry.partner) return;
+  const types = await loadActivityTypes().catch(function() { return []; });
+  if (!types.length) { alert('Could not load activity types from Odoo'); return; }
+  const note = 'Verify and update email address — current address bounced: ' + entry.email;
+  const deadline = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+  try {
+    await odooExecute(odooUid, 'mail.activity', 'create', [{
+      res_model: 'res.partner',
+      res_id: entry.partner.id,
+      activity_type_id: types[0].id,
+      summary: 'Update email address',
+      note: note,
+      user_id: odooUid,
+      date_deadline: deadline,
+    }]);
+    alert('Activity scheduled on ' + entry.partner.name);
+    // Refresh activities
+    const acts = await odooExecute(odooUid, 'mail.activity', 'search_read',
+      [[['res_model','=','res.partner'],['res_id','=',entry.partner.id]]],
+      { fields: ['id','summary','activity_type_id','date_deadline','user_id'], limit: 10 }
+    );
+    _bounceEmails[idx].activities = acts || [];
+    bounceRenderCards();
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+function bounceRenderCards() {
+  const container = document.getElementById('bounce-cards');
+  if (!container) return;
+
+  if (!_bounceEmails.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:0.82rem">Upload a .txt or .csv of bounced email addresses to get started.</div>';
+    return;
+  }
+
+  container.innerHTML = _bounceEmails.map(function(entry, idx) {
+    const statusColor = entry.status === 'matched' ? 'var(--accent)'
+                      : entry.status === 'logged'  ? 'var(--success)'
+                      : entry.status === 'nomatch' ? 'var(--danger)'
+                      : entry.status === 'error'   ? 'var(--danger)'
+                      : 'var(--muted)';
+    const statusLabel = entry.status === 'matched' ? 'Matched'
+                      : entry.status === 'logged'  ? 'Note logged ✓'
+                      : entry.status === 'nomatch' ? 'No match found'
+                      : entry.status === 'error'   ? 'Error'
+                      : 'Pending scan';
+    const borderColor = entry.status === 'logged' ? 'var(--success)'
+                      : entry.status === 'matched' ? 'var(--accent)'
+                      : entry.status === 'nomatch' ? 'rgba(220,50,50,0.3)'
+                      : 'var(--border)';
+
+    let partnerInfo = '';
+    let actions = '';
+    let activityInfo = '';
+
+    if (entry.partner) {
+      partnerInfo = '<div style="margin-top:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px">'
+        + '<div style="font-size:0.82rem;font-weight:500;color:var(--text)">' + escHtml(entry.partner.name) + '</div>'
+        + '<div style="font-size:0.73rem;color:var(--muted);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap">'
+        + (entry.partner.email ? '<span style="font-family:monospace">' + escHtml(entry.partner.email) + '</span>' : '')
+        + (entry.partner.company_name ? '<span>' + escHtml(entry.partner.company_name) + '</span>' : '')
+        + '</div>';
+
+      // Alt matches
+      if (entry.allMatches && entry.allMatches.length > 1) {
+        partnerInfo += '<div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Also found: '
+          + entry.allMatches.slice(1).map(function(p) {
+              return '<button onclick="_bounceSetPartner(' + idx + ',' + p.id + ')" style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:0.7rem;color:var(--muted);cursor:pointer;margin-left:4px">' + escHtml(p.name) + '</button>';
+            }).join('') + '</div>';
+      }
+      partnerInfo += '</div>';
+
+      // Activities
+      if (entry.activities && entry.activities.length) {
+        activityInfo = '<div style="margin-top:6px;font-size:0.73rem;color:var(--muted);padding:6px 10px;background:var(--surface2);border-radius:6px">'
+          + '<strong style="color:var(--warning)">⏰ ' + entry.activities.length + ' scheduled activit' + (entry.activities.length!==1?'ies':'y') + ':</strong> '
+          + entry.activities.map(function(a) {
+              return escHtml((a.summary || (Array.isArray(a.activity_type_id)?a.activity_type_id[1]:'Activity')) + ' — due ' + (a.date_deadline||'?'));
+            }).join(' · ')
+          + '</div>';
+      }
+
+      // Action buttons
+      actions = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">';
+      if (entry.status !== 'logged') {
+        actions += '<button id="bounce-action-' + idx + '" onclick="bounceLogNote(' + idx + ')" class="btn btn-ghost" style="padding:5px 12px;font-size:0.78rem;border-color:rgba(201,168,76,0.5);color:var(--accent)">📋 Log note</button>';
+      }
+      if (entry.activities && entry.activities.length) {
+        actions += '<button id="bounce-clear-act-' + idx + '" onclick="bounceClearActivities(' + idx + ')" class="btn btn-ghost" style="padding:5px 12px;font-size:0.78rem;color:var(--warning)">✕ Clear activities</button>';
+      }
+      actions += '<button onclick="bounceReschedule(' + idx + ')" class="btn btn-ghost" style="padding:5px 12px;font-size:0.78rem">📅 Reschedule</button>';
+      actions += '</div>';
+    } else if (entry.status === 'nomatch') {
+      actions = '<div style="margin-top:8px;font-size:0.75rem;color:var(--muted)">No Odoo contact found for this email address.</div>';
+    }
+
+    return '<div style="background:var(--surface2);border:1px solid ' + borderColor + ';border-radius:10px;padding:12px 14px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+      + '<span style="font-family:\'DM Mono\',monospace;font-size:0.82rem;color:var(--text)">' + escHtml(entry.email) + '</span>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
+      + '<span style="font-size:0.72rem;color:' + statusColor + ';font-weight:500">' + statusLabel + '</span>'
+      + '<button onclick="_bounceRemove(' + idx + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;line-height:1;padding:2px 4px" title="Remove">✕</button>'
+      + '</div></div>'
+      + partnerInfo
+      + activityInfo
+      + actions
+      + '</div>';
+  }).join('');
+}
+
+function _bounceRemove(idx) {
+  _bounceEmails.splice(idx, 1);
+  bounceUpdateCount();
+  bounceRenderCards();
+}
+
+async function _bounceSetPartner(entryIdx, partnerId) {
+  const entry = _bounceEmails[entryIdx];
+  if (!entry) return;
+  const match = (entry.allMatches || []).find(function(p) { return p.id === partnerId; });
+  if (!match) return;
+  entry.partner = match;
+  const acts = await odooExecute(odooUid, 'mail.activity', 'search_read',
+    [[['res_model','=','res.partner'],['res_id','=',match.id]]],
+    { fields: ['id','summary','activity_type_id','date_deadline','user_id'], limit: 10 }
+  ).catch(function() { return []; });
+  entry.activities = acts || [];
+  bounceRenderCards();
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── AI TEMPLATE COMPOSER ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function lazAICompose() {
+  const purpose = document.getElementById('ai-tmpl-purpose')?.value?.trim();
+  const tone    = document.getElementById('ai-tmpl-tone')?.value || 'professional';
+  const context = document.getElementById('ai-tmpl-context')?.value?.trim() || '';
+  const btn     = document.getElementById('ai-tmpl-btn');
+  const status  = document.getElementById('ai-tmpl-status');
+  const groqKey = document.getElementById('gemini-key')?.value?.trim();
+  const model   = document.getElementById('gemini-model')?.value || 'llama-3.3-70b-versatile';
+
+  if (!purpose) { alert('Describe what the template is for first'); return; }
+  if (!groqKey) { alert('Groq API key required — enter it in Settings'); return; }
+
+  if (btn) btn.disabled = true;
+  if (status) status.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Composing…';
+
+  const tones = {
+    professional: 'professional and polished',
+    friendly:     'friendly, warm and conversational',
+    concise:      'short, direct and to the point',
+    formal:       'formal and businesslike',
+    sales:        'persuasive and sales-focused',
+  };
+  const toneDesc = tones[tone] || 'professional';
+  const contextLine = context ? 'Additional context: ' + context + '\n' : '';
+
+  // Helper — single plain-text Groq call, no JSON parsing needed
+  async function ask(prompt) {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+      body: JSON.stringify({
+        model, max_tokens: 600, temperature: 0.4,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      signal: AbortSignal.timeout(20000)
+    });
+    const d = await r.json();
+    return (d.choices?.[0]?.message?.content || '').trim();
+  }
+
+  try {
+    // Three separate plain-text calls — no JSON, no parsing errors
+
+    if (status) status.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Writing template…';
+    const body = await ask(
+      'Write a reusable email template for: ' + purpose + '.\n'
+      + 'Tone: ' + toneDesc + '.\n'
+      + contextLine
+      + 'Rules: use {{customer_name}}, {{subject}}, {{date}}, {{my_name}}, {{sender_email}} where appropriate.\n'
+      + 'No HTML, no markdown, no explanations. Output the email body text only.'
+    );
+
+    if (status) status.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Naming template…';
+    const name = await ask(
+      'Give this email template a short descriptive name (5 words max, title case).\n'
+      + 'Template purpose: ' + purpose + '\n'
+      + 'Output the name only, nothing else.'
+    );
+
+    if (status) status.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Adding keywords…';
+    const keywords = await ask(
+      'List 4-6 short trigger keywords for this email template (comma-separated, lowercase).\n'
+      + 'Template purpose: ' + purpose + '\n'
+      + 'Output the keywords only, nothing else.'
+    );
+
+    if (!body) throw new Error('AI returned an empty template body');
+
+    // Save and load
+    const id = 'tmpl_' + Date.now();
+    lazTemplates.push({ id,
+      name:     name.replace(/["'.]/g, '').slice(0, 60) || purpose,
+      keywords: keywords.replace(/["']/g, ''),
+      body:     body,
+    });
+    saveLazTemplates();
+    rebuildLazTemplateSelector();
+    const newIdx = lazTemplates.length - 1;
+    const sel = document.getElementById('laz-tmpl-selector');
+    if (sel) sel.value = newIdx;
+    lazSelectTemplate(newIdx);
+
+    if (status) { status.style.color = 'var(--success)'; status.textContent = '\u2713 Template created — review and save'; }
+    const p = document.getElementById('ai-tmpl-purpose');
+    const c = document.getElementById('ai-tmpl-context');
+    if (p) p.value = '';
+    if (c) c.value = '';
+
+  } catch(e) {
+    if (status) { status.style.color = 'var(--danger)'; status.textContent = 'Error: ' + e.message; }
+  }
+  if (btn) btn.disabled = false;
+}
+
+
+
+// ── Template variable inserter ────────────────────────────────────────────
+function lazInsertVar(varStr) {
+  const ta = document.getElementById('laz-tmpl-body');
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const end   = ta.selectionEnd;
+  ta.value = ta.value.slice(0, start) + varStr + ta.value.slice(end);
+  ta.selectionStart = ta.selectionEnd = start + varStr.length;
+  ta.focus();
+}
+
+// Also trigger template load when navTo('templates') is called
 // ─── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   loadCredentials();
@@ -10178,44 +10718,114 @@ function loadLazTemplates() {
 }
 
 function rebuildLazTemplateSelector() {
+  // Update legacy select if it still exists (QC picker etc)
   const sel = document.getElementById('laz-tmpl-selector');
-  if (!sel) return;
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— Select a template to edit —</option>';
-  lazTemplates.forEach((t, i) => {
-    const opt = document.createElement('option');
-    opt.value = i; opt.textContent = t.name;
-    sel.appendChild(opt);
-  });
-  sel.value = cur;
-  document.getElementById('laz-tmpl-empty').style.display = lazTemplates.length ? 'none' : 'block';
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Select a template to edit —</option>';
+    lazTemplates.forEach((t, i) => {
+      const opt = document.createElement('option');
+      opt.value = i; opt.textContent = t.name;
+      sel.appendChild(opt);
+    });
+    sel.value = cur;
+  }
+  // Rebuild card list in new layout
+  lazRenderTemplateList();
 }
 
-function lazLoadTemplate() {
-  const idx = parseInt(document.getElementById('laz-tmpl-selector').value);
-  const editor = document.getElementById('laz-tmpl-editor');
-  if (isNaN(idx)) { editor.style.display = 'none'; return; }
+function lazRenderTemplateList() {
+  const list = document.getElementById('laz-tmpl-list');
+  const empty = document.getElementById('laz-tmpl-empty');
+  if (!list) return;
+  if (!lazTemplates.length) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = lazTemplates.map((t, i) => {
+    const isActive = list.dataset.active == i;
+    return '<div onclick="lazSelectTemplate(' + i + ')" style="padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid ' + (isActive ? 'var(--accent)' : 'transparent') + ';background:' + (isActive ? 'var(--accent-dim)' : 'transparent') + ';transition:all 0.12s" onmouseover="if(this.dataset.sel!==\'1\'){this.style.background=\'var(--surface)\'}" onmouseout="if(this.dataset.sel!==\'1\'){this.style.background=\'transparent\'}" id="laz-tmpl-card-' + i + '">'
+      + '<div style="font-size:0.81rem;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(t.name || 'Untitled') + '</div>'
+      + (t.keywords ? '<div style="font-size:0.7rem;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escHtml(t.keywords) + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function lazSelectTemplate(idx) {
+  const list = document.getElementById('laz-tmpl-list');
+  if (list) list.dataset.active = idx;
+  lazRenderTemplateList();
+  // Highlight selected card
+  document.querySelectorAll('[id^="laz-tmpl-card-"]').forEach(el => {
+    el.style.background = 'transparent';
+    el.style.border = '1px solid transparent';
+    el.dataset.sel = '0';
+  });
+  const card = document.getElementById('laz-tmpl-card-' + idx);
+  if (card) { card.style.background = 'var(--accent-dim)'; card.style.border = '1px solid var(--accent)'; card.dataset.sel = '1'; }
+  // Load into editor
   const t = lazTemplates[idx];
   if (!t) return;
+  // Store active index on selector for save
+  const sel = document.getElementById('laz-tmpl-selector');
+  if (sel) sel.value = idx;
   document.getElementById('laz-tmpl-name').value     = t.name || '';
   document.getElementById('laz-tmpl-keywords').value = t.keywords || '';
   document.getElementById('laz-tmpl-body').value     = t.body || '';
-  document.getElementById('laz-tmpl-save-status').textContent = '';
-  editor.style.display = 'block';
+  const label = document.getElementById('laz-tmpl-editing-label');
+  if (label) label.textContent = 'Editing: ' + (t.name || 'Untitled');
+  const status = document.getElementById('laz-tmpl-save-status');
+  if (status) status.textContent = '';
+  const editor = document.getElementById('laz-tmpl-editor');
+  if (editor) editor.style.display = 'block';
+}
+
+function lazTmplClear() {
+  const editor = document.getElementById('laz-tmpl-editor');
+  if (editor) editor.style.display = 'none';
+  const list = document.getElementById('laz-tmpl-list');
+  if (list) { list.dataset.active = -1; }
+  lazRenderTemplateList();
+  const sel = document.getElementById('laz-tmpl-selector');
+  if (sel) sel.value = '';
+}
+
+function lazLoadTemplate() {
+  const idx = parseInt(document.getElementById('laz-tmpl-selector')?.value);
+  if (isNaN(idx)) { lazTmplClear(); return; }
+  lazSelectTemplate(idx);
 }
 
 function lazNewTemplate() {
-  const id = `tmpl_${Date.now()}`;
+  const id = 'tmpl_' + Date.now();
   lazTemplates.push({ id, name: 'New Template', keywords: '', body: '' });
   saveLazTemplates();
   rebuildLazTemplateSelector();
-  document.getElementById('laz-tmpl-selector').value = lazTemplates.length - 1;
-  lazLoadTemplate();
+  const newIdx = lazTemplates.length - 1;
+  const sel = document.getElementById('laz-tmpl-selector');
+  if (sel) sel.value = newIdx;
+  lazSelectTemplate(newIdx);
+  // Focus name field
+  setTimeout(function() {
+    const nameEl = document.getElementById('laz-tmpl-name');
+    if (nameEl) { nameEl.focus(); nameEl.select(); }
+  }, 50);
 }
 
 function lazSaveTemplate() {
-  const idx = parseInt(document.getElementById('laz-tmpl-selector').value);
-  if (isNaN(idx) || !lazTemplates[idx]) return;
+  // Get idx from selector or from the list's active card
+  let idx = parseInt(document.getElementById('laz-tmpl-selector')?.value);
+  if (isNaN(idx)) {
+    const list = document.getElementById('laz-tmpl-list');
+    idx = list ? parseInt(list.dataset.active) : NaN;
+  }
+  if (isNaN(idx) || !lazTemplates[idx]) {
+    const statusEl = document.getElementById('laz-tmpl-save-status');
+    if (statusEl) { statusEl.style.color='var(--warning)'; statusEl.textContent='Select or create a template first'; setTimeout(function(){statusEl.textContent='';},2500); }
+    return;
+  }
   lazTemplates[idx].name     = document.getElementById('laz-tmpl-name').value.trim() || 'Untitled';
   lazTemplates[idx].keywords = document.getElementById('laz-tmpl-keywords').value.trim();
   lazTemplates[idx].body     = document.getElementById('laz-tmpl-body').value;
@@ -10226,13 +10836,17 @@ function lazSaveTemplate() {
 }
 
 function lazDeleteTemplate() {
-  const idx = parseInt(document.getElementById('laz-tmpl-selector').value);
-  if (isNaN(idx)) return;
-  if (!confirm(`Delete "${lazTemplates[idx]?.name}"?`)) return;
+  let idx = parseInt(document.getElementById('laz-tmpl-selector')?.value);
+  if (isNaN(idx)) {
+    const list = document.getElementById('laz-tmpl-list');
+    idx = list ? parseInt(list.dataset.active) : NaN;
+  }
+  if (isNaN(idx) || !lazTemplates[idx]) return;
+  if (!confirm('Delete "' + lazTemplates[idx].name + '"?')) return;
   lazTemplates.splice(idx, 1);
   saveLazTemplates();
+  lazTmplClear();
   rebuildLazTemplateSelector();
-  document.getElementById('laz-tmpl-editor').style.display = 'none';
 }
 
 // ── Laz Template Wizard ──────────────────────────────────────────────────────
@@ -15612,7 +16226,7 @@ function persRebuildContactPicker() {
   loadLazTemplates();
   const tp = document.getElementById('pers-compose-template');
   if (tp) tp.innerHTML = '<option value="">📋 Template…</option>' +
-    _lazTemplates.map((t,i) => `<option value="${i}">${escHtml(t.name)}</option>`).join('');
+    lazTemplates.map((t,i) => `<option value="${i}">${escHtml(t.name)}</option>`).join('');
 }
 
 function persPickContact(email) {
@@ -15638,7 +16252,7 @@ function persSaveContact() {
 
 function persApplyTemplate(idxStr) {
   if (!idxStr) return;
-  const tmpl = _lazTemplates[parseInt(idxStr)];
+  const tmpl = lazTemplates[parseInt(idxStr)];
   if (!tmpl) return;
   const to = document.getElementById('pers-compose-to')?.value || '';
   document.getElementById('pers-compose-body').value = lazFillVariables(tmpl.body, {sender:to, sender_email:to, date:new Date().toLocaleDateString()});
@@ -16561,10 +17175,11 @@ function openQuickCompose(opts = {}) {
 
   rebuildContactPickers();
 
-  // Populate template picker from Laz templates
+  // Populate template picker from Laz templates — ensure loaded first
+  loadLazTemplates();
   const tp = document.getElementById('qc-template-picker');
   tp.innerHTML = '<option value="">📋 Use template…</option>' +
-    _lazTemplates.map((t, i) => `<option value="${i}">${escHtml(t.name)}</option>`).join('');
+    lazTemplates.map((t, i) => `<option value="${i}">${escHtml(t.name)}</option>`).join('');
 
   document.getElementById('quick-compose-modal').classList.remove('hidden');
   setTimeout(() => document.getElementById(opts.to ? 'qc-subject' : 'qc-to').focus(), 100);
@@ -16605,7 +17220,7 @@ function qcSaveContact() {
 
 function qcApplyTemplate(idxStr) {
   if (idxStr === '') return;
-  const tmpl = _lazTemplates[parseInt(idxStr)];
+  const tmpl = lazTemplates[parseInt(idxStr)];
   if (!tmpl) return;
   const to = document.getElementById('qc-to').value;
   const mockEm = { sender: to, sender_email: to, subject: document.getElementById('qc-subject').value, date: new Date().toLocaleDateString() };
@@ -18439,11 +19054,11 @@ window.inboxTab = function(tab) {
   document.querySelectorAll('#inbox-tabs .sec-tab').forEach(el => el.classList.remove('active'));
   const btn = document.getElementById('sec-tab-' + (tab === 'assistant' ? 'inbox-assistant' : tab));
   if (btn) btn.classList.add('active');
-  ['inbox-sub-assistant','inbox-sub-templates','inbox-sub-personal'].forEach(id => {
+  ['inbox-sub-assistant','inbox-sub-personal'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
-  const subMap = {assistant:'inbox-sub-assistant', templates:'inbox-sub-templates', personal:'inbox-sub-personal'};
+  const subMap = {assistant:'inbox-sub-assistant', personal:'inbox-sub-personal'};
   const sub = document.getElementById(subMap[tab]);
   if (sub) sub.classList.add('active');
   if (tab === 'personal' && typeof persRenderPanes === 'function') persRenderPanes();
@@ -18482,6 +19097,7 @@ window.navTo = function(section) {
     leads:      {panel:'panel-leads',      title:'Lead Capture', hasSrc:false},
     activities: {panel:'panel-activities', title:'Activities',   hasSrc:false},
     quotes:     {panel:'panel-quotes',     title:'Quotes',       hasSrc:false},
+    templates:  {panel:'panel-templates',  title:'Templates',    hasSrc:false},
     discuss:    {panel:'panel-discuss',    title:'Discuss',      hasSrc:false},
     support:    {panel:'panel-support',    title:'Support',      hasSrc:false},
     prospect:   {panel:'panel-prospect',   title:'Prospecting',  hasSrc:false},
@@ -18489,6 +19105,8 @@ window.navTo = function(section) {
     catchup:    {panel:'panel-catchup',    title:'Dormant Contacts',     hasSrc:false},
     vendor:     {panel:'panel-vendor',     title:'Vendor Outreach', hasSrc:false},
     docs:       {panel:'panel-docs',       title:'Documents',       hasSrc:false},
+    bounces:    {panel:'panel-bounces',     title:'Bounce Manager',  hasSrc:false},
+    help:       {panel:'panel-help',        title:'Help & Guide',    hasSrc:false},
   };
   if (!NAV_PANELS[section]) return;
   document.querySelectorAll('.sb-item').forEach(el => el.classList.remove('active'));
@@ -18730,6 +19348,10 @@ function navTo(section) {
   // Side effects
   if (section === 'reports') {
     setTimeout(() => { if (typeof lazDashboardLoad === 'function') lazDashboardLoad(); }, 200);
+  }
+  if (section === 'templates') {
+    if (typeof loadLazTemplates === 'function') loadLazTemplates();
+    if (typeof lazRenderTemplateList === 'function') lazRenderTemplateList();
   }
   if (section === 'activities') {
     // If already connected, refresh scan; if not, show connect tab
@@ -19607,21 +20229,18 @@ function inboxTab(tab) {
   if (btn) btn.classList.add('active');
 
   // Update sub-panels
-  ['inbox-sub-assistant','inbox-sub-templates','inbox-sub-personal'].forEach(id => {
+  ['inbox-sub-assistant','inbox-sub-personal'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
-  const subMap = { assistant: 'inbox-sub-assistant', templates: 'inbox-sub-templates', personal: 'inbox-sub-personal' };
+  const subMap = { assistant: 'inbox-sub-assistant', personal: 'inbox-sub-personal' };
   const sub = document.getElementById(subMap[tab]);
   if (sub) sub.classList.add('active');
 
   // Trigger personal inbox load if switching to personal
   if (tab === 'personal' && typeof persRenderPanes === 'function') persRenderPanes();
   // Load templates when switching to templates tab
-  if (tab === 'templates') {
-    if (typeof loadLazTemplates === 'function') loadLazTemplates();
-    if (typeof rebuildLazTemplateSelector === 'function') rebuildLazTemplateSelector();
-  }
+
 }
 
 // ── Activities sub-tab switcher ───────────────────────────────────────────
