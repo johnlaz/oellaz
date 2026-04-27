@@ -280,7 +280,7 @@
     flex-shrink: 0;
     background: var(--surface);
   }
-  .topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .topbar-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
   .topbar-section-title {
     font-family: 'DM Serif Display', serif;
     font-size: 16px; font-weight: 400;
@@ -315,7 +315,7 @@
   .tb-btn.primary:hover { background: var(--accent); color: var(--bg); }
 
   /* Source toggle pills */
-  .source-pills { display: flex; gap: 4px; }
+  .source-pills { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
   .src-pill {
     padding: 4px 10px;
     font-size: 11px;
@@ -834,6 +834,18 @@
         </svg>
       </div>
       <span class="sb-item-label">Quotes</span>
+    </div>
+
+    <div class="sb-item" id="nav-quotedesk" onclick="navTo('quotedesk')" title="Quote Desk — manual quote request handler">
+      <div class="sb-item-icon">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1.5" y="1.5" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M4 4.5h6M4 7h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+          <circle cx="10.5" cy="10.5" r="2.5" fill="var(--accent)"/>
+          <path d="M9.5 10.5h2M10.5 9.5v2" stroke="var(--surface)" stroke-width="1" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="sb-item-label">Quote Desk</span>
     </div>
 
     <div class="sb-item" id="nav-templates" onclick="navTo('templates')" title="Email Templates">
@@ -2109,6 +2121,110 @@ Support Team"></textarea>
     </div>
 
 
+    <!-- ── QUOTE DESK ───────────────────────────────────────────────────── -->
+    <div class="section-panel" id="panel-quotedesk">
+      <div class="section-scroll" style="padding:20px 24px">
+
+        <div style="margin-bottom:20px">
+          <div style="font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--text)">Quote Desk</div>
+          <div style="font-size:0.76rem;color:var(--muted);margin-top:3px">Paste a raw quote request — AI extracts contact info, drafts a professional response, and connects to Odoo</div>
+        </div>
+
+        <!-- Step 1: Paste raw request -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">1 · Paste the raw request</div>
+          <div class="card-subtitle" style="margin-bottom:10px">Copy-paste the email, text, or voicemail you received — contact info, requirements, anything</div>
+          <textarea id="qd-raw" style="width:100%;min-height:130px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-size:0.83rem;font-family:'DM Sans',sans-serif;line-height:1.7;resize:vertical;outline:none;box-sizing:border-box" placeholder="Hi, need a 40-ton crane and 2 lifts for a job in Tampa next month. Budget around 15k. Call me — Mike 813-555-0199"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="qdExtract()" id="qd-extract-btn" style="padding:8px 20px;font-size:0.83rem;gap:6px">
+              <svg width="12" height="12" viewBox="0 0 13 13" fill="none"><path d="M6.5 1l1 3L11 5.5l-3 1-1 3-1-3-3-1 3-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+              Extract &amp; Draft response
+            </button>
+            <button class="btn btn-ghost" onclick="qdReset()" style="padding:8px 14px;font-size:0.82rem;color:var(--muted)">Start over</button>
+            <span id="qd-status" style="font-size:0.78rem;color:var(--muted)"></span>
+          </div>
+        </div>
+
+        <!-- Step 2: Extracted contact (hidden until extracted) -->
+        <div id="qd-contact-card" class="card" style="display:none;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="card-title" style="margin:0">2 · Contact info</div>
+            <button class="btn btn-ghost" onclick="qdSearchOdoo()" id="qd-odoo-btn" style="padding:4px 12px;font-size:0.76rem;gap:4px">
+              <svg width="10" height="10" viewBox="0 0 11 11" fill="none"><circle cx="4.5" cy="4.5" r="3.5" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 7.5l2.5 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Find in Odoo
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Name</label>
+              <input type="text" id="qd-name" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Phone</label>
+              <input type="tel" id="qd-phone" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Email</label>
+              <input type="email" id="qd-email" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Company</label>
+              <input type="text" id="qd-company" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+          </div>
+          <div>
+            <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Project / Requirements</label>
+            <textarea id="qd-notes" style="width:100%;min-height:70px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-size:0.82rem;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;box-sizing:border-box"></textarea>
+          </div>
+          <!-- Odoo match result -->
+          <div id="qd-odoo-match" style="display:none;margin-top:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:0.78rem;color:var(--muted)"></div>
+        </div>
+
+        <!-- Step 3: Drafted response (hidden until extracted) -->
+        <div id="qd-response-card" class="card" style="display:none;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="card-title" style="margin:0">3 · Draft response</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <select id="qd-tone" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:0.76rem;outline:none;font-family:'DM Sans',sans-serif">
+                <option value="professional">Professional</option>
+                <option value="friendly">Friendly</option>
+                <option value="concise">Concise</option>
+                <option value="sales">Sales-focused</option>
+              </select>
+              <button class="btn btn-ghost" onclick="qdRegenerate()" style="padding:4px 12px;font-size:0.76rem">↻ Regenerate</button>
+            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Subject</label>
+            <input type="text" id="qd-subject" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+          </div>
+          <textarea id="qd-body" style="width:100%;min-height:220px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-size:0.83rem;font-family:'DM Sans',sans-serif;line-height:1.75;resize:vertical;outline:none;box-sizing:border-box"></textarea>
+        </div>
+
+        <!-- Step 4: Actions (hidden until extracted) -->
+        <div id="qd-actions" style="display:none">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-primary" onclick="qdSend()" style="padding:8px 18px;font-size:0.83rem;gap:5px">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 1l9 4.5L1 10V6.5l6-2-6-2V1z" fill="currentColor"/></svg>
+              Send email
+            </button>
+            <button class="btn btn-ghost" onclick="qdPushToOdoo()" id="qd-push-btn" style="padding:8px 16px;font-size:0.83rem;gap:5px">⬆ Push to Odoo</button>
+            <button class="btn btn-ghost" onclick="qdScheduleActivity()" style="padding:8px 14px;font-size:0.83rem;gap:4px">
+              <svg width="10" height="10" viewBox="0 0 11 11" fill="none"><rect x="1" y="2" width="9" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 1v2M4 1v2M1 5h9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              Schedule activity
+            </button>
+            <button class="btn btn-ghost" onclick="qdLogToContact()" style="padding:8px 14px;font-size:0.83rem;gap:4px" title="Post the draft response as an internal note on the Odoo contact">
+              📋 Log to contact
+            </button>
+            <button class="btn btn-ghost" onclick="qdCopy()" style="padding:8px 12px;font-size:0.83rem">Copy</button>
+          </div>
+          <div id="qd-action-status" style="font-size:0.79rem;color:var(--muted);margin-top:10px"></div>
+        </div>
+
+      </div>
+    </div>
+
+
     <!-- ── TEMPLATES ────────────────────────────────────────────────────── -->
     <div class="section-panel" id="panel-templates">
       <div style="display:flex;height:100%;overflow:hidden">
@@ -2394,7 +2510,7 @@ Support Team"></textarea>
         </div>
 
         <div style="text-align:center;font-size:0.72rem;color:var(--muted);padding:12px 0">
-          OEL Command v9.3 · Built by Lazzaro · Powered by Groq AI + Odoo 19
+          OEL Command v9.5 · Built by Lazzaro · Powered by Groq AI + Odoo 19
         </div>
 
       </div>
@@ -2504,7 +2620,7 @@ Support Team"></textarea>
           <div class="card-title" style="font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:6px">Dashboard</div>
           <div class="card-subtitle" style="margin-bottom:16px">Pipeline, opportunities, and team performance from Odoo.</div>
           <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px">
-            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v9.3</span>
+            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v9.5</span>
             <span style="font-size:0.68rem;color:var(--muted)">Built by Lazzaro</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
@@ -4029,6 +4145,22 @@ Thank you</textarea>
           <label>Customer Name</label>
           <input type="text" id="lm-name" placeholder="Full name">
         </div>
+        <!-- Odoo contact override -->
+        <div class="modal-field" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+          <label style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span>Link to Odoo contact</span>
+            <span id="lm-contact-status" style="font-size:0.71rem;color:var(--muted);font-weight:400">Leave blank to auto-find or create</span>
+          </label>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="lm-contact-search" placeholder="Search by name or email…"
+              style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:0.79rem;outline:none;font-family:'DM Sans',sans-serif"
+              oninput="lmSearchContact(this.value)">
+            <button onclick="lmClearContact()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;padding:4px 8px;font-size:0.8rem" title="Clear">✕</button>
+          </div>
+          <div id="lm-contact-results" style="display:none;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;max-height:120px;overflow-y:auto"></div>
+          <div id="lm-contact-selected" style="display:none;margin-top:6px;font-size:0.76rem;color:var(--success)"></div>
+        </div>
+
         <div class="modal-field">
           <label>Email</label>
           <input type="email" id="lm-email" placeholder="customer@email.com">
@@ -7858,6 +7990,415 @@ function lazInsertVar(varStr) {
 }
 
 // Also trigger template load when navTo('templates') is called
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── LEAD MODAL — contact search / override ─────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+window._lmOverridePartner = null;
+
+async function lmSearchContact(query) {
+  const results = document.getElementById('lm-contact-results');
+  const status  = document.getElementById('lm-contact-status');
+  if (!results) return;
+  query = (query || '').trim();
+  if (!query || query.length < 2) { results.style.display = 'none'; return; }
+  if (!odooUid) { if (status) status.textContent = 'Connect to Odoo first'; return; }
+  results.style.display = 'block';
+  results.innerHTML = '<div style="padding:6px 10px;font-size:0.76rem;color:var(--muted)">Searching…</div>';
+  try {
+    const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
+      [[['active','=',true],'|',['name','ilike',query],['email','ilike',query]]],
+      { fields: ['id','name','email','phone','company_name'], limit: 8, order: 'name asc' }
+    );
+    if (!partners || !partners.length) {
+      results.innerHTML = '<div style="padding:6px 10px;font-size:0.76rem;color:var(--muted)">No contacts found — will create new on push</div>';
+      return;
+    }
+    results._partners = partners;
+    results.innerHTML = partners.map(function(p, i) {
+      const co = p.company_name ? ' <span style="color:var(--muted)">— ' + escHtml(p.company_name) + '</span>' : '';
+      const em = p.email ? ' <span style="font-family:monospace;font-size:0.71rem;color:var(--muted)">' + escHtml(p.email) + '</span>' : '';
+      return '<div onclick="lmPickContact(' + i + ')" style="padding:7px 10px;cursor:pointer;font-size:0.79rem;color:var(--text);border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'
+        + escHtml(p.name) + co + em + '</div>';
+    }).join('');
+  } catch(e) {
+    results.innerHTML = '<div style="padding:6px 10px;font-size:0.76rem;color:var(--danger)">Error: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+function lmPickContact(i) {
+  const results  = document.getElementById('lm-contact-results');
+  const selected = document.getElementById('lm-contact-selected');
+  const status   = document.getElementById('lm-contact-status');
+  const search   = document.getElementById('lm-contact-search');
+  const emailEl  = document.getElementById('lm-email');
+  const phoneEl  = document.getElementById('lm-phone');
+  const p = (results._partners || [])[i];
+  if (!p) return;
+  window._lmOverridePartner = p;
+  if (emailEl && !emailEl.value && p.email) emailEl.value = p.email;
+  if (phoneEl && !phoneEl.value && p.phone) phoneEl.value = p.phone;
+  if (selected) { selected.style.display = 'block'; selected.textContent = '✓ Linking to: ' + p.name + (p.email ? ' (' + p.email + ')' : ''); }
+  if (status)   status.textContent = 'Override set';
+  if (results)  results.style.display = 'none';
+  if (search)   search.value = '';
+}
+
+function lmClearContact() {
+  window._lmOverridePartner = null;
+  const els = ['lm-contact-results','lm-contact-selected'];
+  els.forEach(function(id) { const el = document.getElementById(id); if(el){el.style.display='none';el.textContent='';} });
+  const st = document.getElementById('lm-contact-status');
+  if (st) st.textContent = 'Leave blank to auto-find or create';
+  const se = document.getElementById('lm-contact-search');
+  if (se) se.value = '';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── QUOTE DESK ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+let _qdExtracted = null; // stores extracted contact + notes
+
+function qdShow(step) {
+  ['qd-contact-card','qd-response-card','qd-actions'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  if (step >= 2) { const el = document.getElementById('qd-contact-card');    if(el) el.style.display = 'block'; }
+  if (step >= 3) { const el = document.getElementById('qd-response-card');   if(el) el.style.display = 'block'; }
+  if (step >= 4) { const el = document.getElementById('qd-actions');         if(el) el.style.display = 'block'; }
+}
+
+function qdSetStatus(msg, color) {
+  const el = document.getElementById('qd-status');
+  if (!el) return;
+  el.style.color = color || 'var(--muted)';
+  el.innerHTML = msg;
+}
+
+async function qdCallGroq(prompt) {
+  const groqKey = document.getElementById('gemini-key')?.value?.trim();
+  const model   = document.getElementById('gemini-model')?.value || 'llama-3.3-70b-versatile';
+  if (!groqKey) throw new Error('Groq API key required — enter it in Settings');
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+    body: JSON.stringify({ model, max_tokens: 600, temperature: 0,
+      messages: [{ role: 'user', content: prompt }] }),
+    signal: AbortSignal.timeout(25000)
+  });
+  if (!r.ok) throw new Error('Groq HTTP ' + r.status);
+  const d = await r.json();
+  return (d.choices?.[0]?.message?.content || '').trim();
+}
+
+async function qdExtract() {
+  const raw = (document.getElementById('qd-raw')?.value || '').trim();
+  if (!raw) { alert('Paste a quote request first'); return; }
+  const btn = document.getElementById('qd-extract-btn');
+  if (btn) btn.disabled = true;
+  qdSetStatus('<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Extracting contact info…');
+
+  try {
+    // Call 1: extract contact fields
+    const extractPrompt =
+      'Extract contact information from this message. Return ONLY a JSON object with these exact keys:\n' +
+      '"name" (full name, or empty string), "phone" (phone number, or empty string), ' +
+      '"email" (email address, or empty string), "company" (company name, or empty string), ' +
+      '"notes" (requirements, project details, budget, timeline — copy verbatim, do not shorten).\n' +
+      'Raw JSON only, no markdown, no explanation.\n\n' +
+      'MESSAGE:\n' + raw;
+
+    qdSetStatus('<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Extracting contact info…');
+    const extractRaw = await qdCallGroq(extractPrompt);
+    let fields;
+    try {
+      const cleaned = extractRaw.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');
+      fields = JSON.parse(cleaned);
+    } catch(e) {
+      const m = extractRaw.match(/\{[\s\S]+\}/);
+      fields = m ? JSON.parse(m[0]) : { name:'', phone:'', email:'', company:'', notes: raw };
+    }
+    _qdExtracted = fields;
+
+    // Populate contact fields
+    document.getElementById('qd-name').value    = fields.name    || '';
+    document.getElementById('qd-phone').value   = fields.phone   || '';
+    document.getElementById('qd-email').value   = fields.email   || '';
+    document.getElementById('qd-company').value = fields.company || '';
+    document.getElementById('qd-notes').value   = fields.notes   || '';
+
+    qdShow(2);
+    qdSetStatus('<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Drafting response…');
+
+    // Call 2: draft response
+    await qdDraftResponse();
+
+    qdShow(4);
+    qdSetStatus('✓ Done — review, edit, then send', 'var(--success)');
+    if (odooUid) qdSearchOdoo();
+
+  } catch(e) {
+    qdSetStatus('Error: ' + e.message, 'var(--danger)');
+  }
+  if (btn) btn.disabled = false;
+}
+
+async function qdDraftResponse() {
+  const name    = document.getElementById('qd-name')?.value  || '';
+  const notes   = document.getElementById('qd-notes')?.value || '';
+  const company = document.getElementById('qd-company')?.value || '';
+  const tone    = document.getElementById('qd-tone')?.value  || 'professional';
+  const raw     = document.getElementById('qd-raw')?.value   || '';
+  const tones   = { professional:'professional and polished', friendly:'friendly and warm',
+                    concise:'short and direct', sales:'persuasive and sales-focused' };
+
+  const responsePrompt =
+    'Write a professional email response to this quote request. ' +
+    'Tone: ' + (tones[tone]||'professional') + '.\n' +
+    'Customer name: ' + (name||'(unknown)') + '.\n' +
+    (company ? 'Company: ' + company + '.\n' : '') +
+    'Their request / requirements:\n' + (notes||raw) + '\n\n' +
+    'Rules: acknowledge their request specifically, express interest, ask any clarifying questions needed, ' +
+    'offer to provide a formal quote, sign off professionally. ' +
+    'Do NOT invent prices or specific equipment availability. ' +
+    'Plain text only, no markdown, no HTML.';
+
+  const subjectPrompt =
+    'Write a short, professional email subject line for a response to this quote request (max 10 words):\n' +
+    (notes||raw) + '\nOutput the subject line only.';
+
+  const [body, subject] = await Promise.all([
+    qdCallGroq(responsePrompt),
+    qdCallGroq(subjectPrompt)
+  ]);
+
+  const subjectEl = document.getElementById('qd-subject');
+  const bodyEl    = document.getElementById('qd-body');
+  if (subjectEl) subjectEl.value = subject.replace(/^["']|["']$/g,'');
+  if (bodyEl)    bodyEl.value    = body;
+}
+
+async function qdRegenerate() {
+  const btn = document.getElementById('qd-extract-btn');
+  qdSetStatus('<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Regenerating…');
+  try {
+    await qdDraftResponse();
+    qdSetStatus('✓ Regenerated', 'var(--success)');
+  } catch(e) {
+    qdSetStatus('Error: ' + e.message, 'var(--danger)');
+  }
+}
+
+async function qdSearchOdoo() {
+  if (!odooUid) return;
+  const name  = document.getElementById('qd-name')?.value  || '';
+  const email = document.getElementById('qd-email')?.value || '';
+  const phone = document.getElementById('qd-phone')?.value || '';
+  const matchEl = document.getElementById('qd-odoo-match');
+  if (!matchEl) return;
+
+  const queries = [];
+  if (email) queries.push(['email','ilike',email]);
+  if (phone) queries.push(['phone','ilike',phone]);
+  if (name)  queries.push(['name','ilike',name]);
+  if (!queries.length) return;
+
+  const domain = queries.length === 1
+    ? [queries[0]]
+    : (queries.length === 2 ? ['|', queries[0], queries[1]] : ['|','|', queries[0], queries[1], queries[2]]);
+
+  try {
+    const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
+      [[...domain, ['active','=',true]]],
+      { fields: ['id','name','email','phone','company_name'], limit: 3 }
+    );
+    if (partners && partners.length) {
+      matchEl.style.display = 'block';
+      matchEl.innerHTML = '<strong style="color:var(--accent)">Found in Odoo:</strong> ' +
+        partners.map(function(p) {
+          return '<span style="margin-left:8px">' + escHtml(p.name) +
+            (p.email ? ' · ' + escHtml(p.email) : '') +
+            ' <button onclick="qdUseContact(' + p.id + ',\'' + escHtml(p.name).replace(/'/g,"\\'") + '\')" style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:0.72rem;color:var(--accent);cursor:pointer;margin-left:4px">Use</button></span>';
+        }).join('');
+      window._qdOdooPartnerId = partners[0].id;
+      window._qdOdooPartnerName = partners[0].name;
+    } else {
+      matchEl.style.display = 'block';
+      matchEl.innerHTML = '<span style="color:var(--muted)">No existing Odoo contact found — will create new on push</span>';
+      window._qdOdooPartnerId = null;
+    }
+  } catch(e) { /* silent */ }
+}
+
+function qdUseContact(id, name) {
+  window._qdOdooPartnerId   = id;
+  window._qdOdooPartnerName = name;
+  const matchEl = document.getElementById('qd-odoo-match');
+  if (matchEl) matchEl.innerHTML = '<span style="color:var(--success)">✓ Will use: ' + escHtml(name) + '</span>';
+}
+
+async function qdSend() {
+  const to      = document.getElementById('qd-email')?.value?.trim();
+  const subject = document.getElementById('qd-subject')?.value?.trim();
+  const body    = document.getElementById('qd-body')?.value?.trim();
+  if (!to) { alert('No email address — add one in the contact section'); return; }
+  if (typeof openQuickCompose === 'function') {
+    openQuickCompose({ to, subject, body });
+  } else {
+    window.open('mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject||'') + '&body=' + encodeURIComponent(body||''));
+  }
+}
+
+async function qdPushToOdoo() {
+  if (!odooUid) { alert('Connect to Odoo first (Settings)'); return; }
+  const name    = document.getElementById('qd-name')?.value?.trim()    || 'Unknown';
+  const email   = document.getElementById('qd-email')?.value?.trim()   || '';
+  const phone   = document.getElementById('qd-phone')?.value?.trim()   || '';
+  const company = document.getElementById('qd-company')?.value?.trim() || '';
+  const notes   = document.getElementById('qd-notes')?.value?.trim()   || '';
+  const subject = document.getElementById('qd-subject')?.value?.trim() || '';
+  const body    = document.getElementById('qd-body')?.value?.trim()    || '';
+  const btn     = document.getElementById('qd-push-btn');
+  const statusEl = document.getElementById('qd-action-status');
+
+  if (btn) btn.disabled = true;
+  if (statusEl) statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Pushing to Odoo…';
+
+  try {
+    // Find or create partner
+    let partnerId = window._qdOdooPartnerId || null;
+    if (!partnerId) {
+      const pVals = { name };
+      if (email)   pVals.email   = email;
+      if (phone)   pVals.phone   = phone;
+      if (company) pVals.company_name = company;
+      partnerId = await odooExecute(odooUid, 'res.partner', 'create', [pVals]);
+    }
+    // Create opportunity
+    const leadVals = {
+      name:        subject || 'Quote request: ' + name,
+      type:        'opportunity',
+      partner_id:  partnerId,
+      description: notes,
+    };
+    if (email) leadVals.email_from = email;
+    if (phone) leadVals.phone      = phone;
+    const leadId = await odooExecute(odooUid, 'crm.lead', 'create', [leadVals]);
+    // Log the drafted response as a chatter note
+    if (body) {
+      await odooExecute(odooUid, 'crm.lead', 'message_post', [[leadId]], {
+        body: '<p><strong>Quote Desk draft response:</strong></p><p>' + escHtml(body).replace(/\n/g,'<br>') + '</p>',
+        message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+      });
+    }
+    // Log draft to contact's internal note as well
+    if (body && partnerId) {
+      await odooExecute(odooUid, 'res.partner', 'message_post', [[partnerId]], {
+        body: '<p><strong>Quote Desk — draft response sent:</strong></p><p>' + escHtml(body).replace(/\n/g,'<br>') + '</p>',
+        message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+      });
+    }
+
+    window._qdOdooPartnerId = partnerId;
+    window._qdOdooLeadId    = leadId;
+    if (statusEl) { statusEl.style.color='var(--success)'; statusEl.textContent = '✓ Pushed to Odoo — lead created for ' + name; }
+  } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent = 'Error: ' + e.message; }
+  }
+  if (btn) btn.disabled = false;
+}
+
+async function qdScheduleActivity() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const statusEl = document.getElementById('qd-action-status');
+
+  // Ensure lead exists in Odoo first
+  if (!window._qdOdooLeadId) {
+    if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.innerHTML='<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Pushing to Odoo first…'; }
+    await qdPushToOdoo();
+    if (!window._qdOdooLeadId) return; // push failed
+  }
+
+  if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.innerHTML='<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Scheduling activity…'; }
+
+  try {
+    // loadActivityTypes populates _activityTypes as side-effect — call then read global
+    await loadActivityTypes();
+    if (!_activityTypes || !_activityTypes.length) {
+      throw new Error('No activity types found in Odoo');
+    }
+    const typeId   = _activityTypes[0].id;
+    const deadline = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const name     = document.getElementById('qd-name')?.value?.trim() || 'Quote request';
+
+    await odooExecute(odooUid, 'mail.activity', 'create', [{
+      res_model:        'crm.lead',
+      res_id:           window._qdOdooLeadId,
+      activity_type_id: typeId,
+      summary:          'Follow up on quote request: ' + name,
+      date_deadline:    deadline,
+      user_id:          odooUid,
+    }]);
+    if (statusEl) { statusEl.style.color='var(--success)'; statusEl.textContent = '✓ Activity scheduled for tomorrow'; }
+  } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent = 'Error: ' + e.message; }
+  }
+}
+
+async function qdLogToContact() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const body    = document.getElementById('qd-body')?.value?.trim() || '';
+  const subject = document.getElementById('qd-subject')?.value?.trim() || '';
+  const statusEl = document.getElementById('qd-action-status');
+  if (!body) { alert('No response to log'); return; }
+
+  // Need a partner — push first if not done
+  if (!window._qdOdooPartnerId) {
+    if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.innerHTML='<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Pushing contact to Odoo first…'; }
+    await qdPushToOdoo();
+    if (!window._qdOdooPartnerId) return;
+  }
+
+  if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.innerHTML='<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Logging note…'; }
+  try {
+    await odooExecute(odooUid, 'res.partner', 'message_post', [[window._qdOdooPartnerId]], {
+      body: '<p><strong>' + escHtml(subject || 'Quote Desk draft response') + '</strong></p>'
+          + '<p>' + escHtml(body).replace(/\n/g, '<br>') + '</p>',
+      message_type: 'comment',
+      subtype_xmlid: 'mail.mt_note',
+    });
+    if (statusEl) { statusEl.style.color='var(--success)'; statusEl.textContent = '✓ Note logged to contact'; }
+  } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent = 'Error: ' + e.message; }
+  }
+}
+
+function qdCopy() {
+  const body = document.getElementById('qd-body')?.value || '';
+  navigator.clipboard.writeText(body).then(function() {
+    const statusEl = document.getElementById('qd-action-status');
+    if (statusEl) { statusEl.style.color='var(--success)'; statusEl.textContent = '✓ Copied to clipboard'; setTimeout(function(){statusEl.textContent='';},2000); }
+  });
+}
+
+function qdReset() {
+  const rawEl = document.getElementById('qd-raw');
+  if (rawEl) rawEl.value = '';
+  ['qd-name','qd-phone','qd-email','qd-company','qd-notes','qd-subject','qd-body'].forEach(function(id) {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  ['qd-contact-card','qd-response-card','qd-actions','qd-odoo-match'].forEach(function(id) {
+    const el = document.getElementById(id); if(el) el.style.display='none';
+  });
+  qdSetStatus('', '');
+  _qdExtracted = null;
+  window._qdOdooPartnerId = null;
+  window._qdOdooPartnerName = null;
+  window._qdOdooLeadId = null;
+}
+
+
 // ─── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   loadCredentials();
@@ -13077,10 +13618,17 @@ async function fetchLeads() {
       staticEl.textContent = `Groq extracting ${i+1} of ${leads.length}…`;
       try {
         const hint = lead.ai_hint ? `\n\nNote: ${lead.ai_hint}` : '';
+        const isFwd = /^(fwd?:|fw:)\s/i.test(lead.subject || '');
+        const fwdNote = isFwd
+          ? ' CRITICAL: This email was FORWARDED internally. The actual lead/customer is the person described ' +
+            'INSIDE the forwarded message body (below a line like "---------- Forwarded message ----------" or ' +
+            '"From: ..."). Do NOT use the internal employee who forwarded it as customer_name. ' +
+            'Extract the real customer from the forwarded content below the divider.' : '';
+
         const sysMsg = 'You are a lead data extractor for a rental company CRM. Read the email and return ONLY a JSON object ' +
           'with exactly these keys: "customer_name", "phone", "email", "notes", "agent". ' +
           'customer_name: full name of the caller or customer. Often ALL CAPS in call alerts (e.g. "JOHN SMITH"). ' +
-          'Ignore company names — extract the individual person name only. ' +
+          'Ignore company names — extract the individual person name only. ' + fwdNote + ' ' +
           'phone: primary phone number exactly as shown including area code. If multiple numbers, take the callback number. ' +
           'email: email address if present, else empty string. ' +
           'notes: copy the FULL call summary, inquiry details, or project description verbatim. Do not shorten. ' +
@@ -13226,7 +13774,7 @@ function renderLeadCards() {
           <!-- Header row -->
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px">
             <div style="min-width:0">
-              <div style="font-weight:500;font-size:0.92rem;color:var(--text);line-height:1.3">${escHtml(name)}</div>
+              <div style="font-weight:500;font-size:0.92rem;color:var(--text);line-height:1.3">${escHtml(name)}${/^(fwd?:|fw:)\s/i.test(lead.subject||'')?'<span style="font-size:0.65rem;padding:1px 7px;border-radius:10px;background:rgba(255,170,0,0.15);color:#ffaa00;border:1px solid rgba(255,170,0,0.35);margin-left:6px">⟳ Forwarded</span>':''}</div>
               <div style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap">
                 ${lead.spec_tag || lead.spec_name ? `<span class="spec-pill">${escHtml(lead.spec_tag || lead.spec_name)}</span>` : ''}
                 <span style="font-size:0.72rem;color:var(--muted)">${escHtml(lead.date || '')}</span>
@@ -13721,6 +14269,11 @@ function openLeadModal(idx) {
   document.getElementById('lm-notes').value   = f.notes   || f.project_details || lead.body_snippet || '';
   document.getElementById('lm-agent').value   = f.agent   || '';
 
+  window._lmOverridePartner = null;
+  const _cs = document.getElementById('lm-contact-search'); if(_cs) _cs.value='';
+  const _cr = document.getElementById('lm-contact-results'); if(_cr) _cr.style.display='none';
+  const _csel = document.getElementById('lm-contact-selected'); if(_csel){_csel.style.display='none';_csel.textContent='';}
+  const _cst = document.getElementById('lm-contact-status'); if(_cst) _cst.textContent='Leave blank to auto-find or create';
   document.getElementById('lm-dedup-msg').style.display = 'none';
   document.getElementById('lm-logging').style.display   = 'none';
   document.getElementById('lm-push-btn').disabled       = false;
@@ -13937,10 +14490,13 @@ async function pushLeadToOdoo() {
       return;
     }
 
-    // 1. Find or create res.partner
+    // 1. Find or create res.partner (use manual override if set)
     logEl.innerHTML = '<div class="dot spin"></div> Checking partner…';
     let partnerId = null;
-    if (emailV) {
+    if (window._lmOverridePartner && window._lmOverridePartner.id) {
+      partnerId = window._lmOverridePartner.id;
+      logEl.innerHTML = '<div class="dot spin"></div> Using: ' + escHtml(window._lmOverridePartner.name) + '…';
+    } else if (emailV) {
       const partners = await odooExecute(odooUid, 'res.partner', 'search',
         [[['email', '=', emailV]]], { limit: 1 }
       );
@@ -13952,7 +14508,7 @@ async function pushLeadToOdoo() {
       );
       if (partners && partners.length) partnerId = partners[0];
     }
-    if (!partnerId) {
+    if (!partnerId && !window._lmOverridePartner) {
       logEl.innerHTML = '<div class="dot spin"></div> Creating partner…';
       const pVals = { name: name || 'Unknown' };
       if (emailV) pVals.email = emailV;
@@ -19098,6 +19654,7 @@ window.navTo = function(section) {
     activities: {panel:'panel-activities', title:'Activities',   hasSrc:false},
     quotes:     {panel:'panel-quotes',     title:'Quotes',       hasSrc:false},
     templates:  {panel:'panel-templates',  title:'Templates',    hasSrc:false},
+    quotedesk:  {panel:'panel-quotedesk',  title:'Quote Desk',   hasSrc:false},
     discuss:    {panel:'panel-discuss',    title:'Discuss',      hasSrc:false},
     support:    {panel:'panel-support',    title:'Support',      hasSrc:false},
     prospect:   {panel:'panel-prospect',   title:'Prospecting',  hasSrc:false},
