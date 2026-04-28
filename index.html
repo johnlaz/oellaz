@@ -2790,7 +2790,7 @@ Support Team"></textarea>
               </div>
               <div class="field">
                 <label>Search by name / company</label>
-                <input type="text" id="cu-contact-search" placeholder="e.g. Acme Corp">
+                <input type="text" id="cu-contact-search" placeholder="Name, company, or reference #">
               </div>
               <div class="field">
                 <label>Exclude tag (optional)</label>
@@ -8209,8 +8209,9 @@ async function qdSearchOdoo() {
     : (queries.length === 2 ? ['|', queries[0], queries[1]] : ['|','|', queries[0], queries[1], queries[2]]);
 
   try {
+    const domainFinal = [...domain, ['active','=',true]];
     const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
-      [[...domain, ['active','=',true]]],
+      [domainFinal],
       { fields: ['id','name','email','phone','company_name'], limit: 3 }
     );
     if (partners && partners.length) {
@@ -20118,29 +20119,38 @@ async function cuScanContacts() {
     cutoff.setDate(cutoff.getDate() - days);
     const cutoffStr = cutoff.toISOString().split('T')[0];
 
-    // Build contact domain
-    const domain = [['active','=',true]];
-    if (type === 'customer') domain.push(['customer_rank','>',0]);
+    // Build contact domain — only use STORED fields in domain (Odoo 19)
+    // opportunity_count and activity_ids are computed/relational — filter in JS after fetch
+    const domain = [['active','=',true], ['is_company','=',false]];
+    if (type === 'customer')  domain.push(['customer_rank','>',0]);
     else if (type === 'supplier') domain.push(['supplier_rank','>',0]);
-    else if (type !== 'all') {
-      // Default: customers or leads (has customer rank OR has lead/opp)
-      domain.push(['|',['customer_rank','>',0],['opportunity_count','>',0]]);
-    }
+    // 'all' and default: no rank filter — fetch all and let JS filter by activity/date
     if (userId) domain.push(['user_id','=',userId]);
-    if (search) domain.push(['|',['name','ilike',search],['company_name','ilike',search]]);
-
-    // Push date and activity filters into Odoo query directly
-    domain.push(['activity_ids','=',false]);
+    if (search) {
+      // Search name, company, AND ref — all stored fields, safe for Odoo 19 domain
+      domain.push('|', '|', ['name','ilike',search], ['company_name','ilike',search], ['ref','ilike',search]);
+    }
+    // write_date is stored — safe to filter in domain
     domain.push(['write_date','<=',cutoffStr + ' 23:59:59']);
+    // NOTE: activity_ids filter removed from domain — computed relation unreliable in Odoo 19
+    // We fetch a larger set and filter activity_ids in JS below
 
     const contacts = await odooExecute(odooUid, 'res.partner', 'search_read',
       [domain],
-      { fields: ['id','name','email','phone','company_name','user_id','customer_rank',
-                 'opportunity_count','activity_ids','write_date','category_id'], limit: 200, order: 'write_date asc' }
+      { fields: ['id','name','email','phone','company_name','ref','user_id','customer_rank',
+                 'supplier_rank','activity_ids','write_date','category_id','is_company'], limit: 200, order: 'write_date asc' }
     );
 
-    // Belt-and-suspenders: confirm no activities (Odoo 19 relational filter can be loose)
-    const dormant = (contacts||[]).filter(c => {
+    // JS filters — applied after fetch since these fields are computed/relational in Odoo 19
+    let filtered = contacts || [];
+
+    // Type filter in JS for default mode (customer OR supplier rank > 0)
+    if (type === '' || type === 'default') {
+      filtered = filtered.filter(c => (c.customer_rank > 0) || (c.supplier_rank > 0));
+    }
+
+    // Activity filter: only keep contacts with NO scheduled activities
+    const dormant = filtered.filter(c => {
       return !c.activity_ids || c.activity_ids.length === 0;
     });
 
@@ -20163,6 +20173,7 @@ async function cuScanContacts() {
       description:  '',
       opportunity_count: c.opportunity_count || 0,
       customer_rank: c.customer_rank || 0,
+      ref:          c.ref || '',
       _isContact:   true,
       email_from:   c.email || '',   // alias so send/log code works uniformly
       _selected:    false,
@@ -20362,7 +20373,7 @@ function cuRenderResults() {
         <div style="flex:1;min-width:0">
           <div style="font-size:0.88rem;font-weight:500;color:var(--text);margin-bottom:3px">${name}${wasSent ? ' <span style="font-size:0.65rem;padding:1px 6px;border-radius:10px;background:rgba(80,200,120,0.15);color:var(--success);border:1px solid rgba(80,200,120,0.3)">Sent</span>' : ''}</div>
           <div style="font-size:0.75rem;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap">
-            ${lead._isContact ? (lead.company_name ? `<span>${escHtml(lead.company_name)}</span>` : '') : (partner ? `<span>${partner}</span>` : '')}
+            ${lead._isContact ? (lead.company_name ? `<span>${escHtml(lead.company_name)}</span>` : '') + (lead.ref ? ` <span style="font-family:monospace;font-size:0.71rem;color:var(--muted);opacity:0.8">#${escHtml(lead.ref)}</span>` : '') : (partner ? `<span>${partner}</span>` : '')}
             ${lead._isContact ? (lead.opportunity_count > 0 ? `<span style="color:var(--warning)">${lead.opportunity_count} opp${lead.opportunity_count!==1?'s':''}</span>` : '<span style="color:var(--muted)">No open opps</span>') : (stage ? `<span class="spec-pill">${stage}</span>` : '')}
             ${rep ? `<span>Rep: ${rep}</span>` : (lead._isContact ? '<span style="color:var(--danger)">Unassigned</span>' : '')}
             ${rev && !lead._isContact ? `<span style="color:var(--accent)">${rev}</span>` : ''}
