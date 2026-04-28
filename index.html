@@ -496,9 +496,8 @@
   .stat-value.danger { color: var(--danger); }
 
   /* ── Section content tabs (within a panel) ── */
-  .sub-panel { display: none; }
-  .sub-panel.active { display: block; }
-  #proj-sub-ai.active { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+  .sub-panel { display: none; overflow: hidden; }
+  .sub-panel.active { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 
   /* ── Preserve all v4 component styles ── */
   .hidden { display: none !important; }
@@ -837,7 +836,16 @@
       <span class="sb-item-label">Quotes</span>
     </div>
 
-    <div class="sb-item" id="nav-quotedesk" onclick="navTo('quotedesk')" title="Quote Desk — manual quote request handler">
+    <div class="sb-item" id="nav-smartbuilder" onclick="navTo('smartbuilder')" title="Smart Builder — AI-powered quote builder from raw requests">
+      <div class="sb-item-icon">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M7 1l1.2 3.6L12 6l-3.8 1.2L7 11l-1.2-3.8L2 6l3.8-1.4z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="sb-item-label">Smart Builder</span>
+    </div>
+
+    <div class="sb-item" id="nav-quotedesk" onclick="navTo('quotedesk')" title="Request Desk — manual quote request handler">
       <div class="sb-item-icon">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <rect x="1.5" y="1.5" width="11" height="11" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
@@ -846,7 +854,7 @@
           <path d="M9.5 10.5h2M10.5 9.5v2" stroke="var(--surface)" stroke-width="1" stroke-linecap="round"/>
         </svg>
       </div>
-      <span class="sb-item-label">Quote Desk</span>
+      <span class="sb-item-label">Request Desk</span>
     </div>
 
     <div class="sb-item" id="nav-projects" onclick="navTo('projects')" title="Projects &amp; Tasks">
@@ -1401,7 +1409,6 @@
         </div>
         </div><!-- end hidden original content -->
       </div>
-    </div>
 
     <!-- ── LEAD CAPTURE ──────────────────────────────────────────────────── -->
     <div class="section-panel" id="panel-leads">
@@ -1728,8 +1735,10 @@
 
     <!-- ── QUOTES ────────────────────────────────────────────────────────── -->
     <div class="section-panel" id="panel-quotes">
-      <div class="section-scroll">
-    <div id="laz-quotation" style="padding:20px 24px">
+
+      <div id="qb-sub-builder" class="sub-panel active" style="display:flex;flex-direction:column;height:100%;overflow:hidden">
+        <div class="section-scroll">
+          <div id="laz-quotation" style="padding:20px 24px">
 
       <!-- Header -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
@@ -1828,10 +1837,105 @@
         <button onclick="qbClear()" title="Clear all items from the quote" class="btn btn-ghost" style="padding:9px 14px;font-size:0.84rem">Clear</button>
         <div id="qb-status" style="font-size:0.8rem;flex:1;min-width:0"></div>
       </div>
-    </div>
-      </div>
-    </div>
+    </div><!-- end laz-quotation -->
+      </div><!-- end section-scroll -->
+    </div><!-- end qb-sub-builder -->
 
+    </div><!-- end panel-quotes -->
+
+    <!-- ── SMART BUILDER ──────────────────────────────────────────────────── -->
+    <div class="section-panel" id="panel-smartbuilder">
+      <div class="section-scroll" style="padding:20px 24px">
+
+        <div style="margin-bottom:20px">
+          <div style="font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--text)">Smart Builder</div>
+          <div style="font-size:0.76rem;color:var(--muted);margin-top:3px">Paste any quote request — AI extracts customer, dates, venue, and equipment. Products are matched against your Odoo rental catalog. Review and adjust before pushing to the Quote Builder.</div>
+        </div>
+
+        <!-- Paste area -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-title">Paste raw request</div>
+          <textarea id="qsp-raw" style="width:100%;min-height:130px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-size:0.83rem;font-family:'DM Sans',sans-serif;line-height:1.7;resize:vertical;outline:none;box-sizing:border-box" placeholder="Paste the email, text, or message here — include any dates, venue name, location, and equipment mentions…"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="qspExtract()" id="qsp-extract-btn" style="padding:8px 20px;font-size:0.83rem;gap:5px">
+              <svg width="12" height="12" viewBox="0 0 13 13" fill="none"><path d="M6.5 1l1 3L11 5.5l-3 1-1 3-1-3-3-1 3-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+              Extract &amp; Match
+            </button>
+            <button class="btn btn-ghost" onclick="qspReset()" style="padding:8px 14px;font-size:0.82rem;color:var(--muted)">Clear</button>
+            <span id="qsp-status" style="font-size:0.78rem;color:var(--muted)"></span>
+          </div>
+        </div>
+
+        <!-- Extracted fields -->
+        <div id="qsp-fields-card" class="card" style="display:none;margin-bottom:14px">
+          <div class="card-title" style="margin-bottom:12px">Extracted details — review &amp; edit</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Customer name</label>
+              <input type="text" id="qsp-customer" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Phone</label>
+              <input type="text" id="qsp-phone" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Email</label>
+              <input type="email" id="qsp-email" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Company</label>
+              <input type="text" id="qsp-company" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Event / rental date</label>
+              <input type="date" id="qsp-event-date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+            <div>
+              <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Return / strike date</label>
+              <input type="date" id="qsp-return-date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+            </div>
+          </div>
+          <div style="margin-bottom:10px">
+            <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Venue / delivery address</label>
+            <input type="text" id="qsp-venue" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;box-sizing:border-box;font-family:'DM Sans',sans-serif">
+          </div>
+          <div>
+            <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Notes / requirements</label>
+            <textarea id="qsp-notes" style="width:100%;min-height:60px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-size:0.82rem;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;box-sizing:border-box"></textarea>
+          </div>
+        </div>
+
+        <!-- Equipment match results -->
+        <div id="qsp-equipment-card" class="card" style="display:none;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div class="card-title" style="margin:0">Equipment — matched to catalog</div>
+            <span id="qsp-match-summary" style="font-size:0.74rem;color:var(--muted)"></span>
+          </div>
+          <div id="qsp-equipment-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+
+        <!-- Odoo template selector + Build quote action -->
+        <div id="qsp-build-card" style="display:none;padding-bottom:24px">
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <label style="font-size:0.74rem;color:var(--muted);white-space:nowrap">Odoo rental template:</label>
+              <select id="qsp-odoo-template" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:0.8rem;outline:none;font-family:'DM Sans',sans-serif">
+                <option value="">— None (blank quote) —</option>
+              </select>
+              <button onclick="qspLoadOdooTemplates()" class="btn btn-ghost" style="padding:5px 12px;font-size:0.77rem">Load templates</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="qspBuildQuote()" style="padding:9px 22px;font-size:0.84rem;gap:6px">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 10V8l6-6 2 2-6 6H2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Build quote
+            </button>
+            <span style="font-size:0.75rem;color:var(--muted)">Switches to Quote Builder with all fields pre-filled — review, adjust quantities, then push to Odoo.</span>
+          </div>
+        </div>
+
+      </div><!-- end section-scroll -->
+    </div><!-- end panel-smartbuilder -->
     <!-- ── DISCUSS ───────────────────────────────────────────────────────── -->
     <div class="section-panel" id="panel-discuss">
       <div class="section-scroll">
@@ -2138,7 +2242,7 @@ Support Team"></textarea>
       <div class="section-scroll" style="padding:20px 24px">
 
         <div style="margin-bottom:20px">
-          <div style="font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--text)">Quote Desk</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--text)">Request Desk</div>
           <div style="font-size:0.76rem;color:var(--muted);margin-top:3px">Paste a raw quote request — AI extracts contact info, drafts a professional response, and connects to Odoo</div>
         </div>
 
@@ -2634,9 +2738,9 @@ Support Team"></textarea>
           </div>
         </div>
 
-        <!-- Quote Desk -->
+        <!-- Request Desk -->
         <div class="card" style="margin-bottom:14px">
-          <div class="card-title">📝 Quote Desk</div>
+          <div class="card-title">📝 Request Desk</div>
           <div style="font-size:0.82rem;color:var(--muted);line-height:1.8">
             <p style="margin:0 0 4px">Paste any vague quote request — AI extracts contact info and drafts a TRSAV-style response with clarifying questions (event date, venue, indoor/outdoor, audience size, AV needs, budget).</p>
             <p style="margin:0 0 4px"><strong style="color:var(--text)">Custom AI prompt:</strong> Click "Customize AI response prompt" to edit and save your own prompt. Blank = use TRSAV default. Stored in localStorage.</p>
@@ -2719,7 +2823,7 @@ Support Team"></textarea>
         </div>
 
         <div style="text-align:center;font-size:0.72rem;color:var(--muted);padding:12px 0">
-          OEL Command v10.0 · Built by Lazzaro · Powered by Groq AI + Odoo 19
+          OEL Command v10.1 · Built by Lazzaro · Powered by Groq AI + Odoo 19
         </div>
 
       </div>
@@ -2829,7 +2933,7 @@ Support Team"></textarea>
           <div class="card-title" style="font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:6px">Dashboard</div>
           <div class="card-subtitle" style="margin-bottom:16px">Pipeline, opportunities, and team performance from Odoo.</div>
           <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px">
-            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v10.0</span>
+            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v10.1</span>
             <span style="font-size:0.68rem;color:var(--muted)">Built by Lazzaro</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
@@ -3395,7 +3499,7 @@ Thank you</textarea>
     </div>
 
   </div><!-- end #content-area -->
-<!-- end #main -->
+</div><!-- end #main -->
 
 <!-- ── Quick Nav Palette ──────────────────────────────────────────────────── -->
 <div class="nav-palette hidden" id="nav-palette" onclick="closeNavPalette(event)">
@@ -8360,7 +8464,7 @@ async function qdDraftResponse() {
   const raw     = document.getElementById('qd-raw')?.value     || '';
   const customPrompt = (localStorage.getItem('oel_qd_prompt') || '').trim();
 
-  // Default TRSAV AV rental prompt — user can override in Quote Desk settings
+  // Default TRSAV AV rental prompt — user can override in Request Desk settings
   const defaultPrompt =
     'You are a sales assistant for TRSAV, a professional AV and technology rental company. ' +
     'We rent audio-visual equipment, staging, lighting, microphones, projectors, screens, ' +
@@ -8531,14 +8635,14 @@ async function qdPushToOdoo() {
     // Log the drafted response as a chatter note
     if (body) {
       await odooExecute(odooUid, 'crm.lead', 'message_post', [[leadId]], {
-        body: '<p><strong>Quote Desk draft response:</strong></p><p>' + escHtml(body).replace(/\n/g,'<br>') + '</p>',
+        body: '<p><strong>Request Desk draft response:</strong></p><p>' + escHtml(body).replace(/\n/g,'<br>') + '</p>',
         message_type: 'comment', subtype_xmlid: 'mail.mt_note',
       });
     }
     // Log draft to contact's internal note as well
     if (body && partnerId) {
       await odooExecute(odooUid, 'res.partner', 'message_post', [[partnerId]], {
-        body: '<p><strong>Quote Desk — draft response sent:</strong></p><p>' + escHtml(body).replace(/\n/g,'<br>') + '</p>',
+        body: '<p><strong>Request Desk — draft response sent:</strong></p><p>' + escHtml(body).replace(/\n/g,'<br>') + '</p>',
         message_type: 'comment', subtype_xmlid: 'mail.mt_note',
       });
     }
@@ -8606,7 +8710,7 @@ async function qdLogToContact() {
   if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.innerHTML='<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Logging note…'; }
   try {
     await odooExecute(odooUid, 'res.partner', 'message_post', [[window._qdOdooPartnerId]], {
-      body: '<p><strong>' + escHtml(subject || 'Quote Desk draft response') + '</strong></p>'
+      body: '<p><strong>' + escHtml(subject || 'Request Desk draft response') + '</strong></p>'
           + '<p>' + escHtml(body).replace(/\n/g, '<br>') + '</p>',
       message_type: 'comment',
       subtype_xmlid: 'mail.mt_note',
@@ -9577,6 +9681,423 @@ async function ptmAIRewrite() {
 function ptmPickRewrite(text) {
   document.getElementById('ptm-name').value = text;
   document.getElementById('ptm-ai-suggestions').style.display = 'none';
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── QUOTES SMART PASTE ─────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _qspExtracted  = null; // {customer, phone, email, company, eventDate, returnDate, venue, notes, items:[{desc, qty}]}
+let _qspMatchedLines = []; // [{desc, qty, productId, productName, matched}]
+
+function qbTab(tab) {
+  ['builder','paste'].forEach(function(t) {
+    const btn   = document.getElementById('qb-tab-' + t);
+    const panel = document.getElementById('qb-sub-' + t);
+    if (btn)   btn.classList.toggle('active', t === tab);
+    if (panel) panel.classList.toggle('active', t === tab);
+  });
+}
+
+function qspSetStatus(msg, color) {
+  const el = document.getElementById('qsp-status');
+  if (!el) return;
+  el.style.color = color || 'var(--muted)';
+  el.innerHTML = msg;
+}
+
+function qspReset() {
+  const raw = document.getElementById('qsp-raw');
+  if (raw) raw.value = '';
+  ['qsp-fields-card','qsp-equipment-card','qsp-build-card'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  qspSetStatus('', '');
+  _qspExtracted = null;
+  _qspMatchedLines = [];
+}
+
+async function qspExtract() {
+  const raw = (document.getElementById('qsp-raw')?.value || '').trim();
+  if (!raw) { alert('Paste a quote request first'); return; }
+  const groqKey = document.getElementById('gemini-key')?.value?.trim();
+  if (!groqKey) { alert('Groq API key required — enter it in Settings'); return; }
+  const model = document.getElementById('gemini-model')?.value || 'llama-3.3-70b-versatile';
+  const btn = document.getElementById('qsp-extract-btn');
+  if (btn) btn.disabled = true;
+  qspSetStatus('<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Extracting contact &amp; event details…');
+
+  async function groqCall(prompt, maxTok) {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+      body: JSON.stringify({ model, max_tokens: maxTok || 400, temperature: 0,
+        messages: [{ role: 'user', content: prompt }] }),
+      signal: AbortSignal.timeout(25000)
+    });
+    if (!r.ok) throw new Error('Groq HTTP ' + r.status);
+    const d = await r.json();
+    return (d.choices?.[0]?.message?.content || '').trim();
+  }
+
+  function extract(text, label) {
+    // Pull value after "Label:" on same line, or return empty
+    const m = text.match(new RegExp(label + '[:\\s]+(.+?)(?:\\n|$)', 'i'));
+    return m ? m[1].trim().replace(/^["']|["']$/g,'') : '';
+  }
+
+  try {
+    // ── Call 1: Contact + event fields (plain text, one field per line) ──
+    const contactPrompt =
+      'Extract the following from this AV rental request. Output ONLY these labeled lines, one per line.\n' +
+      'If a value is not present, output the label with empty value.\n' +
+      'Customer: (full name or company if no person name)\n' +
+      'Phone: (phone number)\n' +
+      'Email: (email address)\n' +
+      'Company: (company or organization name)\n' +
+      'EventDate: (event/setup start date as YYYY-MM-DD)\n' +
+      'ReturnDate: (strike/pickup date as YYYY-MM-DD)\n' +
+      'Venue: (venue name and city)\n\n' +
+      'REQUEST:\n' + raw;
+
+    const contactText = await groqCall(contactPrompt, 300);
+
+    const customer   = extract(contactText, 'Customer');
+    const phone      = extract(contactText, 'Phone');
+    const email      = extract(contactText, 'Email');
+    const company    = extract(contactText, 'Company');
+    const eventDate  = extract(contactText, 'EventDate');
+    const returnDate = extract(contactText, 'ReturnDate');
+    const venue      = extract(contactText, 'Venue');
+
+    document.getElementById('qsp-customer').value    = customer;
+    document.getElementById('qsp-phone').value       = phone;
+    document.getElementById('qsp-email').value       = email;
+    document.getElementById('qsp-company').value     = company;
+    document.getElementById('qsp-venue').value       = venue;
+    if (eventDate)  document.getElementById('qsp-event-date').value  = eventDate;
+    if (returnDate) document.getElementById('qsp-return-date').value = returnDate;
+
+    // ── Call 2: Equipment list (one item per line: QTY x DESCRIPTION) ──
+    qspSetStatus('<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Extracting equipment…');
+    const equipPrompt =
+      'List every piece of equipment or rental item mentioned in this AV rental request.\n' +
+      'Output ONLY a plain list, one item per line, in this exact format:\n' +
+      'QTY x ITEM DESCRIPTION\n' +
+      'If quantity is not specified, use 1.\n' +
+      'Include ALL AV, audio, video, lighting, staging, labor, and tech items.\n' +
+      'Do not include notes, conditions, or explanations — items only.\n\n' +
+      'REQUEST:\n' + raw;
+
+    const equipText = await groqCall(equipPrompt, 500);
+    const equipLines = equipText.split('\n').map(function(l){return l.trim();})
+      .filter(function(l){ return l && /\d/.test(l); });
+
+    const items = equipLines.map(function(line) {
+      // Parse "2 x 7k lumen projector" or "2 7k lumen projector" or "7k lumen projector"
+      const m1 = line.match(/^(\d+)\s*[x×]\s*(.+)$/i);
+      const m2 = line.match(/^(\d+)\s+(.{5,})$/);
+      if (m1) return { qty: parseInt(m1[1]), desc: m1[2].trim() };
+      if (m2) return { qty: parseInt(m2[1]), desc: m2[2].trim() };
+      return { qty: 1, desc: line.replace(/^[-*•]\s*/,'').trim() };
+    }).filter(function(it){ return it.desc.length > 2; });
+
+    // ── Call 3: Notes (everything that doesn't fit fields) ──
+    qspSetStatus('<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Extracting notes…');
+    const notesPrompt =
+      'From this AV rental request, write a concise notes summary covering:\n' +
+      '- Room/space setup details and special instructions\n' +
+      '- Timeline and schedule specifics\n' +
+      '- Labor requirements\n' +
+      '- Client-supplied items\n' +
+      '- Any conditions or special requirements\n' +
+      'Write in plain text, 3-8 sentences. Do not repeat equipment lists.\n\n' +
+      'REQUEST:\n' + raw;
+
+    const notesText = await groqCall(notesPrompt, 400);
+    document.getElementById('qsp-notes').value = notesText;
+
+    document.getElementById('qsp-fields-card').style.display = 'block';
+    _qspExtracted = { customer, phone, email, company, eventDate, returnDate, venue, notes: notesText, items };
+
+    qspSetStatus('<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Matching ' + items.length + ' items to Odoo catalog…');
+    await qspMatchEquipment(items);
+    qspSetStatus('✓ Done — review and adjust before building quote', 'var(--success)');
+
+  } catch(e) {
+    qspSetStatus('Error: ' + e.message, 'var(--danger)');
+  }
+  if (btn) btn.disabled = false;
+}
+
+async function qspMatchEquipment(items) {
+  if (!items.length) {
+    document.getElementById('qsp-equipment-card').style.display = 'none';
+    document.getElementById('qsp-build-card').style.display = 'block';
+    return;
+  }
+  document.getElementById('qsp-equipment-card').style.display = 'block';
+  document.getElementById('qsp-equipment-list').innerHTML =
+    '<div style="color:var(--muted);font-size:0.78rem">Searching catalog…</div>';
+
+  _qspMatchedLines = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const desc = item.desc || '';
+    const qty  = Math.max(1, parseInt(item.qty) || 1);
+    let matched = false, productId = null, productName = null;
+
+    if (odooUid && desc) {
+      try {
+        // Try rent_ok products first, fall back to all products
+        let products = await odooExecute(odooUid, 'product.product', 'search_read',
+          [[['name','ilike', desc.split(' ').slice(0,3).join(' ')],['active','=',true],['rent_ok','=',true]]],
+          { fields: ['id','name','list_price'], limit: 3 }
+        );
+        if (!products || !products.length) {
+          // Broader search with first meaningful word
+          const keyword = desc.replace(/^\d+\s*[x×]\s*/i,'').split(/[\s,]/)[0];
+          products = await odooExecute(odooUid, 'product.product', 'search_read',
+            [[['name','ilike',keyword],['active','=',true],['rent_ok','=',true]]],
+            { fields: ['id','name','list_price'], limit: 3 }
+          );
+        }
+        if (products && products.length) {
+          productId   = products[0].id;
+          productName = products[0].name;
+          matched     = true;
+        }
+      } catch(e) { /* ignore individual match errors */ }
+    }
+    _qspMatchedLines.push({ desc, qty, productId, productName, matched, alternatives: [] });
+  }
+
+  qspRenderEquipment();
+  document.getElementById('qsp-build-card').style.display = 'block';
+
+  // Update summary
+  const matchCount = _qspMatchedLines.filter(function(l){return l.matched;}).length;
+  const total      = _qspMatchedLines.length;
+  const summaryEl  = document.getElementById('qsp-match-summary');
+  if (summaryEl) {
+    summaryEl.style.color = matchCount === total ? 'var(--success)' : matchCount > 0 ? 'var(--warning)' : 'var(--muted)';
+    summaryEl.textContent = matchCount + ' of ' + total + ' matched to catalog';
+  }
+}
+
+function qspRenderEquipment() {
+  const list = document.getElementById('qsp-equipment-list');
+  if (!list) return;
+  list.innerHTML = _qspMatchedLines.map(function(line, idx) {
+    const matchBg  = line.matched ? 'rgba(100,200,100,0.08)' : 'rgba(220,100,50,0.08)';
+    const matchBdr = line.matched ? 'rgba(100,200,100,0.25)' : 'rgba(220,100,50,0.25)';
+    const matchTxt = line.matched
+      ? '<span style="font-size:0.7rem;color:var(--success)">✓ ' + escHtml(line.productName) + '</span>'
+      : '<span style="font-size:0.7rem;color:var(--warning)">⚠ No catalog match — will be skipped unless you search</span>';
+
+    return (
+      '<div style="background:' + matchBg + ';border:1px solid ' + matchBdr + ';border-radius:8px;padding:10px 12px">' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+          // Description
+          '<div style="flex:1;min-width:160px">' +
+            '<div style="font-size:0.83rem;font-weight:500;color:var(--text)">' + escHtml(line.desc) + '</div>' +
+            '<div style="margin-top:3px">' + matchTxt + '</div>' +
+          '</div>' +
+          // Qty
+          '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">' +
+            '<label style="font-size:0.72rem;color:var(--muted)">Qty</label>' +
+            '<input type="number" value="' + line.qty + '" min="1" step="1" ' +
+              'onchange="_qspMatchedLines[' + idx + '].qty=Math.max(1,+this.value)" ' +
+              'style="width:56px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:\'DM Mono\',monospace;font-size:0.82rem;outline:none;text-align:center">' +
+          '</div>' +
+          // Product search override
+          '<div style="flex-shrink:0;position:relative">' +
+            '<input type="text" placeholder="Search catalog…" ' +
+              'oninput="qspSearchProduct(this,\'' + idx + '\')" ' +
+              'style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:0.76rem;outline:none;width:140px;font-family:\'DM Sans\',sans-serif" ' +
+              'id="qsp-search-' + idx + '">' +
+            '<div id="qsp-results-' + idx + '" style="display:none;position:absolute;top:calc(100%+2px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:7px;z-index:200;min-width:200px;max-height:150px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,0.25)"></div>' +
+          '</div>' +
+          // Remove
+          '<button onclick="qspRemoveLine(' + idx + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.9rem;padding:2px 4px;flex-shrink:0">✕</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+async function qspSearchProduct(input, idx) {
+  const q = input.value.trim();
+  const resultsEl = document.getElementById('qsp-results-' + idx);
+  if (!resultsEl) return;
+  if (!q || q.length < 2) { resultsEl.style.display = 'none'; return; }
+  if (!odooUid) return;
+
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '<div style="padding:6px 10px;font-size:0.75rem;color:var(--muted)">Searching…</div>';
+
+  try {
+    const products = await odooExecute(odooUid, 'product.product', 'search_read',
+      [[['name','ilike',q],['active','=',true]]],
+      { fields: ['id','name','list_price'], limit: 8 }
+    );
+    if (!products || !products.length) {
+      resultsEl.innerHTML = '<div style="padding:6px 10px;font-size:0.75rem;color:var(--muted)">No products found</div>';
+      return;
+    }
+    resultsEl._products = products;
+    resultsEl.innerHTML = products.map(function(p, pi) {
+      return '<div onclick="qspPickProduct(\'' + idx + '\',' + pi + ')" ' +
+        'style="padding:7px 10px;cursor:pointer;font-size:0.78rem;color:var(--text);border-bottom:1px solid var(--border)" ' +
+        'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">' +
+        escHtml(p.name) +
+        (p.list_price ? ' <span style="color:var(--muted);font-size:0.72rem">$' + p.list_price.toFixed(2) + '</span>' : '') +
+        '</div>';
+    }).join('');
+  } catch(e) {
+    resultsEl.innerHTML = '<div style="padding:6px 10px;font-size:0.75rem;color:var(--danger)">Error: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+function qspPickProduct(idx, pi) {
+  const resultsEl = document.getElementById('qsp-results-' + idx);
+  const p = (resultsEl?._products || [])[pi];
+  if (!p) return;
+  _qspMatchedLines[idx].productId   = p.id;
+  _qspMatchedLines[idx].productName = p.name;
+  _qspMatchedLines[idx].matched     = true;
+  const searchEl = document.getElementById('qsp-search-' + idx);
+  if (searchEl) searchEl.value = '';
+  resultsEl.style.display = 'none';
+  qspRenderEquipment();
+  // Update match summary
+  const matchCount = _qspMatchedLines.filter(function(l){return l.matched;}).length;
+  const summaryEl  = document.getElementById('qsp-match-summary');
+  if (summaryEl) summaryEl.textContent = matchCount + ' of ' + _qspMatchedLines.length + ' matched to catalog';
+}
+
+function qspRemoveLine(idx) {
+  _qspMatchedLines.splice(idx, 1);
+  qspRenderEquipment();
+}
+
+async function qspBuildQuote() {
+  // Navigate to the Quotes section and ensure builder view
+  navTo('quotes');
+
+  // Set customer name in search field (user can confirm/search)
+  const customer  = document.getElementById('qsp-customer')?.value?.trim();
+  const email     = document.getElementById('qsp-email')?.value?.trim();
+  const phone     = document.getElementById('qsp-phone')?.value?.trim();
+  const company   = document.getElementById('qsp-company')?.value?.trim();
+  const eventDate = document.getElementById('qsp-event-date')?.value;
+  const retDate   = document.getElementById('qsp-return-date')?.value;
+  const venue     = document.getElementById('qsp-venue')?.value?.trim();
+  const notes     = document.getElementById('qsp-notes')?.value?.trim();
+
+  // Fill customer search field
+  if (customer) {
+    const csEl = document.getElementById('qb-contact-search');
+    if (csEl) csEl.value = customer + (company ? ' — ' + company : '');
+    // If Odoo connected, try to find and auto-pick the contact
+    if (odooUid && (customer || email)) {
+      try {
+        const q = email || customer;
+        const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
+          [[['active','=',true],'|',['name','ilike',customer||''],['email','ilike',email||'']]],
+          { fields: ['id','name','email','phone'], limit: 1 }
+        );
+        if (partners && partners.length) {
+          await qbPickContact(partners[0].id, partners[0].name, partners[0].email||'', partners[0].phone||'');
+        }
+      } catch(e) { /* ignore */ }
+    }
+  }
+
+  // Fill dates
+  if (eventDate) {
+    const sdEl = document.getElementById('qb-start-date');
+    if (sdEl) sdEl.value = eventDate + 'T08:00';
+  }
+  if (retDate) {
+    const rdEl = document.getElementById('qb-return-date');
+    if (rdEl) rdEl.value = retDate + 'T18:00';
+  }
+
+  // Fill venue
+  if (venue) {
+    const vEl = document.getElementById('qb-venue');
+    if (vEl) vEl.value = venue;
+  }
+
+  // Fill notes
+  if (notes) {
+    const nEl = document.getElementById('qb-notes');
+    if (nEl) nEl.value = notes;
+  }
+
+  // Apply Odoo template if selected
+  const templateId = parseInt(document.getElementById('qsp-odoo-template')?.value) || null;
+  if (templateId) {
+    try {
+      // Use the existing qbLoadOdooTemplate function if available
+      const templateSel = document.getElementById('qb-odoo-template-list');
+      // Load template lines into builder
+      const tLines = await odooExecute(odooUid, 'sale.order.template.line', 'search_read',
+        [[['sale_order_template_id','=',templateId]]],
+        { fields: ['product_id','product_uom_qty','name'], limit: 50 }
+      );
+      if (tLines && tLines.length) {
+        _qbLines = tLines
+          .filter(function(l){ return l.product_id; })
+          .map(function(l) {
+            return { productId: l.product_id[0], productName: l.product_id[1], qty: l.product_uom_qty || 1 };
+          });
+        qbRenderLines();
+      }
+    } catch(e) { console.warn('Template load:', e.message); }
+  }
+
+  // Add matched lines to quote builder (appends to template lines)
+  const matched = _qspMatchedLines.filter(function(l){ return l.matched && l.productId; });
+  if (matched.length) {
+    // Append matched lines to any template lines already loaded
+    matched.forEach(function(line) {
+      _qbLines.push({ productId: line.productId, productName: line.productName, qty: line.qty });
+    });
+    qbRenderLines();
+  }
+
+  // Scroll to top of builder
+  const scroll = document.querySelector('#qb-sub-builder .section-scroll');
+  if (scroll) scroll.scrollTop = 0;
+
+  // Show toast
+  const unmatched = _qspMatchedLines.filter(function(l){ return !l.matched; });
+  if (unmatched.length) {
+    alert('✓ Quote builder pre-filled. Note: ' + unmatched.length + ' item' + (unmatched.length!==1?'s were':'was') + ' not matched to catalog (' + unmatched.map(function(l){return l.desc;}).join(', ') + ') — add them manually.');
+  }
+}
+
+
+
+// ── Smart Paste: load Odoo rental templates into selector ────────────────────
+async function qspLoadOdooTemplates() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const sel = document.getElementById('qsp-odoo-template');
+  if (!sel) return;
+  try {
+    const templates = await odooExecute(odooUid, 'sale.order.template', 'search_read',
+      [[['active','=',true]]],
+      { fields: ['id','name'], limit: 50, order: 'name asc' }
+    );
+    sel.innerHTML = '<option value="">— None (blank quote) —</option>' +
+      (templates || []).map(function(t) {
+        return '<option value="' + t.id + '">' + escHtml(t.name) + '</option>';
+      }).join('');
+  } catch(e) { alert('Error loading templates: ' + e.message); }
 }
 
 // ─── Init ─────────────────────────────────────────────────
@@ -20829,9 +21350,10 @@ window.navTo = function(section) {
     inbox:      {panel:'panel-inbox',      title:'Inbox',        hasSrc:true},
     leads:      {panel:'panel-leads',      title:'Lead Capture', hasSrc:false},
     activities: {panel:'panel-activities', title:'Activities',   hasSrc:false},
-    quotes:     {panel:'panel-quotes',     title:'Quotes',       hasSrc:false},
-    templates:  {panel:'panel-templates',  title:'Templates',    hasSrc:false},
-    quotedesk:  {panel:'panel-quotedesk',  title:'Quote Desk',   hasSrc:false},
+    quotes:     {panel:'panel-quotes',        title:'Quotes',         hasSrc:false},
+    smartbuilder:{panel:'panel-smartbuilder', title:'Smart Builder',  hasSrc:false},
+    templates:  {panel:'panel-templates',     title:'Templates',      hasSrc:false},
+    quotedesk:  {panel:'panel-quotedesk',     title:'Request Desk',   hasSrc:false},
     projects:   {panel:'panel-projects',   title:'Projects',     hasSrc:false},
     discuss:    {panel:'panel-discuss',    title:'Discuss',      hasSrc:false},
     support:    {panel:'panel-support',    title:'Support',      hasSrc:false},
@@ -21041,14 +21563,23 @@ function applySidebar() {
 
 // ── Primary navigation ────────────────────────────────────────────────────
 const NAV_PANELS = {
-  inbox:      { panel: 'panel-inbox',      title: 'Inbox',         hasSrc: true },
-  leads:      { panel: 'panel-leads',      title: 'Lead Capture',  hasSrc: false },
-  activities: { panel: 'panel-activities', title: 'Activities',    hasSrc: false },
-  quotes:     { panel: 'panel-quotes',     title: 'Quotes',        hasSrc: false },
-  discuss:    { panel: 'panel-discuss',    title: 'Discuss',       hasSrc: false },
-  support:    { panel: 'panel-support',    title: 'Support',       hasSrc: false },
-  prospect:   { panel: 'panel-prospect',   title: 'Prospecting',   hasSrc: false },
-  reports:    { panel: 'panel-reports',    title: 'Reports',       hasSrc: false },
+  inbox:        { panel: 'panel-inbox',        title: 'Inbox',         hasSrc: true },
+  leads:        { panel: 'panel-leads',        title: 'Lead Capture',  hasSrc: false },
+  activities:   { panel: 'panel-activities',   title: 'Activities',    hasSrc: false },
+  quotes:       { panel: 'panel-quotes',       title: 'Quotes',        hasSrc: false },
+  smartbuilder: { panel: 'panel-smartbuilder', title: 'Smart Builder', hasSrc: false },
+  quotedesk:    { panel: 'panel-quotedesk',    title: 'Request Desk',  hasSrc: false },
+  templates:    { panel: 'panel-templates',    title: 'Templates',     hasSrc: false },
+  projects:     { panel: 'panel-projects',     title: 'Projects',      hasSrc: false },
+  discuss:      { panel: 'panel-discuss',      title: 'Discuss',       hasSrc: false },
+  support:      { panel: 'panel-support',      title: 'Support',       hasSrc: false },
+  prospect:     { panel: 'panel-prospect',     title: 'Prospecting',   hasSrc: false },
+  reports:      { panel: 'panel-reports',      title: 'Reports',       hasSrc: false },
+  catchup:      { panel: 'panel-catchup',      title: 'Dormant Contacts', hasSrc: false },
+  vendor:       { panel: 'panel-vendor',       title: 'Vendor Outreach',  hasSrc: false },
+  docs:         { panel: 'panel-docs',         title: 'Documents',        hasSrc: false },
+  bounces:      { panel: 'panel-bounces',      title: 'Bounce Manager',   hasSrc: false },
+  help:         { panel: 'panel-help',         title: 'Help & Guide',     hasSrc: false },
 };
 
 let _currentNav = 'inbox';
@@ -21106,6 +21637,8 @@ function updateTopbarActions(section) {
     el.innerHTML = '<button class="tb-btn" onclick="if(window.lazScan)lazScan()">Refresh</button>';
   } else if (section === 'quotes') {
     el.innerHTML = '<button class="tb-btn primary" onclick="navTo(\'quotes\')">+ New Quote</button>';
+  } else if (section === 'smartbuilder') {
+    el.innerHTML = '<button class="tb-btn" onclick="qspReset()">Clear</button>';
   } else {
     el.innerHTML = '';
   }
