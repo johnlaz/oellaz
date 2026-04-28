@@ -498,6 +498,7 @@
   /* ── Section content tabs (within a panel) ── */
   .sub-panel { display: none; }
   .sub-panel.active { display: block; }
+  #proj-sub-ai.active { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
 
   /* ── Preserve all v4 component styles ── */
   .hidden { display: none !important; }
@@ -846,6 +847,17 @@
         </svg>
       </div>
       <span class="sb-item-label">Quote Desk</span>
+    </div>
+
+    <div class="sb-item" id="nav-projects" onclick="navTo('projects')" title="Projects &amp; Tasks">
+      <div class="sb-item-icon">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <rect x="1.5" y="3.5" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+          <path d="M4.5 1.5v4M9.5 1.5v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <path d="M4 8l1.5 1.5L10 7" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="sb-item-label">Projects</span>
     </div>
 
     <div class="sb-item" id="nav-templates" onclick="navTo('templates')" title="Email Templates">
@@ -2145,6 +2157,25 @@ Support Team"></textarea>
           </div>
         </div>
 
+        <!-- AI Prompt customizer (collapsible) -->
+        <div style="margin-bottom:14px">
+          <button onclick="qdTogglePrompt()" style="background:none;border:none;color:var(--muted);font-size:0.74rem;cursor:pointer;padding:4px 0;display:flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif" id="qd-prompt-toggle">
+            <svg id="qd-prompt-chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" style="transition:transform 0.2s"><path d="M2 3.5l3 3 3-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Customize AI response prompt
+          </button>
+          <div id="qd-prompt-panel" style="display:none;margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;line-height:1.6">
+              This prompt tells the AI how to respond to quote requests. Edit it to match your business. Leave blank to use the TRSAV default.
+            </div>
+            <textarea id="qd-custom-prompt" style="width:100%;min-height:160px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:0.79rem;font-family:'DM Sans',sans-serif;line-height:1.65;resize:vertical;outline:none;box-sizing:border-box" placeholder="Leave blank to use default TRSAV AV rental prompt…"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <button class="btn btn-primary" onclick="qdSavePrompt()" style="padding:5px 14px;font-size:0.78rem">Save prompt</button>
+              <button class="btn btn-ghost" onclick="qdResetPrompt()" style="padding:5px 12px;font-size:0.78rem;color:var(--muted)">Reset to default</button>
+              <span id="qd-prompt-status" style="font-size:0.76rem;color:var(--muted)"></span>
+            </div>
+          </div>
+        </div>
+
         <!-- Step 2: Extracted contact (hidden until extracted) -->
         <div id="qd-contact-card" class="card" style="display:none;margin-bottom:14px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -2222,6 +2253,171 @@ Support Team"></textarea>
         </div>
 
       </div>
+    </div>
+
+
+    <!-- ── PROJECTS ─────────────────────────────────────────────────────── -->
+    <div class="section-panel" id="panel-projects">
+
+      <!-- Sub-tabs -->
+      <div class="section-tabs" id="proj-tabs">
+        <button class="sec-tab active" id="proj-tab-projects" onclick="projTab('projects')">Projects</button>
+        <button class="sec-tab" id="proj-tab-tasks"    onclick="projTab('tasks')">Tasks</button>
+        <button class="sec-tab" id="proj-tab-todo"     onclick="projTab('todo')">To Do</button>
+        <button class="sec-tab" id="proj-tab-ai"       onclick="projTab('ai')">✦ AI Brainstorm</button>
+      </div>
+
+      <!-- ── PROJECTS sub-panel ──────────────────────────────────────────── -->
+      <div id="proj-sub-projects" class="sub-panel active">
+        <div class="section-scroll" style="padding:18px 22px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="projLoadProjects()" id="proj-load-btn" style="padding:7px 16px;font-size:0.81rem;gap:5px">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 108.5-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M7 1l2.5 2.5L7 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Load projects
+            </button>
+            <button class="btn btn-ghost" onclick="projNewProject()" style="padding:7px 14px;font-size:0.81rem">+ New project</button>
+            <span id="proj-status" style="font-size:0.78rem;color:var(--muted)"></span>
+          </div>
+          <div id="proj-project-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
+        </div>
+      </div>
+
+      <!-- ── TASKS sub-panel ─────────────────────────────────────────────── -->
+      <div id="proj-sub-tasks" class="sub-panel">
+        <div class="section-scroll" style="padding:18px 22px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <select id="proj-task-project-filter" onchange="projLoadTasks()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:0.8rem;outline:none;font-family:'DM Sans',sans-serif">
+              <option value="">All projects</option>
+            </select>
+            <select id="proj-task-user-filter" onchange="projLoadTasks()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:0.8rem;outline:none;font-family:'DM Sans',sans-serif">
+              <option value="">All assignees</option>
+            </select>
+            <select id="proj-task-stage-filter" onchange="projLoadTasks()" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:0.8rem;outline:none;font-family:'DM Sans',sans-serif">
+              <option value="">All stages</option>
+            </select>
+            <button class="btn btn-ghost" onclick="projLoadTasks()" style="padding:6px 12px;font-size:0.79rem">Refresh</button>
+            <button class="btn btn-primary" onclick="projNewTask()" style="padding:6px 14px;font-size:0.79rem;margin-left:auto">+ New task</button>
+          </div>
+
+          <!-- Quick-add task bar -->
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
+            <input type="text" id="proj-quick-task-name" placeholder="Quick add task — type and press Enter…"
+              style="flex:1;background:none;border:none;color:var(--text);font-size:0.83rem;outline:none;font-family:'DM Sans',sans-serif"
+              onkeydown="if(event.key==='Enter')projQuickAddTask()">
+            <select id="proj-quick-task-project" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:0.76rem;outline:none;font-family:'DM Sans',sans-serif;max-width:140px">
+              <option value="">No project</option>
+            </select>
+            <select id="proj-quick-task-user" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:0.76rem;outline:none;font-family:'DM Sans',sans-serif;max-width:120px">
+              <option value="">Unassigned</option>
+            </select>
+            <input type="date" id="proj-quick-task-date" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:0.76rem;outline:none;font-family:'DM Sans',sans-serif">
+            <button class="btn btn-primary" onclick="projQuickAddTask()" style="padding:5px 12px;font-size:0.78rem">Add</button>
+          </div>
+
+          <div id="proj-task-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+
+      <!-- ── TO DO sub-panel ─────────────────────────────────────────────── -->
+      <div id="proj-sub-todo" class="sub-panel">
+        <div class="section-scroll" style="padding:18px 22px">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px">
+            <input type="text" id="proj-todo-input" placeholder="Add a to-do — press Enter to save…"
+              style="flex:1;background:none;border:none;color:var(--text);font-size:0.83rem;outline:none;font-family:'DM Sans',sans-serif"
+              onkeydown="if(event.key==='Enter')projAddTodo()">
+            <button class="btn btn-primary" onclick="projAddTodo()" style="padding:5px 14px;font-size:0.8rem">Add</button>
+          </div>
+          <div id="proj-todo-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+            <button class="btn btn-ghost" onclick="projLoadOdooTodos()" style="padding:6px 14px;font-size:0.79rem;gap:5px">
+              <svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M1 5.5a4.5 4.5 0 108.5-2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+              Sync with Odoo To Do
+            </button>
+            <span style="font-size:0.74rem;color:var(--muted);margin-left:8px">Loads your personal Odoo tasks with no project</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── AI BRAINSTORM sub-panel ──────────────────────────────────────── -->
+      <div id="proj-sub-ai" class="sub-panel">
+        <div style="display:flex;height:100%;overflow:hidden">
+
+          <!-- Chat area -->
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+            <div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0">
+              <div>
+                <div style="font-size:0.82rem;font-weight:500;color:var(--text)">AI Brainstorm</div>
+                <div style="font-size:0.72rem;color:var(--muted)">Describe a project, problem, or goal — AI breaks it down into tasks you can push to Odoo</div>
+              </div>
+              <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:5px">
+                  <span style="font-size:0.71rem;color:var(--muted);white-space:nowrap">Project context:</span>
+                  <select id="proj-ai-context" title="AI will focus on this project when suggesting tasks" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:0.74rem;outline:none;font-family:'DM Sans',sans-serif;max-width:160px">
+                    <option value="">None selected</option>
+                  </select>
+                </div>
+                <button onclick="projClearChat()" class="btn btn-ghost" style="padding:4px 10px;font-size:0.74rem;color:var(--muted)">Clear chat</button>
+              </div>
+            </div>
+
+            <!-- Chat messages -->
+            <div id="proj-chat-messages" style="flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+              <div style="text-align:center;padding:30px 20px;color:var(--muted)">
+                <div style="font-size:1.5rem;margin-bottom:10px">✦</div>
+                <div style="font-size:0.84rem;font-weight:500;color:var(--text);margin-bottom:6px">AI Project Brainstorm</div>
+                <div style="font-size:0.77rem;max-width:320px;margin:0 auto">Describe a project, idea, or challenge. AI will suggest a structured task breakdown you can push directly to Odoo.</div>
+                <div style="margin-top:14px;display:flex;flex-direction:column;gap:6px;max-width:320px;margin-left:auto;margin-right:auto">
+                  <button onclick="projChatSuggest('Plan a new client onboarding workflow')" class="btn btn-ghost" style="font-size:0.76rem;padding:6px 12px;justify-content:flex-start;text-align:left">Plan a new client onboarding workflow →</button>
+                  <button onclick="projChatSuggest('Organize our next event production timeline')" class="btn btn-ghost" style="font-size:0.76rem;padding:6px 12px;justify-content:flex-start;text-align:left">Organize an event production timeline →</button>
+                  <button onclick="projChatSuggest('Break down a large AV installation project into tasks')" class="btn btn-ghost" style="font-size:0.76rem;padding:6px 12px;justify-content:flex-start;text-align:left">Break down an AV installation project →</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input -->
+            <div style="padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0">
+              <div style="display:flex;gap:8px;align-items:flex-end">
+                <textarea id="proj-chat-input" placeholder="Describe your project or ask a planning question…"
+                  style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;color:var(--text);font-size:0.82rem;font-family:'DM Sans',sans-serif;resize:none;outline:none;min-height:44px;max-height:120px;line-height:1.5;overflow-y:auto"
+                  onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();projChatSend()}"
+                  oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+                <button class="btn btn-primary" onclick="projChatSend()" id="proj-chat-send-btn" style="padding:9px 16px;font-size:0.81rem;flex-shrink:0">Send</button>
+              </div>
+              <!-- Quick action buttons -->
+              <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center">
+                <span style="font-size:0.71rem;color:var(--muted);margin-right:2px">Save last response as:</span>
+                <button onclick="projSaveLastAs('task')" class="btn btn-ghost" style="padding:4px 11px;font-size:0.74rem;gap:4px" title="Stage the last AI response as a task">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="0.5" y="1" width="9" height="8" rx="1.2" stroke="currentColor" stroke-width="1.1"/><path d="M2.5 5l1.5 1.5L7.5 3.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  Task
+                </button>
+                <button onclick="projSaveLastAs('todo')" class="btn btn-ghost" style="padding:4px 11px;font-size:0.74rem;gap:4px" title="Save to your To Do list">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 2h8M1 5h6M1 8h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+                  To Do
+                </button>
+                <button onclick="projSaveLastAs('project')" class="btn btn-ghost" style="padding:4px 11px;font-size:0.74rem;gap:4px" title="Create an Odoo project from this conversation">
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><rect x="0.5" y="1.5" width="9" height="7" rx="1.2" stroke="currentColor" stroke-width="1.1"/><path d="M3 1.5v3M7 1.5v3" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+                  New project
+                </button>
+                <span style="font-size:0.7rem;color:var(--muted);margin-left:4px">· Shift+Enter for new line</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Brainstorm sidebar: saved tasks from this session -->
+          <div id="proj-brainstorm-sidebar" style="width:260px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width 0.2s">
+            <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+              <div>
+                <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600">Task Summary</div>
+                <div style="font-size:0.67rem;color:var(--muted);opacity:0.6;margin-top:1px">Updates as AI responds</div>
+              </div>
+              <button onclick="projToggleBrainstormSidebar()" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 6px;font-size:0.8rem" title="Collapse">◀</button>
+            </div>
+            <div id="proj-staged-tasks" style="flex:1;overflow-y:auto;padding:8px"></div>
+          </div>
+
+        </div>
+      </div>
+
     </div>
 
 
@@ -2510,7 +2706,7 @@ Support Team"></textarea>
         </div>
 
         <div style="text-align:center;font-size:0.72rem;color:var(--muted);padding:12px 0">
-          OEL Command v9.5 · Built by Lazzaro · Powered by Groq AI + Odoo 19
+          OEL Command v10.0 · Built by Lazzaro · Powered by Groq AI + Odoo 19
         </div>
 
       </div>
@@ -2620,7 +2816,7 @@ Support Team"></textarea>
           <div class="card-title" style="font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:6px">Dashboard</div>
           <div class="card-subtitle" style="margin-bottom:16px">Pipeline, opportunities, and team performance from Odoo.</div>
           <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px">
-            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v9.5</span>
+            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v10.0</span>
             <span style="font-size:0.68rem;color:var(--muted)">Built by Lazzaro</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
@@ -8145,38 +8341,71 @@ async function qdExtract() {
 }
 
 async function qdDraftResponse() {
-  const name    = document.getElementById('qd-name')?.value  || '';
-  const notes   = document.getElementById('qd-notes')?.value || '';
+  const name    = document.getElementById('qd-name')?.value    || '';
+  const notes   = document.getElementById('qd-notes')?.value   || '';
   const company = document.getElementById('qd-company')?.value || '';
-  const tone    = document.getElementById('qd-tone')?.value  || 'professional';
-  const raw     = document.getElementById('qd-raw')?.value   || '';
-  const tones   = { professional:'professional and polished', friendly:'friendly and warm',
-                    concise:'short and direct', sales:'persuasive and sales-focused' };
+  const raw     = document.getElementById('qd-raw')?.value     || '';
+  const customPrompt = (localStorage.getItem('oel_qd_prompt') || '').trim();
 
-  const responsePrompt =
-    'Write a professional email response to this quote request. ' +
-    'Tone: ' + (tones[tone]||'professional') + '.\n' +
-    'Customer name: ' + (name||'(unknown)') + '.\n' +
-    (company ? 'Company: ' + company + '.\n' : '') +
-    'Their request / requirements:\n' + (notes||raw) + '\n\n' +
-    'Rules: acknowledge their request specifically, express interest, ask any clarifying questions needed, ' +
-    'offer to provide a formal quote, sign off professionally. ' +
-    'Do NOT invent prices or specific equipment availability. ' +
-    'Plain text only, no markdown, no HTML.';
+  // Default TRSAV AV rental prompt — user can override in Quote Desk settings
+  const defaultPrompt =
+    'You are a sales assistant for TRSAV, a professional AV and technology rental company. ' +
+    'We rent audio-visual equipment, staging, lighting, microphones, projectors, screens, ' +
+    'Wi-Fi solutions, registration equipment (iPads/tablets), office gear, and event technology. ' +
+    'When responding to a quote request:\n' +
+    '1. Open with a warm, professional thank-you addressed to the customer by first name.\n' +
+    '2. Briefly confirm what they are asking for (if enough info was provided).\n' +
+    '3. Ask the clarifying questions needed to prepare an accurate quote. ' +
+    'Use emoji bullets (📋 🎯 💰) to organize sections — Details to Confirm, Additional Rentals, Budget. ' +
+    'Standard questions to consider (only ask what is relevant or unknown):\n' +
+    '   • Event date(s)\n' +
+    '   • Location / venue name\n' +
+    '   • Indoor or outdoor\n' +
+    '   • Audience size and room layout\n' +
+    '   • Setup access time and strike timing\n' +
+    '   • Power availability\n' +
+    '   • Specific equipment needed\n' +
+    '   • Additional rentals (mics, projectors, screens, iPads, staging, lighting, Wi-Fi, office gear)\n' +
+    '   • Budget range\n' +
+    '4. Close by saying you will prepare a tailored quote once you have the details, ' +
+    'and thank them for considering TRSAV.\n' +
+    'Do NOT invent prices or confirm availability. Use plain text with emoji bullets — no markdown, no HTML.';
+
+  const systemPrompt = customPrompt || defaultPrompt;
+
+  const userContent =
+    'Customer name: ' + (name || '(unknown)') + '\n' +
+    (company ? 'Company: ' + company + '\n' : '') +
+    'Their request:\n' + (notes || raw);
 
   const subjectPrompt =
-    'Write a short, professional email subject line for a response to this quote request (max 10 words):\n' +
-    (notes||raw) + '\nOutput the subject line only.';
+    'Write a short email subject line (max 8 words) for an AV rental quote response to:\n' +
+    (notes || raw) + '\nOutput the subject line only, no quotes.';
 
-  const [body, subject] = await Promise.all([
-    qdCallGroq(responsePrompt),
+  const groqKey = document.getElementById('gemini-key')?.value?.trim();
+  const model   = document.getElementById('gemini-model')?.value || 'llama-3.3-70b-versatile';
+  if (!groqKey) throw new Error('Groq API key required');
+
+  // Two calls in parallel — body uses system prompt, subject is simple
+  const [bodyResp, subjectResp] = await Promise.all([
+    fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+      body: JSON.stringify({ model, max_tokens: 800, temperature: 0.5,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user',   content: userContent }
+        ]
+      }),
+      signal: AbortSignal.timeout(25000)
+    }).then(r => r.json()).then(d => (d.choices?.[0]?.message?.content || '').trim()),
     qdCallGroq(subjectPrompt)
   ]);
 
   const subjectEl = document.getElementById('qd-subject');
   const bodyEl    = document.getElementById('qd-body');
-  if (subjectEl) subjectEl.value = subject.replace(/^["']|["']$/g,'');
-  if (bodyEl)    bodyEl.value    = body;
+  if (subjectEl) subjectEl.value = subjectResp.replace(/^["']|["']$/g, '');
+  if (bodyEl)    bodyEl.value    = bodyResp;
 }
 
 async function qdRegenerate() {
@@ -8399,6 +8628,935 @@ function qdReset() {
   window._qdOdooLeadId = null;
 }
 
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── PROJECTS & TASKS ───────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _projProjects  = [];   // [{id, name, task_count, user_id, ...}]
+let _projTasks     = [];   // current task list
+let _projTodos     = JSON.parse(localStorage.getItem('oel_todos') || '[]'); // local to-dos
+let _projChatHistory = []; // AI chat messages
+let _projStagedTasks = []; // tasks queued from brainstorm
+let _projStages    = [];   // project.task.type records
+
+// ── Sub-tab routing ─────────────────────────────────────────────────────────
+function projTab(tab) {
+  ['projects','tasks','todo','ai'].forEach(function(t) {
+    const btn = document.getElementById('proj-tab-' + t);
+    const panel = document.getElementById('proj-sub-' + t);
+    if (btn)   btn.classList.toggle('active', t === tab);
+    if (panel) panel.classList.toggle('active', t === tab);
+  });
+  if (tab === 'projects' && !_projProjects.length && odooUid) projLoadProjects();
+  if (tab === 'tasks')   { projPopulateProjectDropdowns(); projLoadTasks(); }
+  if (tab === 'todo')    projRenderTodos();
+  if (tab === 'ai')      { projPopulateAiContextDropdown(); projRenderStagedTasks(); }
+}
+
+// ── PROJECTS ────────────────────────────────────────────────────────────────
+async function projLoadProjects() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const btn = document.getElementById('proj-load-btn');
+  const statusEl = document.getElementById('proj-status');
+  if (btn) btn.disabled = true;
+  if (statusEl) statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Loading…';
+  try {
+    const projects = await odooExecute(odooUid, 'project.project', 'search_read',
+      [[['active','=',true]]],
+      { fields: ['id','name','description','user_id','task_count','date_start','date','partner_id'], limit: 50, order: 'name asc' }
+    );
+    _projProjects = projects || [];
+    projRenderProjects();
+    projPopulateProjectDropdowns();
+    if (statusEl) statusEl.textContent = _projProjects.length + ' projects loaded';
+  } catch(e) {
+    if (statusEl) { statusEl.style.color='var(--danger)'; statusEl.textContent = 'Error: ' + e.message; }
+  }
+  if (btn) btn.disabled = false;
+}
+
+function projRenderProjects() {
+  const grid = document.getElementById('proj-project-grid');
+  if (!grid) return;
+  if (!_projProjects.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:20px 0">No projects found. Click Load projects or create one.</div>';
+    return;
+  }
+  grid.innerHTML = _projProjects.map(function(p) {
+    const manager = Array.isArray(p.user_id) ? p.user_id[1] : '';
+    const customer = Array.isArray(p.partner_id) ? p.partner_id[1] : '';
+    return (
+      '<div class="card" style="cursor:pointer;transition:border-color 0.15s" onclick="projOpenProject(' + p.id + ')" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">' +
+          '<div style="font-size:0.9rem;font-weight:500;color:var(--text)">' + escHtml(p.name) + '</div>' +
+          '<span style="font-size:0.72rem;padding:2px 8px;border-radius:10px;background:var(--accent-dim);color:var(--accent);white-space:nowrap;flex-shrink:0">' + (p.task_count || 0) + ' tasks</span>' +
+        '</div>' +
+        (customer ? '<div style="font-size:0.74rem;color:var(--muted);margin-bottom:4px">Client: ' + escHtml(customer) + '</div>' : '') +
+        (manager  ? '<div style="font-size:0.74rem;color:var(--muted);margin-bottom:8px">Manager: ' + escHtml(manager) + '</div>' : '') +
+        '<div style="display:flex;gap:6px;margin-top:10px">' +
+          '<button onclick="event.stopPropagation();projOpenProject(' + p.id + ')" class="btn btn-ghost" style="padding:4px 10px;font-size:0.74rem">View tasks</button>' +
+          '<button onclick="event.stopPropagation();projNewTaskForProject(' + p.id + ',\'' + escHtml(p.name).replace(/'/g,"\\'") + '\')" class="btn btn-ghost" style="padding:4px 10px;font-size:0.74rem">+ Task</button>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+function projOpenProject(projectId) {
+  // Switch to Tasks tab filtered to this project
+  projTab('tasks');
+  const sel = document.getElementById('proj-task-project-filter');
+  if (sel) { sel.value = projectId; projLoadTasks(); }
+}
+
+async function projNewProject() {
+  const name = prompt('Project name:');
+  if (!name) return;
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  try {
+    const id = await odooExecute(odooUid, 'project.project', 'create', [{ name, user_id: odooUid }]);
+    await projLoadProjects();
+    const statusEl = document.getElementById('proj-status');
+    if (statusEl) { statusEl.style.color='var(--success)'; statusEl.textContent = '✓ Project created'; }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── TASKS ────────────────────────────────────────────────────────────────────
+async function projLoadTasks() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const projectId = parseInt(document.getElementById('proj-task-project-filter')?.value) || null;
+  const userId    = parseInt(document.getElementById('proj-task-user-filter')?.value)    || null;
+  const stageId   = parseInt(document.getElementById('proj-task-stage-filter')?.value)   || null;
+  const listEl    = document.getElementById('proj-task-list');
+  if (listEl) listEl.innerHTML = '<div style="color:var(--muted);font-size:0.8rem">Loading…</div>';
+
+  try {
+    const domain = [['active','=',true]];
+    if (projectId) domain.push(['project_id','=',projectId]);
+    else           domain.push(['project_id','!=',false]); // exclude personal todos
+    if (userId)    domain.push(['user_ids','in',[userId]]);
+    if (stageId)   domain.push(['stage_id','=',stageId]);
+
+    const tasks = await odooExecute(odooUid, 'project.task', 'search_read',
+      [domain],
+      { fields: ['id','name','description','project_id','stage_id','user_ids','date_deadline',
+                 'priority','tag_ids','partner_id'], limit: 100, order: 'date_deadline asc, priority desc' }
+    );
+    _projTasks = tasks || [];
+
+    // Load stages if not already loaded
+    if (!_projStages.length) await projLoadStages();
+    // Load users into filter dropdowns
+    projPopulateUserDropdown();
+    projRenderTasks();
+  } catch(e) {
+    if (listEl) listEl.innerHTML = '<div style="color:var(--danger);font-size:0.8rem">Error: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+async function projLoadStages() {
+  try {
+    const stages = await odooExecute(odooUid, 'project.task.type', 'search_read',
+      [[]], { fields: ['id','name','sequence'], limit: 20, order: 'sequence asc' }
+    );
+    _projStages = stages || [];
+    const sel = document.getElementById('proj-task-stage-filter');
+    if (sel) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">All stages</option>' +
+        _projStages.map(function(s) { return '<option value="' + s.id + '">' + escHtml(s.name) + '</option>'; }).join('');
+      sel.value = cur;
+    }
+  } catch(e) { _projStages = []; }
+}
+
+function projPopulateProjectDropdowns() {
+  const sels = ['proj-task-project-filter','proj-quick-task-project','proj-ai-context'];
+  sels.forEach(function(selId) {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const cur = sel.value;
+    const firstOpt = selId === 'proj-task-project-filter' ? '<option value="">All projects</option>'
+                   : selId === 'proj-ai-context'           ? '<option value="">No project context</option>'
+                   :                                         '<option value="">No project</option>';
+    sel.innerHTML = firstOpt + _projProjects.map(function(p) {
+      return '<option value="' + p.id + '">' + escHtml(p.name) + '</option>';
+    }).join('');
+    if (cur) sel.value = cur;
+  });
+}
+
+function projPopulateUserDropdown() {
+  const sels = ['proj-task-user-filter','proj-quick-task-user'];
+  sels.forEach(function(selId) {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const cur = sel.value;
+    const firstOpt = selId === 'proj-task-user-filter' ? '<option value="">All assignees</option>' : '<option value="">Unassigned</option>';
+    sel.innerHTML = firstOpt + (odooUsers || []).map(function(u) {
+      return '<option value="' + u.id + '">' + escHtml(u.name) + '</option>';
+    }).join('');
+    if (cur) sel.value = cur;
+  });
+}
+
+function projPopulateAiContextDropdown() {
+  projPopulateProjectDropdowns();
+}
+
+function projRenderTasks() {
+  const listEl = document.getElementById('proj-task-list');
+  if (!listEl) return;
+  if (!_projTasks.length) {
+    listEl.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:20px 0;text-align:center">No tasks found — try changing filters or add one above.</div>';
+    return;
+  }
+  listEl.innerHTML = _projTasks.map(function(t, idx) {
+    const project  = Array.isArray(t.project_id) ? t.project_id[1] : '';
+    const stage    = Array.isArray(t.stage_id)   ? t.stage_id[1]   : '';
+    const assignees = (t.user_ids || []).map(function(uid) {
+      const u = (odooUsers || []).find(function(u2) { return u2.id === uid; });
+      return u ? u.name.split(' ')[0] : '?';
+    }).join(', ');
+    const deadlineStr = t.date_deadline || '';
+    const isOverdue   = deadlineStr && new Date(deadlineStr) < new Date();
+    const isPriority  = t.priority === '1';
+    return (
+      '<div class="lead-card" id="proj-task-' + idx + '" style="' + (isPriority ? 'border-left:2px solid var(--accent)' : '') + '">' +
+        '<div style="display:flex;align-items:flex-start;gap:10px">' +
+          '<input type="checkbox" onchange="projToggleTaskDone(' + t.id + ',this.checked)" style="accent-color:var(--accent);margin-top:3px;flex-shrink:0" title="Mark done">' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:0.86rem;font-weight:500;color:var(--text);display:flex;align-items:center;gap:6px">' +
+              (isPriority ? '<span style="color:var(--accent)">★</span>' : '') +
+              escHtml(t.name) +
+            '</div>' +
+            '<div style="font-size:0.73rem;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap">' +
+              (project ? '<span>' + escHtml(project) + '</span>' : '') +
+              (stage   ? '<span style="background:var(--surface);border-radius:4px;padding:1px 6px">' + escHtml(stage) + '</span>' : '') +
+              (assignees ? '<span>👤 ' + escHtml(assignees) + '</span>' : '') +
+              (deadlineStr ? '<span style="color:' + (isOverdue?'var(--danger)':'var(--muted)') + '">' + (isOverdue?'⚠ ':'📅 ') + deadlineStr + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:5px;flex-shrink:0">' +
+            '<button onclick="projEditTask(' + idx + ')" class="btn btn-ghost" style="padding:3px 9px;font-size:0.74rem">Edit</button>' +
+            '<button onclick="projLogNote(' + t.id + ')" class="btn btn-ghost" style="padding:3px 9px;font-size:0.74rem">Note</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+async function projQuickAddTask() {
+  const nameEl   = document.getElementById('proj-quick-task-name');
+  const projSel  = document.getElementById('proj-quick-task-project');
+  const userSel  = document.getElementById('proj-quick-task-user');
+  const dateSel  = document.getElementById('proj-quick-task-date');
+  const name = nameEl?.value?.trim();
+  if (!name) return;
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+
+  try {
+    const vals = { name };
+    const projId = parseInt(projSel?.value) || null;
+    const userId = parseInt(userSel?.value) || null;
+    const date   = dateSel?.value || null;
+    if (projId) vals.project_id = projId;
+    if (userId) vals.user_ids   = [[4, userId]]; // Many2many add
+    if (date)   vals.date_deadline = date;
+    await odooExecute(odooUid, 'project.task', 'create', [vals]);
+    if (nameEl) nameEl.value = '';
+    await projLoadTasks();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function projNewTaskForProject(projectId, projectName) {
+  projTab('tasks');
+  const sel = document.getElementById('proj-task-project-filter');
+  if (sel) sel.value = projectId;
+  const nameEl = document.getElementById('proj-quick-task-name');
+  const projSel = document.getElementById('proj-quick-task-project');
+  if (nameEl) { nameEl.focus(); }
+  if (projSel) projSel.value = projectId;
+}
+
+async function projNewTask() {
+  const name = prompt('Task name:');
+  if (!name) return;
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const projectId = parseInt(document.getElementById('proj-task-project-filter')?.value) || null;
+  try {
+    const vals = { name };
+    if (projectId) vals.project_id = projectId;
+    await odooExecute(odooUid, 'project.task', 'create', [vals]);
+    await projLoadTasks();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function projToggleTaskDone(taskId, done) {
+  if (!odooUid) return;
+  try {
+    // Find last stage (done) or first stage (in progress)
+    if (done && _projStages.length) {
+      const doneStage = _projStages[_projStages.length - 1];
+      await odooExecute(odooUid, 'project.task', 'write', [[taskId], { stage_id: doneStage.id }]);
+    }
+    setTimeout(projLoadTasks, 400);
+  } catch(e) { console.warn('Toggle task:', e.message); }
+}
+
+// projEditTask — see modal version below
+
+async function projLogNote(taskId) {
+  const note = prompt('Add a note to this task:');
+  if (!note || !odooUid) return;
+  try {
+    await odooExecute(odooUid, 'project.task', 'message_post', [[taskId]], {
+      body: '<p>' + escHtml(note) + '</p>',
+      message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+    });
+    alert('✓ Note logged');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── TO DO ────────────────────────────────────────────────────────────────────
+function projAddTodo() {
+  const input = document.getElementById('proj-todo-input');
+  const text = (input?.value || '').trim();
+  if (!text) return;
+  _projTodos.push({ id: Date.now(), text, done: false, odoo_id: null });
+  localStorage.setItem('oel_todos', JSON.stringify(_projTodos));
+  if (input) input.value = '';
+  projRenderTodos();
+}
+
+function projRenderTodos() {
+  const listEl = document.getElementById('proj-todo-list');
+  if (!listEl) return;
+  if (!_projTodos.length) {
+    listEl.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:16px 0;text-align:center">No to-dos yet — type above and press Enter</div>';
+    return;
+  }
+  listEl.innerHTML = _projTodos.map(function(todo, idx) {
+    return (
+      '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;' + (todo.done?'opacity:0.5':'') + '">' +
+        '<input type="checkbox"' + (todo.done?' checked':'') + ' onchange="projToggleTodo(' + idx + ',this.checked)" style="accent-color:var(--accent);flex-shrink:0">' +
+        '<span style="flex:1;font-size:0.83rem;color:var(--text);' + (todo.done?'text-decoration:line-through':'') + '">' + escHtml(todo.text) + '</span>' +
+        (todo.odoo_id ? '<span style="font-size:0.7rem;color:var(--success)">✓ Odoo</span>' : '<button onclick="projPushTodo(' + idx + ')" class="btn btn-ghost" style="padding:3px 8px;font-size:0.72rem;flex-shrink:0" title="Push to Odoo as task">⬆ Odoo</button>') +
+        '<button onclick="projDeleteTodo(' + idx + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem;padding:2px 4px;flex-shrink:0">✕</button>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+function projToggleTodo(idx, done) {
+  _projTodos[idx].done = done;
+  localStorage.setItem('oel_todos', JSON.stringify(_projTodos));
+  projRenderTodos();
+}
+
+function projDeleteTodo(idx) {
+  _projTodos.splice(idx, 1);
+  localStorage.setItem('oel_todos', JSON.stringify(_projTodos));
+  projRenderTodos();
+}
+
+async function projPushTodo(idx) {
+  const todo = _projTodos[idx];
+  if (!todo || !odooUid) { alert('Connect to Odoo first'); return; }
+  try {
+    const id = await odooExecute(odooUid, 'project.task', 'create', [{
+      name: todo.text, user_ids: [[4, odooUid]]
+    }]);
+    _projTodos[idx].odoo_id = id;
+    localStorage.setItem('oel_todos', JSON.stringify(_projTodos));
+    projRenderTodos();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function projLoadOdooTodos() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  try {
+    const tasks = await odooExecute(odooUid, 'project.task', 'search_read',
+      [[['project_id','=',false],['user_ids','in',[odooUid]],['active','=',true]]],
+      { fields: ['id','name'], limit: 50, order: 'name asc' }
+    );
+    const existingIds = new Set(_projTodos.map(function(t){return t.odoo_id;}));
+    (tasks||[]).forEach(function(t) {
+      if (!existingIds.has(t.id)) {
+        _projTodos.push({ id: Date.now()+Math.random(), text: t.name, done: false, odoo_id: t.id });
+      }
+    });
+    localStorage.setItem('oel_todos', JSON.stringify(_projTodos));
+    projRenderTodos();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── AI BRAINSTORM ─────────────────────────────────────────────────────────────
+let _projBrainstormCollapsed = false;
+
+function projToggleBrainstormSidebar() {
+  _projBrainstormCollapsed = !_projBrainstormCollapsed;
+  const sidebar = document.getElementById('proj-brainstorm-sidebar');
+  const btn = sidebar?.querySelector('button[onclick="projToggleBrainstormSidebar()"]');
+  if (sidebar) sidebar.style.width = _projBrainstormCollapsed ? '0' : '260px';
+  if (btn) btn.textContent = _projBrainstormCollapsed ? '▶' : '◀';
+}
+
+function projClearChat() {
+  _projChatHistory = [];
+  const msgs = document.getElementById('proj-chat-messages');
+  if (msgs) msgs.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:0.8rem">Chat cleared. Describe a project to get started.</div>';
+}
+
+function projChatSuggest(text) {
+  const input = document.getElementById('proj-chat-input');
+  if (input) { input.value = text; projChatSend(); }
+}
+
+function projAddChatBubble(role, content, extras) {
+  const msgs = document.getElementById('proj-chat-messages');
+  if (!msgs) return;
+  // Remove empty state
+  const empty = msgs.querySelector('[style*="text-align:center"]');
+  if (empty && _projChatHistory.length <= 2) empty.remove();
+
+  const div = document.createElement('div');
+  const isUser = role === 'user';
+  div.style.cssText = 'display:flex;flex-direction:column;align-items:' + (isUser?'flex-end':'flex-start');
+  div.innerHTML = (
+    '<div style="max-width:85%;padding:10px 14px;border-radius:' + (isUser?'14px 14px 4px 14px':'14px 14px 14px 4px') + ';background:' + (isUser?'var(--accent-dim)':'var(--surface2)') + ';border:1px solid ' + (isUser?'rgba(201,168,76,0.3)':'var(--border)') + ';font-size:0.82rem;color:var(--text);line-height:1.65;white-space:pre-wrap">' +
+      escHtml(content) +
+    '</div>' +
+    (extras || '')
+  );
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function projChatSend() {
+  const input = document.getElementById('proj-chat-input');
+  const btn   = document.getElementById('proj-chat-send-btn');
+  const text  = (input?.value || '').trim();
+  if (!text) return;
+  const groqKey = document.getElementById('gemini-key')?.value?.trim();
+  if (!groqKey) { alert('Groq API key required — enter it in Settings'); return; }
+
+  if (input) { input.value = ''; input.style.height = 'auto'; }
+  if (btn)   btn.disabled = true;
+
+  // Add user message
+  _projChatHistory.push({ role: 'user', content: text });
+  projAddChatBubble('user', text);
+
+  // Get project context
+  const projectId = parseInt(document.getElementById('proj-ai-context')?.value) || null;
+  const project   = projectId ? _projProjects.find(function(p){return p.id===projectId;}) : null;
+  const projectContext = project ? '\nCurrent project context: ' + project.name : '';
+
+  const systemPrompt =
+    'You are a collaborative project and business planning assistant for TRSAV, a professional AV and technology rental company. ' +
+    'You are also an expert on OEL Command, a sales operations PWA suite used by TRSAV. ' +
+    '\n\nOEL Command tools (suggest these when relevant):\n' +
+    '- INBOX: unified email with AI draft, log-to-Odoo, bounce detection\n' +
+    '- LEAD CAPTURE: scans inbox for inbound leads, push to Odoo CRM\n' +
+    '- ACTIVITIES: scans due Odoo activities, AI drafts follow-up emails\n' +
+    '- QUOTE DESK: paste a quote request, AI drafts TRSAV response, push to Odoo\n' +
+    '- DORMANT CONTACTS: re-engage inactive contacts with AI emails\n' +
+    '- VENDOR OUTREACH: find and email vendors, push to Odoo\n' +
+    '- BOUNCE MANAGER: handle undeliverable email lists against Odoo contacts\n' +
+    '- TEMPLATES: build reusable email templates with AI Composer\n' +
+    '- PROJECTS (this tab): manage projects, tasks, to-dos, AI brainstorm\n' +
+    '\n\nCONVERSATION STYLE RULES — follow these strictly:\n' +
+    '1. Have a REAL conversation. Ask clarifying questions before jumping to task lists.\n' +
+    '2. Only generate a task breakdown when the user has given you enough detail, OR explicitly asks for tasks/a plan/a breakdown.\n' +
+    '3. When generating tasks, prefix each with "TASK:" on its own line. Do NOT do this in normal conversation.\n' +
+    '4. Feel free to discuss, refine, push back, ask questions, and have multiple turns before producing tasks.\n' +
+    '5. If the user is still describing or thinking through something, respond conversationally — do not pre-emptively generate a task list.\n' +
+    '6. Keep responses concise unless the user asks for detail.\n' +
+    projectContext;
+
+
+  try {
+    const model = document.getElementById('gemini-model')?.value || 'llama-3.3-70b-versatile';
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+      body: JSON.stringify({
+        model, max_tokens: 800, temperature: 0.6,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ..._projChatHistory
+        ]
+      }),
+      signal: AbortSignal.timeout(30000)
+    });
+    const d = await r.json();
+    const reply = (d.choices?.[0]?.message?.content || 'No response').trim();
+    _projChatHistory.push({ role: 'assistant', content: reply });
+
+    // Extract TASK: lines — auto-stage them AND show add buttons
+    const taskLines = reply.match(/^TASK:\s*(.+)$/gm) || [];
+    const taskNames = taskLines.map(function(l){ return l.replace(/^TASK:\s*/,'').trim(); });
+    // Auto-add to staged tasks so Task Summary updates live
+    if (taskNames.length) {
+      const projectId = parseInt(document.getElementById('proj-ai-context')?.value) || null;
+      taskNames.forEach(function(name) {
+        // Don't duplicate if already staged
+        if (!_projStagedTasks.find(function(t){ return t.name === name; })) {
+          _projStagedTasks.push({ name, projectId, done: false });
+        }
+      });
+      projRenderStagedTasks();
+    }
+
+    let taskBtns = '';
+    if (taskNames.length) {
+      taskBtns = '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">' +
+        taskNames.map(function(name, i) {
+          return '<button onclick="projStageBrainstormTask(\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:var(--accent-dim);border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:3px 10px;font-size:0.73rem;color:var(--accent);cursor:pointer;font-family:\'DM Sans\',sans-serif">+ ' + escHtml(name.slice(0,35)) + (name.length>35?'…':'') + '</button>';
+        }).join('') +
+        (taskNames.length > 1 ? '<button onclick="projStageAllBrainstormTasks(' + JSON.stringify(taskNames).replace(/"/g,"'") + ')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:0.73rem;color:var(--muted);cursor:pointer;font-family:\'DM Sans\',sans-serif">+ All ' + taskNames.length + ' tasks</button>' : '') +
+      '</div>';
+    }
+
+    projAddChatBubble('assistant', reply, taskBtns);
+
+  } catch(e) {
+    projAddChatBubble('assistant', 'Error: ' + e.message);
+  }
+  if (btn) btn.disabled = false;
+}
+
+function projStageBrainstormTask(name) {
+  const projectId = parseInt(document.getElementById('proj-ai-context')?.value) || null;
+  _projStagedTasks.push({ name, projectId, done: false });
+  projRenderStagedTasks();
+}
+
+function projStageAllBrainstormTasks(names) {
+  const projectId = parseInt(document.getElementById('proj-ai-context')?.value) || null;
+  names.forEach(function(name) {
+    _projStagedTasks.push({ name, projectId, done: false });
+  });
+  projRenderStagedTasks();
+}
+
+function projRenderStagedTasks() {
+  const el = document.getElementById('proj-staged-tasks');
+  if (!el) return;
+
+  const total  = _projStagedTasks.length;
+  const pushed = _projStagedTasks.filter(function(t){ return t.done; }).length;
+  const pending = total - pushed;
+
+  if (!total) {
+    el.innerHTML = '<div style="padding:16px 10px;font-size:0.75rem;color:var(--muted);text-align:center;line-height:1.6">AI-extracted tasks appear here as the conversation builds.<br><span style="opacity:0.6">Use the buttons below chat to save them.</span></div>';
+    return;
+  }
+
+  // Count badge
+  const badge = '<div style="padding:6px 10px;font-size:0.72rem;color:var(--muted);border-bottom:1px solid var(--border);display:flex;justify-content:space-between">'
+    + '<span>' + total + ' task' + (total!==1?'s':'') + '</span>'
+    + (pushed ? '<span style="color:var(--success)">' + pushed + ' pushed</span>' : '')
+    + '</div>';
+
+  const items = _projStagedTasks.map(function(t, idx) {
+    return (
+      '<div id="staged-' + idx + '" draggable="true"'
+      + ' ondragstart="projDragStart(event,' + idx + ')"'
+      + ' ondragover="projDragOver(event)"'
+      + ' ondrop="projDrop(event,' + idx + ')"'
+      + ' ondragend="projDragEnd(event)"'
+      + ' style="padding:7px 8px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:5px;' + (t.done?'opacity:0.5':'') + '">'
+        // Drag handle
+        + '<div style="color:var(--muted);font-size:1rem;padding-top:1px;user-select:none;flex-shrink:0;cursor:grab;line-height:1" title="Drag to reorder">⋮⋮</div>'
+        // Number + name
+        + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:0.68rem;color:var(--muted);margin-bottom:1px">#' + (idx+1) + '</div>'
+          + '<div style="font-size:0.75rem;color:var(--text);line-height:1.4;word-break:break-word">' + escHtml(t.name) + '</div>'
+        + '</div>'
+        // Actions
+        + '<div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;align-items:flex-end">'
+          + (t.done
+            ? '<span style="font-size:0.67rem;color:var(--success)">✓ done</span>'
+            : '<button onclick="projPushStagedTask(' + idx + ')" style="background:var(--accent-dim);border:1px solid rgba(201,168,76,0.4);border-radius:4px;padding:2px 7px;font-size:0.67rem;color:var(--accent);cursor:pointer;white-space:nowrap">⬆</button>'
+          )
+          + '<button onclick="projRemoveStagedTask(' + idx + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.68rem;padding:0;line-height:1">✕</button>'
+        + '</div>'
+      + '</div>'
+    );
+  }).join('');
+
+  el.innerHTML = badge + items;
+}
+
+// Drag-to-reorder for staged tasks
+let _projDragIdx = null;
+
+function projDragStart(e, idx) {
+  _projDragIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.4';
+}
+function projDragEnd(e) {
+  e.currentTarget.style.opacity = '';
+  _projDragIdx = null;
+}
+function projDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+function projDrop(e, targetIdx) {
+  e.preventDefault();
+  if (_projDragIdx === null || _projDragIdx === targetIdx) return;
+  const moved = _projStagedTasks.splice(_projDragIdx, 1)[0];
+  _projStagedTasks.splice(targetIdx, 0, moved);
+  _projDragIdx = null;
+  projRenderStagedTasks();
+}
+
+async function projPushStagedTask(idx) {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const t = _projStagedTasks[idx];
+  if (!t || t.done) return;
+  try {
+    const vals = { name: t.name, user_ids: [[4, odooUid]] };
+    if (t.projectId) vals.project_id = t.projectId;
+    await odooExecute(odooUid, 'project.task', 'create', [vals]);
+    _projStagedTasks[idx].done = true;
+    projRenderStagedTasks();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function projPushAllStagedTasks() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const pending = _projStagedTasks.filter(function(t){return !t.done;});
+  if (!pending.length) { alert('No tasks to push'); return; }
+  let pushed = 0;
+  for (let i = 0; i < _projStagedTasks.length; i++) {
+    if (!_projStagedTasks[i].done) {
+      await projPushStagedTask(i);
+      pushed++;
+    }
+  }
+  alert('✓ Pushed ' + pushed + ' task' + (pushed!==1?'s':'') + ' to Odoo');
+}
+
+function projRemoveStagedTask(idx) {
+  _projStagedTasks.splice(idx, 1);
+  projRenderStagedTasks();
+}
+
+// ── QUOTE DESK prompt helpers ────────────────────────────────────────────────
+function qdTogglePrompt() {
+  const panel = document.getElementById('qd-prompt-panel');
+  const chevron = document.getElementById('qd-prompt-chevron');
+  if (!panel) return;
+  const open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  if (chevron) chevron.style.transform = open ? '' : 'rotate(180deg)';
+  if (!open) {
+    const ta = document.getElementById('qd-custom-prompt');
+    if (ta) ta.value = localStorage.getItem('oel_qd_prompt') || '';
+  }
+}
+
+function qdSavePrompt() {
+  const ta = document.getElementById('qd-custom-prompt');
+  const statusEl = document.getElementById('qd-prompt-status');
+  const val = (ta?.value || '').trim();
+  localStorage.setItem('oel_qd_prompt', val);
+  if (statusEl) { statusEl.style.color='var(--success)'; statusEl.textContent='✓ Saved'; setTimeout(function(){statusEl.textContent='';},2000); }
+}
+
+function qdResetPrompt() {
+  localStorage.removeItem('oel_qd_prompt');
+  const ta = document.getElementById('qd-custom-prompt');
+  if (ta) ta.value = '';
+  const statusEl = document.getElementById('qd-prompt-status');
+  if (statusEl) { statusEl.style.color='var(--muted)'; statusEl.textContent='Reset to default'; setTimeout(function(){statusEl.textContent='';},2000); }
+}
+
+
+
+// ── Email body cleaner — strips HTML, entities, invisible chars, image data ──
+function cleanEmailBody(raw) {
+  if (!raw) return '';
+  return raw
+    // Preserve angle-bracket emails before stripping tags
+    .replace(/<([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>/g, '[$1]')
+    // Drop style/script blocks entirely
+    .replace(/<(style|script)[^>]*>[\s\S]*?<\/\1>/gi, '')
+    // Drop base64 image data (long data: URIs inside tags)
+    .replace(/src="data:[^"]{50,}"/gi, 'src=""')
+    // Common block elements → newline
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(p|div|tr|li|h[1-6]|blockquote)[^>]*>/gi, '\n')
+    // Strip remaining HTML tags
+    .replace(/<[^>]+>/g, '')
+    // Decode common HTML entities
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+    .replace(/&nbsp;/g,' ').replace(/&quot;/g,'"').replace(/&#39;/g,"'")
+    .replace(/&mdash;/g,'—').replace(/&ndash;/g,'–').replace(/&hellip;/g,'…')
+    // Strip numeric entities (&#8199; &#847; &#8203; etc — invisible tracking chars)
+    .replace(/&#\d+;/g, '')
+    // Strip named entities not decoded above
+    .replace(/&[a-zA-Z]{2,6};/g, ' ')
+    // Strip zero-width / invisible Unicode characters inserted by email clients
+    .replace(/[\u00AD\u200B\u200C\u200D\u2028\u2029\u202A-\u202F\u2060-\u2064\u206A-\u206F\uFEFF]/g, '')
+    // Collapse excessive whitespace while preserving paragraph breaks
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+
+// ── Save last AI response as task / to-do / project ─────────────────────────
+async function projSaveLastAs(type) {
+  const lastAssistant = [..._projChatHistory].reverse().find(function(m){ return m.role === 'assistant'; });
+  if (!lastAssistant) { alert('No AI response yet — send a message first'); return; }
+
+  const content   = lastAssistant.content;
+  const lines     = content.split('\n').filter(function(l){ return l.trim(); });
+  const firstLine = lines[0] || 'AI brainstorm result';
+  const taskLines = content.match(/^TASK:\s*(.+)$/gm) || [];
+  const taskNames = taskLines.map(function(l){ return l.replace(/^TASK:\s*/,'').trim(); });
+  // Fallback: if no TASK: lines, use all non-empty lines that look like tasks
+  const names = taskNames.length ? taskNames
+    : lines.filter(function(l){ return l.length > 3 && l.length < 120 && !/^(#|\/\/)/.test(l); }).slice(0, 10);
+
+  if (type === 'task') {
+    // Stage ALL tasks into the brainstorm sidebar panel
+    names.forEach(function(name) { projStageBrainstormTask(name); });
+    const n = names.length;
+    const sidebar = document.getElementById('proj-brainstorm-sidebar');
+    // Expand sidebar if collapsed
+    if (_projBrainstormCollapsed) projToggleBrainstormSidebar();
+    const statusDiv = document.createElement('div');
+    statusDiv.style.cssText = 'font-size:0.75rem;color:var(--success);padding:6px 10px;text-align:center';
+    statusDiv.textContent = '✓ ' + n + ' task' + (n!==1?'s':'') + ' staged — click Push all or push individually';
+    const staged = document.getElementById('proj-staged-tasks');
+    if (staged) staged.prepend(statusDiv);
+    setTimeout(function(){ statusDiv.remove(); }, 3000);
+
+  } else if (type === 'todo') {
+    // Add ALL tasks to local To Do list
+    names.forEach(function(name, i) {
+      _projTodos.push({ id: Date.now() + i, text: name, done: false, odoo_id: null });
+    });
+    localStorage.setItem('oel_todos', JSON.stringify(_projTodos));
+    // Switch to To Do tab
+    projTab('todo');
+    const n = names.length;
+    const statusEl = document.getElementById('proj-status');
+
+  } else if (type === 'project') {
+    if (!odooUid) { alert('Connect to Odoo first'); return; }
+    const suggestedName = firstLine.slice(0, 60)
+      .replace(/^(TASK:|#|\*|-|Here is|Here's|Below is)\s*/i,'').trim();
+    const projName = prompt('New project name:', suggestedName);
+    if (!projName) return;
+
+    const statusDiv = document.createElement('div');
+    statusDiv.style.cssText = 'font-size:0.75rem;color:var(--muted);padding:6px 18px';
+    statusDiv.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Creating project and ' + names.length + ' tasks…';
+    const msgs = document.getElementById('proj-chat-messages');
+    if (msgs) msgs.appendChild(statusDiv);
+
+    try {
+      // Create the project
+      const projId = await odooExecute(odooUid, 'project.project', 'create', [{
+        name: projName, user_id: odooUid
+      }]);
+
+      // Create ALL tasks inside the project
+      let pushed = 0;
+      for (let i = 0; i < names.length; i++) {
+        try {
+          await odooExecute(odooUid, 'project.task', 'create', [{
+            name: names[i],
+            project_id: projId,
+            user_ids: [[4, odooUid]],
+          }]);
+          pushed++;
+        } catch(e) { /* skip individual task errors */ }
+      }
+
+      statusDiv.innerHTML = '✓ Project <strong>' + escHtml(projName) + '</strong> created with ' + pushed + ' tasks. Open the Projects tab to view.';
+      statusDiv.style.color = 'var(--success)';
+      setTimeout(function(){ statusDiv.remove(); }, 5000);
+
+      // Refresh projects if loaded
+      if (_projProjects.length) projLoadProjects();
+
+    } catch(e) {
+      statusDiv.style.color = 'var(--danger)';
+      statusDiv.textContent = 'Error: ' + e.message;
+    }
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── TASK EDIT MODAL ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _ptmTaskId  = null;
+let _ptmTaskIdx = null;
+
+function projEditTask(idx) {
+  const t = _projTasks[idx];
+  if (!t) return;
+  _ptmTaskId  = t.id;
+  _ptmTaskIdx = idx;
+
+  // Populate fields
+  document.getElementById('ptm-title').textContent  = 'Edit Task';
+  document.getElementById('ptm-name').value         = t.name || '';
+  document.getElementById('ptm-desc').value         = t.description || '';
+  document.getElementById('ptm-deadline').value     = t.date_deadline || '';
+  document.getElementById('ptm-priority').value     = t.priority || '0';
+  document.getElementById('ptm-note').value         = '';
+  document.getElementById('ptm-status').textContent = '';
+  document.getElementById('ptm-ai-suggestions').style.display = 'none';
+  document.getElementById('ptm-ai-suggestions').innerHTML = '';
+
+  // Populate stage dropdown
+  const stageSel = document.getElementById('ptm-stage');
+  stageSel.innerHTML = '<option value="">— No stage —</option>' +
+    _projStages.map(function(s) {
+      return '<option value="' + s.id + '">' + escHtml(s.name) + '</option>';
+    }).join('');
+  if (Array.isArray(t.stage_id)) stageSel.value = t.stage_id[0];
+
+  // Populate user dropdown
+  const userSel = document.getElementById('ptm-user');
+  userSel.innerHTML = '<option value="">— Unassigned —</option>' +
+    (odooUsers || []).map(function(u) {
+      return '<option value="' + u.id + '">' + escHtml(u.name) + '</option>';
+    }).join('');
+  // Set first assignee
+  if (t.user_ids && t.user_ids.length) userSel.value = t.user_ids[0];
+
+  document.getElementById('proj-task-modal').classList.remove('hidden');
+}
+
+function ptmClose() {
+  document.getElementById('proj-task-modal').classList.add('hidden');
+  _ptmTaskId = null; _ptmTaskIdx = null;
+}
+
+async function ptmSave() {
+  if (!_ptmTaskId || !odooUid) return;
+  const btn = document.getElementById('ptm-save-btn');
+  const statusEl = document.getElementById('ptm-status');
+  btn.disabled = true;
+  statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Saving…';
+
+  try {
+    const name     = document.getElementById('ptm-name').value.trim();
+    const desc     = document.getElementById('ptm-desc').value.trim();
+    const deadline = document.getElementById('ptm-deadline').value;
+    const priority = document.getElementById('ptm-priority').value;
+    const stageId  = parseInt(document.getElementById('ptm-stage').value) || null;
+    const userId   = parseInt(document.getElementById('ptm-user').value)  || null;
+    const note     = document.getElementById('ptm-note').value.trim();
+
+    const vals = { name: name || _projTasks[_ptmTaskIdx]?.name };
+    if (desc)     vals.description    = desc;
+    if (deadline) vals.date_deadline  = deadline;
+    if (priority) vals.priority       = priority;
+    if (stageId)  vals.stage_id       = stageId;
+    if (userId)   vals.user_ids       = [[6, 0, [userId]]]; // Many2many replace
+    else          vals.user_ids       = [[5]]; // clear assignees
+
+    await odooExecute(odooUid, 'project.task', 'write', [[_ptmTaskId], vals]);
+
+    // Log note if provided
+    if (note) {
+      await odooExecute(odooUid, 'project.task', 'message_post', [[_ptmTaskId]], {
+        body: '<p>' + escHtml(note) + '</p>',
+        message_type: 'comment', subtype_xmlid: 'mail.mt_note',
+      });
+    }
+
+    statusEl.style.color = 'var(--success)';
+    statusEl.textContent = '✓ Saved';
+    setTimeout(function() { ptmClose(); projLoadTasks(); }, 800);
+  } catch(e) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+  btn.disabled = false;
+}
+
+async function ptmDelete() {
+  if (!_ptmTaskId || !odooUid) return;
+  const taskName = document.getElementById('ptm-name').value || 'this task';
+  if (!confirm('Delete "' + taskName + '"? This cannot be undone.')) return;
+  const statusEl = document.getElementById('ptm-status');
+  statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Deleting…';
+  try {
+    await odooExecute(odooUid, 'project.task', 'unlink', [[_ptmTaskId]]);
+    ptmClose();
+    projLoadTasks();
+  } catch(e) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function ptmAIRewrite() {
+  const currentName = document.getElementById('ptm-name').value.trim();
+  if (!currentName) { alert('Enter a task name first'); return; }
+  const groqKey = document.getElementById('gemini-key')?.value?.trim();
+  if (!groqKey) { alert('Groq API key required — enter it in Settings'); return; }
+  const btn = document.getElementById('ptm-ai-btn');
+  const suggestionsEl = document.getElementById('ptm-ai-suggestions');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="dot spin" style="display:inline-block"></div>';
+  suggestionsEl.style.display = 'none';
+
+  try {
+    const model = document.getElementById('gemini-model')?.value || 'llama-3.3-70b-versatile';
+    const prompt =
+      'Rewrite this project task name 3 different ways — clearer, more actionable, and professional. ' +
+      'Each version should be concise (under 60 chars) and start with an action verb. ' +
+      'Return exactly 3 lines, one rewrite per line, no numbering, no bullets, no explanation.\n\n' +
+      'Original task: ' + currentName;
+
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey },
+      body: JSON.stringify({ model, max_tokens: 200, temperature: 0.7,
+        messages: [{ role: 'user', content: prompt }] }),
+      signal: AbortSignal.timeout(15000)
+    });
+    const d = await r.json();
+    const lines = (d.choices?.[0]?.message?.content || '').trim()
+      .split('\n').map(function(l){ return l.trim(); }).filter(Boolean).slice(0, 3);
+
+    if (lines.length) {
+      suggestionsEl.style.display = 'flex';
+      suggestionsEl.innerHTML = '<div style="font-size:0.71rem;color:var(--muted);margin-bottom:3px">Choose a rewrite:</div>' +
+        lines.map(function(l) {
+          return '<button onclick="ptmPickRewrite(\'' + escHtml(l).replace(/'/g,"\\'") + '\')" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-size:0.8rem;color:var(--text);cursor:pointer;text-align:left;font-family:\'DM Sans\',sans-serif;transition:border-color 0.12s" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' + escHtml(l) + '</button>';
+        }).join('');
+    }
+  } catch(e) {
+    document.getElementById('ptm-status').textContent = 'AI error: ' + e.message;
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M6.5 1l1 3L11 5.5l-3 1-1 3-1-3-3-1 3-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg> Rewrite';
+}
+
+function ptmPickRewrite(text) {
+  document.getElementById('ptm-name').value = text;
+  document.getElementById('ptm-ai-suggestions').style.display = 'none';
+}
 
 // ─── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -9551,10 +10709,7 @@ function _renderInboxRow(em, src, idx) {
       } catch(e) { body = '(Could not fetch body: ' + e.message + ')'; }
     }
     // Preserve angle-bracket emails before stripping HTML
-    const cleanedForPreview = (body || '(No body available)')
-      .replace(/<([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>/g, '[$1]')
-      .replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    const clean = cleanedForPreview;
+    const clean = cleanEmailBody(body || '(No body available)');
     preview.textContent = clean.slice(0, 5000) + (clean.length > 5000 ? '\n\n[…truncated]' : '');
   };
 
@@ -9666,7 +10821,7 @@ function _renderInboxRow(em, src, idx) {
     const isBounce = /undeliverable|delivery.fail|mail delivery|failure notice|bounce|could not deliver|relay access denied|recipient address rejected|no such user|returned mail/i.test(subject + ' ' + (body||''));
 
     // Clean body for display
-    const cleanBody = (body||'').replace(/<[^>]+>/g, ' ').replace(/\s+/g,' ').trim();
+    const cleanBody = cleanEmailBody(body || '');
 
     // Build prefill — surface bounce info prominently
     let prefill = 'Email from: ' + (sender||emailTo) + '\nSubject: ' + subject;
@@ -19656,6 +20811,7 @@ window.navTo = function(section) {
     quotes:     {panel:'panel-quotes',     title:'Quotes',       hasSrc:false},
     templates:  {panel:'panel-templates',  title:'Templates',    hasSrc:false},
     quotedesk:  {panel:'panel-quotedesk',  title:'Quote Desk',   hasSrc:false},
+    projects:   {panel:'panel-projects',   title:'Projects',     hasSrc:false},
     discuss:    {panel:'panel-discuss',    title:'Discuss',      hasSrc:false},
     support:    {panel:'panel-support',    title:'Support',      hasSrc:false},
     prospect:   {panel:'panel-prospect',   title:'Prospecting',  hasSrc:false},
@@ -21011,5 +22167,73 @@ window.persTab = function(tab) {
       </div>
       <div id="laz-notes-list" style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px"></div>
     </div>
+
+
+
+<!-- ── Task Edit Modal ──────────────────────────────────────────────────── -->
+<div id="proj-task-modal" class="modal-overlay hidden" style="z-index:300">
+  <div class="modal" style="max-width:560px;width:100%">
+    <div class="modal-header">
+      <div class="modal-title" id="ptm-title">Edit Task</div>
+      <button class="modal-close" onclick="ptmClose()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Task name</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="ptm-name" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:0.83rem;outline:none;font-family:'DM Sans',sans-serif">
+          <button onclick="ptmAIRewrite()" id="ptm-ai-btn" class="btn btn-ghost" style="padding:6px 10px;font-size:0.76rem;gap:4px;flex-shrink:0">
+            <svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M6.5 1l1 3L11 5.5l-3 1-1 3-1-3-3-1 3-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+            Rewrite
+          </button>
+        </div>
+        <div id="ptm-ai-suggestions" style="display:none;margin-top:6px;flex-direction:column;gap:4px"></div>
+      </div>
+      <div>
+        <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Description / notes</label>
+        <textarea id="ptm-desc" style="width:100%;min-height:80px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:0.82rem;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;box-sizing:border-box" placeholder="Optional description…"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Stage</label>
+          <select id="ptm-stage" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:0.82rem;outline:none;font-family:'DM Sans',sans-serif">
+            <option value="">— No stage —</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Priority</label>
+          <select id="ptm-priority" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:0.82rem;outline:none;font-family:'DM Sans',sans-serif">
+            <option value="0">Normal</option>
+            <option value="1">⭐ High priority</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Assignee</label>
+          <select id="ptm-user" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:0.82rem;outline:none;font-family:'DM Sans',sans-serif">
+            <option value="">— Unassigned —</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Deadline</label>
+          <input type="date" id="ptm-deadline" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:0.82rem;outline:none;font-family:'DM Sans',sans-serif;box-sizing:border-box">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:0.71rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:500;display:block;margin-bottom:4px">Add a chatter note (optional)</label>
+        <textarea id="ptm-note" style="width:100%;min-height:56px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:0.82rem;font-family:'DM Sans',sans-serif;resize:vertical;outline:none;box-sizing:border-box" placeholder="Logged to Odoo task chatter…"></textarea>
+      </div>
+      <div id="ptm-status" style="font-size:0.78rem;color:var(--muted);min-height:18px"></div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between">
+      <button onclick="ptmDelete()" class="btn btn-ghost" style="color:var(--danger);border-color:rgba(220,50,50,0.4);padding:8px 16px">Delete task</button>
+      <div style="display:flex;gap:8px">
+        <button onclick="ptmClose()" class="btn btn-ghost" style="padding:8px 16px">Cancel</button>
+        <button onclick="ptmSave()" class="btn btn-primary" style="padding:8px 20px" id="ptm-save-btn">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body></html>
