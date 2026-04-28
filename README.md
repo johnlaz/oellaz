@@ -1,118 +1,77 @@
-# OEL Command
+# OEL Command v10.0
 
-**Your AI-powered sales operations command center — built for Odoo 19.**
+**AI-powered sales operations command center — built for TRSAV and Odoo 19.**
 
-OEL Command is a single-file Progressive Web App that sits alongside your Odoo CRM and turns your daily sales workflow into a streamlined, AI-assisted operation. From unified inbox management to vendor outreach, activity drafting to bounce handling — everything you need to move deals forward, all in one dark-luxury interface.
+OEL Command is a single-file Progressive Web App that connects your IMAP inbox, Odoo CRM, and Groq AI into one dark-luxury interface. From unified inbox management to vendor outreach, AI-assisted project planning to bounced email handling — every tool you need to move deals forward, all in one place.
 
 ---
 
 ## What It Does
 
 ### ✉ Unified Inbox
-Pull your Turbify/IMAP, Odoo, and Gmail messages into one view. Click any email to expand the body inline. Reply, AI-draft, log to Odoo, schedule an activity, or move to trash — all without leaving the app. Bounce-back emails are automatically detected and the undeliverable address is surfaced so you can log the failure to the correct contact instantly.
+Pull Turbify/IMAP, Odoo, and Gmail into one view. Click any email row to expand the body inline — HTML noise, invisible tracking characters, and base64 image data are automatically stripped so you see clean text. Reply, AI-draft, log to Odoo, schedule an activity, or trash from each row.
+
+**Bounce detection:** Delivery failure emails auto-detect the undeliverable address and pre-fill the Odoo contact search in the log note modal. Log the bounce to the correct contact in two clicks.
 
 ### ⚡ Activities
-Connects to your Odoo CRM and scans activities due today. AI drafts a personalized follow-up email for each one using deal context and last chatter note. Review in the Send tab — compose via Quick Compose, log the draft as an Odoo note, or send directly via IMAP. The Follow-up Tracker shows which pushed leads are missing a scheduled activity.
+Scans Odoo activities due today. AI drafts a personalized follow-up email per contact using deal context and last chatter note. Review in the Send tab — compose via Quick Compose, log as a note, or send via IMAP with auto-log. Follow-up Tracker shows leads missing a scheduled activity.
 
 ### 📊 Dashboard & Reports
-Eight CRM stat cards — Pipeline Value, Open Opportunities, Won This Month, Due Today, Odoo Inbox, Stalled Deals, Closing This Month, Lost This Month. Click any card for a drill-down. Daily AI Briefing summarizes your pipeline, wins, due activities, and stale deals — with Over Achiever mode that scans flagged emails for action items. Email the briefing to yourself with one click.
+Eight CRM stat cards + four accounting cards. Click any for drill-down. AI Daily Briefing with Over Achiever mode. Quick reports: Aged AR, Top Customers (YTD), Overdue Notices — all print-ready with Save as PDF.
 
-Accounting cards pull directly from Odoo: Open AR, Overdue, Revenue MTD, Collected MTD. Quick reports — Aged AR, Top Customers, Overdue Notices — open print-ready in a new tab.
+### 📝 Quote Desk
+Paste any vague quote request and AI extracts contact info then drafts a TRSAV-style response with clarifying questions: event dates, venue, indoor/outdoor, audience size, AV needs, setup timing, budget. Custom prompt editor saves your own instructions without touching code. Push contact + opportunity to Odoo, schedule activity, or log draft to contact chatter.
 
-### 📋 Templates
-Dedicated template management section. Build templates manually with a rich editor and clickable variable insertion (`{{customer_name}}`, `{{subject}}`, `{{date}}`, and more). Or use the **AI Composer** — describe what you need, pick a tone, and AI writes the name, keywords, and body as three separate plain-text calls (no JSON parsing, no errors). Templates are available in every composer across the app and included in credential export/import.
+### 🗂 Projects & Tasks
+Four sub-tabs — all connected to Odoo's project module:
+
+**Projects** — card grid of all Odoo projects. Click to view tasks or create new projects.
+
+**Tasks** — filter by project, assignee, stage. Quick-add bar at the top. Full edit modal: name, description, stage, priority, assignee, deadline, chatter note, delete. Checkbox moves task to Done stage in Odoo (never deleted, always retrievable). AI Rewrite generates 3 alternative task name options.
+
+**To Do** — personal tasks (localStorage-first), push any to Odoo. Sync imports existing personal Odoo tasks.
+
+**✦ AI Brainstorm** — conversational AI planning. AI asks clarifying questions before generating tasks — holds a real conversation rather than immediately dumping a list. Tasks auto-appear in the Task Summary panel. Save last response as staged tasks, To Do items, or a new Odoo project with all tasks created inside it.
 
 ### 💤 Dormant Contacts
-Finds open opportunities and contacts with no scheduled activity and no recent movement. Filter by stage, rep, minimum revenue, or exclude a tag. AI drafts warm re-engagement emails. Send via IMAP with auto-log to Odoo, or bulk-schedule a follow-up activity on all selected contacts at once.
+Finds contacts and opportunities with no recent activity. Filter by days inactive, type, rep, or tag. Search by name, company, or Odoo internal reference number. AI re-engagement drafts, send via IMAP, bulk schedule activities.
 
 ### 🏭 Vendor Outreach
-Find subcontractors and vendors, send quote requests, track responses. Search your Odoo purchase/vendors by location and equipment type. The **Find Vendors** button opens YellowPages, Yelp, Google, and ThomasNet pre-filled with your search — paste results back in and AI extracts structured contact data. Pending vendors appear in a gold-bordered section. Push individually or all at once to Odoo as `res.partner` with `supplier_rank=1`. Blast quote request emails to all selected vendors.
+Find Vendors opens YellowPages/Yelp/Google/ThomasNet pre-filled. Paste results → AI extracts contacts. Push to Odoo as suppliers. Blast quote request emails to all vendors.
 
 ### 📥 Lead Capture
-Scans your IMAP inbox for inbound leads matching your configured specs. AI extracts contact name, phone, email, and notes. One click pushes a `crm.lead`, creates the `res.partner`, logs a chatter note, and schedules a follow-up activity in Odoo.
+Scans IMAP for inbound leads matching your specs. Forwarded emails auto-detected — AI extracts the real customer from the forwarded body. Contact override lets you link to an existing Odoo contact. One click creates CRM lead + partner + note + activity.
 
 ### 📭 Bounce Manager
-Upload a `.txt` or `.csv` of undeliverable email addresses (or paste them directly). The app fuzzy-matches each against Odoo contacts — exact email first, then local-part matching. For each match: log a bounce note to the Odoo chatter, clear all scheduled activities, or reschedule a "verify contact info" activity. Bulk log notes on all matched contacts at once.
+Upload .txt or .csv of undeliverable emails. Fuzzy-matches against Odoo contacts. Per card: log bounce note, clear activities, reschedule follow-up. Bulk log to all matched contacts.
 
-### 💬 Discuss
-Check your Odoo inbox directly from the app. Log notes and schedule activities on any lead or contact.
-
-### 🔧 Remote Support
-One-click launchers for Quick Assist, Windows RDP, AnyDesk, and TeamViewer. Pre-written session invite emailer — pick the tool, enter your ID, and a professional connection guide opens in Quick Compose ready to send to your client.
-
-### 📄 Documents
-Upload PDFs and annotate them — text labels, signatures, highlights. Multi-page print-to-PDF. Save and reload signature.
+### 📋 Templates
+Standalone sidebar section. Editor with variable insertion. AI Composer generates name, keywords, and body from a description (plain-text calls — no JSON errors). Templates populate every composer. Build from inbox email wizard creates templates from real conversations.
 
 ---
 
 ## How It Works
 
-OEL Command is a **single-file HTML/CSS/JavaScript PWA**. No frameworks, no build tools, no cloud dependency. Everything runs locally on your machine.
-
-Two lightweight Python servers handle the heavy lifting:
+Single-file HTML/CSS/JS PWA. Two lightweight Python servers:
 
 | Server | Port | Purpose |
 |--------|------|---------|
-| `imap_server.py` | 7843 | IMAP/SMTP — fetch email, send email, lead capture, body parsing |
-| `server.py` | 7842 | Odoo XML-RPC CORS proxy — all Odoo API calls |
+| `imap_server.py` | 7843 | IMAP/SMTP, email body parsing, bounce detection |
+| `server.py` | 7842 | Odoo 19 XML-RPC CORS proxy |
 
-All Odoo data stays between your browser and your Odoo instance. No third-party cloud. AI calls go directly to Groq's API using your own key.
+All Odoo data stays between your browser and your instance. AI calls go directly to Groq with your own key. No cloud storage, no analytics.
 
 ---
 
 ## Quick Start
 
-### Requirements
-- Windows 10/11 (or any OS with Python 3.8+)
-- Python 3 (`python.org`)
-- Groq API key (free — `console.groq.com`)
-- Odoo 19 instance with API key enabled
+**Requirements:** Python 3, Groq API key ([console.groq.com](https://console.groq.com)), Odoo 19 with API key enabled.
 
-### Launch
 ```
 Double-click start.bat
 ```
-This starts both Python servers, registers auto-launch on Windows startup, and opens the app in Chrome.
 
-Or start servers manually:
-```
-python imap_server.py   # port 7843
-python server.py        # port 7842
-```
-
-### First-time setup
-1. Open **Settings** (bottom of sidebar)
-2. Enter your Odoo URL, database, username, and API key
-3. Enter your Groq API key
-4. Configure IMAP credentials in **Lead Capture** settings
-5. Click **Export credentials** to save a backup JSON
-
----
-
-## Feature Reference
-
-### AI
-- Powered by **Groq** (`llama-3.3-70b-versatile` by default, switchable)
-- Used in: activity email drafting, inbox reply drafting, daily briefing, template AI Composer, lead extraction from email, vendor contact extraction, AI note cleanup, dormant contact re-engagement emails
-- All prompts are grounded — AI only summarizes content you provide, never invents facts
-
-### Email
-- Send via IMAP/SMTP directly from the app
-- All sent emails auto-log to Odoo chatter
-- Bounce detection: `<email@domain>` addresses preserved through HTML stripping
-- Quick Compose available from every section of the app
-
-### Odoo Integration
-- Odoo 19 XML-RPC API (all calls use correct `[[id]]` double-bracket syntax)
-- Creates and updates: `crm.lead`, `res.partner`, `mail.activity`, `sale.order`, `account.move`
-- Reads: pipeline, activities, accounting invoices, inbox messages, contacts, vendors
-- All write operations surface errors — nothing fails silently
-
-### Data & Privacy
-- **All data is local** — credentials in `localStorage`, no cloud storage
-- Export/import credentials as JSON (includes templates, specs, contacts, notes)
-- Service worker caches the app shell for offline access
-- No analytics, no ads, no telemetry
+Starts both servers and opens the app in Chrome. First-time: go to Settings, enter Odoo URL/database/username/API key and Groq key. Export credentials for backup.
 
 ---
 
@@ -120,19 +79,14 @@ python server.py        # port 7842
 
 ```
 OEL Command/
-├── index.html          — The entire app (HTML + CSS + JS, single file)
-├── imap_server.py      — IMAP/SMTP server (port 7843)
-├── server.py           — Odoo CORS proxy (port 7842)
-├── manifest.json       — PWA manifest
-├── sw.js               — Service worker (cache key: oel-v9.3)
-├── start.bat           — Windows launcher
-├── credentials.json    — Default empty credentials template
-└── icons/
-    ├── icon.svg
-    ├── icon-192.png
-    ├── icon-512.png
-    ├── icon-maskable-192.png
-    └── icon-maskable-512.png
+├── index.html            — The entire app (single file)
+├── imap_server.py        — IMAP/SMTP server (port 7843)
+├── server.py             — Odoo CORS proxy (port 7842)
+├── manifest.json         — PWA manifest (v10.0.0)
+├── sw.js                 — Service worker (cache: oel-v10.0)
+├── start.bat             — Windows launcher
+├── credentials.json      — Empty credentials template
+└── icons/                — SVG + PNG icons (192, 512, maskable)
 ```
 
 ---
@@ -141,16 +95,18 @@ OEL Command/
 
 | Version | Highlights |
 |---------|-----------|
-| v9.3 | Templates as standalone sidebar section, AI Composer (3-call plain text), bounce manager, help guide, Follow-up Tracker fixed |
-| v9.2 | Bounce Manager with fuzzy Odoo matching, Help sidebar section, template system rebuilt |
-| v9.1 | Contact search override in log note modal, bounce email extraction from IMAP body (strip_html fix), Follow-up Tracker fixed |
-| v9.0 | Activity draft→compose→log flow, vendor paste-extract with push-to-Odoo, inbox body preview, email preview modal |
-| v8.0 | Inbox panel action bar, IMAP trash endpoint, notes cleanup modal, templates tab load fix |
-| v7.x | Dormant contacts, vendor outreach, document center, accounting dashboard, remote support, bulk schedule |
+| **v10.0** | Projects tab (Projects/Tasks/To Do/AI Brainstorm), conversational AI, task edit modal with AI Rewrite, Done stage (not delete), Quote Desk TRSAV prompt with custom editor |
+| v9.5 | Quote Desk, FWD email detection, contact override in lead modal, schedule activity fix |
+| v9.3 | Templates standalone section, Bounce Manager, Help guide, email body cleaner |
+| v9.2 | Bounce Manager, Help sidebar, template system with AI Composer |
+| v9.1 | Contact search in log note modal, bounce address extraction |
+| v9.0 | Activity draft→compose→log, vendor paste-extract, inbox body preview |
+| v8.x | IMAP trash, inbox action bar, notes cleanup |
+| v7.x | Dormant contacts, vendor outreach, accounting dashboard, remote support |
 
 ---
 
 ## Built By
 
 Lazzaro · Powered by Groq AI + Odoo 19  
-`OEL Command v9.3`
+`OEL Command v10.0`
