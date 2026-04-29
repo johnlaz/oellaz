@@ -1911,31 +1911,64 @@
 
         <!-- Equipment match results -->
         <div id="qsp-equipment-card" class="card" style="display:none;margin-bottom:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
             <div class="card-title" style="margin:0">Equipment — matched to catalog</div>
-            <span id="qsp-match-summary" style="font-size:0.74rem;color:var(--muted)"></span>
+            <div style="flex:1"></div>
+            <span id="qsp-match-summary" style="font-size:0.74rem;color:var(--muted);margin-right:4px"></span>
+            <button onclick="qsbVerifyLines(0)" class="btn btn-ghost" style="padding:3px 8px;font-size:0.72rem" title="Re-check all items against Odoo catalog">↻ Verify</button>
+            <button onclick="qsbShowLocalTemplates()" class="btn btn-ghost" style="padding:3px 8px;font-size:0.72rem">My templates</button>
+            <button onclick="qsbAddLine()" title="Search catalog and add a line" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-size:0.74rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">+ Add item</button>
+            <button onclick="qsbOpenCatalog()" title="Browse full product catalog" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:5px;padding:3px 10px;font-size:0.74rem;color:var(--accent);cursor:pointer;font-family:'DM Sans',sans-serif;margin-left:2px">⊞ Browse catalog</button>
           </div>
           <div id="qsp-equipment-list" style="display:flex;flex-direction:column;gap:8px"></div>
+          <!-- Smart Builder local template panel (hidden until My templates clicked) -->
+          <div id="qsb-template-panel" style="display:none;margin-top:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div style="font-size:0.77rem;font-weight:500;color:var(--text)">Saved equipment templates</div>
+              <button onclick="document.getElementById('qsb-template-panel').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem">✕</button>
+            </div>
+            <div id="qsb-template-list"></div>
+          </div>
         </div>
 
-        <!-- Odoo template selector + Build quote action -->
-        <div id="qsp-build-card" style="display:none;padding-bottom:24px">
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+        <!-- Step 3: Customer + Push (shown after extract) -->
+        <div id="qsp-build-card" style="display:none;padding-bottom:32px">
+
+          <!-- Customer search -->
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:10px">3 · Customer &amp; delivery</div>
+            <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+              <input type="text" id="qsp-contact-search" placeholder="Search Odoo contacts by name or email…"
+                style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:0.82rem;outline:none;font-family:'DM Sans',sans-serif"
+                oninput="qspSearchContact(this.value)">
+              <button onclick="qspClearContact()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;padding:5px 8px;font-size:0.8rem">✕</button>
+            </div>
+            <div id="qsp-contact-results" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:7px;max-height:130px;overflow-y:auto;margin-bottom:6px"></div>
+            <div id="qsp-contact-selected" style="font-size:0.78rem;color:var(--success);min-height:18px"></div>
+            <input type="hidden" id="qsp-contact-id" value="">
+          </div>
+
+          <!-- Odoo rental template -->
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <label style="font-size:0.74rem;color:var(--muted);white-space:nowrap">Odoo rental template:</label>
+              <label style="font-size:0.74rem;color:var(--muted);white-space:nowrap">Rental template:</label>
               <select id="qsp-odoo-template" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:0.8rem;outline:none;font-family:'DM Sans',sans-serif">
-                <option value="">— None (blank quote) —</option>
+                <option value="">— None —</option>
               </select>
-              <button onclick="qspLoadOdooTemplates()" class="btn btn-ghost" style="padding:5px 12px;font-size:0.77rem">Load templates</button>
+              <button onclick="qspLoadOdooTemplates()" class="btn btn-ghost" style="padding:5px 12px;font-size:0.77rem">Load</button>
             </div>
           </div>
+
+          <!-- Push button -->
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="qspBuildQuote()" style="padding:9px 22px;font-size:0.84rem;gap:6px">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 10V8l6-6 2 2-6 6H2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Build quote
+            <button class="btn btn-primary" onclick="qspCreateQuote()" id="qsp-create-btn" style="padding:10px 24px;font-size:0.85rem;gap:6px">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 11V7l7-7 2 2-7 7H2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Create rental quote in Odoo
             </button>
-            <span style="font-size:0.75rem;color:var(--muted)">Switches to Quote Builder with all fields pre-filled — review, adjust quantities, then push to Odoo.</span>
+            <button class="btn btn-ghost" onclick="qsbSaveTemplate()" style="padding:9px 16px;font-size:0.83rem">Save as template</button>
+          <button class="btn btn-ghost" onclick="qspReset()" style="padding:9px 16px;font-size:0.83rem;color:var(--muted)">Start over</button>
           </div>
+          <div id="qsp-create-status" style="font-size:0.79rem;color:var(--muted);margin-top:10px;min-height:20px"></div>
         </div>
 
       </div><!-- end section-scroll -->
@@ -4965,13 +4998,13 @@ async function qbAddLine() {
     // Search rental products only (rent_ok=True)
     const products = await odooExecute(odooUid,'product.product','search_read',
       [[['name','ilike',q],['active','=',true],['rent_ok','=',true]]],
-      {fields:['id','name','list_price'],limit:10});
+      {fields:['id','name','list_price','product_tmpl_id'],limit:10});
     statusEl.textContent = '';
     if (!products || !products.length) {
       // Fallback: search all products if no rentals found
       const all = await odooExecute(odooUid,'product.product','search_read',
         [[['name','ilike',q],['active','=',true]]],
-        {fields:['id','name','list_price'],limit:10});
+        {fields:['id','name','list_price','product_tmpl_id'],limit:10});
       if (!all || !all.length) { statusEl.style.color='var(--warning)'; statusEl.textContent='No products found for "'+q+'"'; return; }
       statusEl.style.color = 'var(--warning)';
       statusEl.textContent = 'Note: no rental-enabled products found — showing all products';
@@ -4980,7 +5013,7 @@ async function qbAddLine() {
       if (!choice) { statusEl.textContent = ''; return; }
       const picked = all[parseInt(choice)-1];
       if (!picked) return;
-      _qbLines.push({ productId: picked.id, productName: picked.name, qty: 1 });
+      _qbLines.push({ productId: picked.id, productTmplId: Array.isArray(picked.product_tmpl_id)?picked.product_tmpl_id[0]:picked.product_tmpl_id, productName: picked.name, qty: 1 });
       qbRenderLines(); return;
     }
     let picked;
@@ -4993,7 +5026,7 @@ async function qbAddLine() {
       picked = products[parseInt(choice2)-1];
       if (!picked) return;
     }
-    _qbLines.push({ productId: picked.id, productName: picked.name, qty: 1 });
+    _qbLines.push({ productId: picked.id, productTmplId: Array.isArray(picked.product_tmpl_id)?picked.product_tmpl_id[0]:picked.product_tmpl_id, productName: picked.name, qty: 1 });
     qbRenderLines();
     statusEl.textContent = '';
   } catch(e) { statusEl.style.color='var(--danger)'; statusEl.textContent='Error: '+e.message; }
@@ -5095,6 +5128,15 @@ function qbShowLocalTemplates() {
 function qbApplyLocalTemplate(i) {
   const stored = JSON.parse(localStorage.getItem(QB_LOCAL_KEY) || '[]');
   if (!stored[i]) return;
+  if (window._qsbCatalogMode) {
+    // Smart Builder mode — add template lines to _qspMatchedLines
+    (stored[i].lines || []).forEach(function(l) {
+      qsbPushLine(l.productTmplId || null, l.productName || l.name || 'Item', l.qty || 1);
+    });
+    document.getElementById('qb-local-template-panel').style.display = 'none';
+    window._qsbCatalogMode = false;
+    return;
+  }
   _qbLines = stored[i].lines.map(l=>({...l}));
   qbRenderLines();
   document.getElementById('qb-local-template-panel').style.display = 'none';
@@ -5148,14 +5190,27 @@ async function qbCreate() {
       // Convert datetime-local to Odoo format (YYYY-MM-DD HH:MM:SS)
       const fmtDate = iso => iso.replace('T', ' ') + ':00';
       for (const line of _qbLines) {
-        await odooExecute(odooUid,'sale.order.line','create',[{
+        // Try with product_id first; if access error, fall back to product_template_id
+        const lineVals = {
           order_id:        orderId,
-          product_id:      line.productId,
+          name:            line.productName,
           product_uom_qty: line.qty,
           is_rental:       true,
           start_date:      fmtDate(startDate),
           return_date:     fmtDate(returnDate),
-        }]);
+        };
+        if (line.productId)     lineVals.product_id          = line.productId;
+        if (line.productTmplId) lineVals.product_template_id = line.productTmplId;
+        try {
+          await odooExecute(odooUid,'sale.order.line','create',[lineVals]);
+        } catch(lineErr) {
+          // Retry with only product_template_id (avoids product.product access errors)
+          if (line.productTmplId && lineVals.product_id) {
+            const fallback = Object.assign({}, lineVals);
+            delete fallback.product_id;
+            await odooExecute(odooUid,'sale.order.line','create',[fallback]);
+          } else { throw lineErr; }
+        }
       }
     }
 
@@ -9714,6 +9769,8 @@ function qspSetStatus(msg, color) {
 function qspReset() {
   const raw = document.getElementById('qsp-raw');
   if (raw) raw.value = '';
+  qspClearContact();
+  const statusEl2 = document.getElementById('qsp-create-status'); if(statusEl2) statusEl2.textContent='';
   ['qsp-fields-card','qsp-equipment-card','qsp-build-card'].forEach(function(id) {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -9824,6 +9881,7 @@ async function qspExtract() {
     document.getElementById('qsp-notes').value = notesText;
 
     document.getElementById('qsp-fields-card').style.display = 'block';
+    qspAutoFindContact(); // auto-search Odoo for extracted customer
     _qspExtracted = { customer, phone, email, company, eventDate, returnDate, venue, notes: notesText, items };
 
     qspSetStatus('<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Matching ' + items.length + ' items to Odoo catalog…');
@@ -9851,19 +9909,19 @@ async function qspMatchEquipment(items) {
     const item = items[i];
     const desc = item.desc || '';
     const qty  = Math.max(1, parseInt(item.qty) || 1);
-    let matched = false, productId = null, productName = null;
+    let matched = false, productId = null, productName = null, productTmplId = null;
 
     if (odooUid && desc) {
       try {
         // Try rent_ok products first, fall back to all products
-        let products = await odooExecute(odooUid, 'product.product', 'search_read',
+        let products = await odooExecute(odooUid, 'product.template', 'search_read',
           [[['name','ilike', desc.split(' ').slice(0,3).join(' ')],['active','=',true],['rent_ok','=',true]]],
           { fields: ['id','name','list_price'], limit: 3 }
         );
         if (!products || !products.length) {
           // Broader search with first meaningful word
           const keyword = desc.replace(/^\d+\s*[x×]\s*/i,'').split(/[\s,]/)[0];
-          products = await odooExecute(odooUid, 'product.product', 'search_read',
+          products = await odooExecute(odooUid, 'product.template', 'search_read',
             [[['name','ilike',keyword],['active','=',true],['rent_ok','=',true]]],
             { fields: ['id','name','list_price'], limit: 3 }
           );
@@ -9872,23 +9930,16 @@ async function qspMatchEquipment(items) {
           productId   = products[0].id;
           productName = products[0].name;
           matched     = true;
+          productTmplId = products[0].id;  // product.template id
         }
       } catch(e) { /* ignore individual match errors */ }
     }
-    _qspMatchedLines.push({ desc, qty, productId, productName, matched, alternatives: [] });
+    _qspMatchedLines.push({ desc, qty, productId, productTmplId, productName, matched, alternatives: [] });
   }
 
   qspRenderEquipment();
   document.getElementById('qsp-build-card').style.display = 'block';
-
-  // Update summary
-  const matchCount = _qspMatchedLines.filter(function(l){return l.matched;}).length;
-  const total      = _qspMatchedLines.length;
-  const summaryEl  = document.getElementById('qsp-match-summary');
-  if (summaryEl) {
-    summaryEl.style.color = matchCount === total ? 'var(--success)' : matchCount > 0 ? 'var(--warning)' : 'var(--muted)';
-    summaryEl.textContent = matchCount + ' of ' + total + ' matched to catalog';
-  }
+  qsbUpdateSummary();
 }
 
 function qspRenderEquipment() {
@@ -9943,7 +9994,7 @@ async function qspSearchProduct(input, idx) {
   resultsEl.innerHTML = '<div style="padding:6px 10px;font-size:0.75rem;color:var(--muted)">Searching…</div>';
 
   try {
-    const products = await odooExecute(odooUid, 'product.product', 'search_read',
+    const products = await odooExecute(odooUid, 'product.template', 'search_read',
       [[['name','ilike',q],['active','=',true]]],
       { fields: ['id','name','list_price'], limit: 8 }
     );
@@ -9969,9 +10020,10 @@ function qspPickProduct(idx, pi) {
   const resultsEl = document.getElementById('qsp-results-' + idx);
   const p = (resultsEl?._products || [])[pi];
   if (!p) return;
-  _qspMatchedLines[idx].productId   = p.id;
-  _qspMatchedLines[idx].productName = p.name;
-  _qspMatchedLines[idx].matched     = true;
+  _qspMatchedLines[idx].productId    = null;          // template search — no variant id
+  _qspMatchedLines[idx].productTmplId = p.id;          // p.id IS the template id
+  _qspMatchedLines[idx].productName  = p.name;
+  _qspMatchedLines[idx].matched      = true;
   const searchEl = document.getElementById('qsp-search-' + idx);
   if (searchEl) searchEl.value = '';
   resultsEl.style.display = 'none';
@@ -9987,103 +10039,209 @@ function qspRemoveLine(idx) {
   qspRenderEquipment();
 }
 
-async function qspBuildQuote() {
-  // Navigate to the Quotes section and ensure builder view
-  navTo('quotes');
-
-  // Set customer name in search field (user can confirm/search)
-  const customer  = document.getElementById('qsp-customer')?.value?.trim();
-  const email     = document.getElementById('qsp-email')?.value?.trim();
-  const phone     = document.getElementById('qsp-phone')?.value?.trim();
-  const company   = document.getElementById('qsp-company')?.value?.trim();
-  const eventDate = document.getElementById('qsp-event-date')?.value;
-  const retDate   = document.getElementById('qsp-return-date')?.value;
-  const venue     = document.getElementById('qsp-venue')?.value?.trim();
-  const notes     = document.getElementById('qsp-notes')?.value?.trim();
-
-  // Fill customer search field
-  if (customer) {
-    const csEl = document.getElementById('qb-contact-search');
-    if (csEl) csEl.value = customer + (company ? ' — ' + company : '');
-    // If Odoo connected, try to find and auto-pick the contact
-    if (odooUid && (customer || email)) {
-      try {
-        const q = email || customer;
-        const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
-          [[['active','=',true],'|',['name','ilike',customer||''],['email','ilike',email||'']]],
-          { fields: ['id','name','email','phone'], limit: 1 }
-        );
-        if (partners && partners.length) {
-          await qbPickContact(partners[0].id, partners[0].name, partners[0].email||'', partners[0].phone||'');
-        }
-      } catch(e) { /* ignore */ }
+async function qspSearchContact(query) {
+  const results = document.getElementById('qsp-contact-results');
+  if (!results) return;
+  query = (query || '').trim();
+  if (!query || query.length < 2) { results.style.display = 'none'; return; }
+  if (!odooUid) { return; }
+  results.style.display = 'block';
+  results.innerHTML = '<div style="padding:6px 10px;font-size:0.76rem;color:var(--muted)">Searching…</div>';
+  try {
+    const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
+      [[['active','=',true],'|',['name','ilike',query],['email','ilike',query]]],
+      { fields: ['id','name','email','phone'], limit: 8, order: 'name asc' }
+    );
+    if (!partners || !partners.length) {
+      results.innerHTML = '<div style="padding:6px 10px;font-size:0.76rem;color:var(--muted)">No contacts found</div>';
+      return;
     }
-  }
-
-  // Fill dates
-  if (eventDate) {
-    const sdEl = document.getElementById('qb-start-date');
-    if (sdEl) sdEl.value = eventDate + 'T08:00';
-  }
-  if (retDate) {
-    const rdEl = document.getElementById('qb-return-date');
-    if (rdEl) rdEl.value = retDate + 'T18:00';
-  }
-
-  // Fill venue
-  if (venue) {
-    const vEl = document.getElementById('qb-venue');
-    if (vEl) vEl.value = venue;
-  }
-
-  // Fill notes
-  if (notes) {
-    const nEl = document.getElementById('qb-notes');
-    if (nEl) nEl.value = notes;
-  }
-
-  // Apply Odoo template if selected
-  const templateId = parseInt(document.getElementById('qsp-odoo-template')?.value) || null;
-  if (templateId) {
-    try {
-      // Use the existing qbLoadOdooTemplate function if available
-      const templateSel = document.getElementById('qb-odoo-template-list');
-      // Load template lines into builder
-      const tLines = await odooExecute(odooUid, 'sale.order.template.line', 'search_read',
-        [[['sale_order_template_id','=',templateId]]],
-        { fields: ['product_id','product_uom_qty','name'], limit: 50 }
-      );
-      if (tLines && tLines.length) {
-        _qbLines = tLines
-          .filter(function(l){ return l.product_id; })
-          .map(function(l) {
-            return { productId: l.product_id[0], productName: l.product_id[1], qty: l.product_uom_qty || 1 };
-          });
-        qbRenderLines();
-      }
-    } catch(e) { console.warn('Template load:', e.message); }
-  }
-
-  // Add matched lines to quote builder (appends to template lines)
-  const matched = _qspMatchedLines.filter(function(l){ return l.matched && l.productId; });
-  if (matched.length) {
-    // Append matched lines to any template lines already loaded
-    matched.forEach(function(line) {
-      _qbLines.push({ productId: line.productId, productName: line.productName, qty: line.qty });
-    });
-    qbRenderLines();
-  }
-
-  // Scroll to top of builder
-  const scroll = document.querySelector('#qb-sub-builder .section-scroll');
-  if (scroll) scroll.scrollTop = 0;
-
-  // Show toast
-  const unmatched = _qspMatchedLines.filter(function(l){ return !l.matched; });
-  if (unmatched.length) {
-    alert('✓ Quote builder pre-filled. Note: ' + unmatched.length + ' item' + (unmatched.length!==1?'s were':'was') + ' not matched to catalog (' + unmatched.map(function(l){return l.desc;}).join(', ') + ') — add them manually.');
-  }
+    results._partners = partners;
+    results.innerHTML = partners.map(function(p, i) {
+      const em = p.email ? ' <span style="color:var(--muted);font-size:0.71rem">' + escHtml(p.email) + '</span>' : '';
+      return '<div onclick="qspPickContact(' + i + ')" style="padding:7px 10px;cursor:pointer;font-size:0.79rem;color:var(--text);border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">' + escHtml(p.name) + em + '</div>';
+    }).join('');
+  } catch(e) { results.innerHTML = '<div style="padding:6px 10px;font-size:0.75rem;color:var(--danger)">Error: ' + escHtml(e.message) + '</div>'; }
 }
+
+function qspPickContact(i) {
+  const results = document.getElementById('qsp-contact-results');
+  const p = (results._partners || [])[i];
+  if (!p) return;
+  document.getElementById('qsp-contact-id').value = p.id;
+  document.getElementById('qsp-contact-selected').textContent = '✓ ' + p.name + (p.email ? ' (' + p.email + ')' : '');
+  const search = document.getElementById('qsp-contact-search');
+  if (search) search.value = '';
+  results.style.display = 'none';
+}
+
+function qspClearContact() {
+  document.getElementById('qsp-contact-id').value = '';
+  document.getElementById('qsp-contact-selected').textContent = '';
+  const search = document.getElementById('qsp-contact-search');
+  if (search) search.value = '';
+  const results = document.getElementById('qsp-contact-results');
+  if (results) results.style.display = 'none';
+}
+
+// Auto-search for contact when fields are extracted
+async function qspAutoFindContact() {
+  const customer = document.getElementById('qsp-customer')?.value?.trim();
+  const email    = document.getElementById('qsp-email')?.value?.trim();
+  if (!odooUid || (!customer && !email)) return;
+  try {
+    const domain = email
+      ? [['active','=',true],'|',['name','ilike',customer||''],['email','ilike',email]]
+      : [['active','=',true],['name','ilike',customer]];
+    const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
+      [domain], { fields: ['id','name','email','phone'], limit: 1 }
+    );
+    if (partners && partners.length) {
+      document.getElementById('qsp-contact-id').value = partners[0].id;
+      document.getElementById('qsp-contact-selected').textContent = '✓ Found: ' + partners[0].name + (partners[0].email ? ' (' + partners[0].email + ')' : '');
+    }
+  } catch(e) { /* silent */ }
+}
+
+async function qspCreateQuote() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+
+  const contactId  = parseInt(document.getElementById('qsp-contact-id')?.value) || null;
+  const customer   = document.getElementById('qsp-customer')?.value?.trim();
+  const email      = document.getElementById('qsp-email')?.value?.trim();
+  const phone      = document.getElementById('qsp-phone')?.value?.trim();
+  const company    = document.getElementById('qsp-company')?.value?.trim();
+  const eventDate  = document.getElementById('qsp-event-date')?.value;   // YYYY-MM-DD
+  const retDate    = document.getElementById('qsp-return-date')?.value;  // YYYY-MM-DD
+  const venue      = document.getElementById('qsp-venue')?.value?.trim();
+  const notes      = document.getElementById('qsp-notes')?.value?.trim();
+  const templateId = parseInt(document.getElementById('qsp-odoo-template')?.value) || null;
+
+  const btn      = document.getElementById('qsp-create-btn');
+  const statusEl = document.getElementById('qsp-create-status');
+
+  if (!contactId && !customer) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = 'Search and select a customer contact first';
+    return;
+  }
+  if (!eventDate)  { statusEl.style.color='var(--danger)'; statusEl.textContent='Set an event/rental date'; return; }
+  if (!retDate)    { statusEl.style.color='var(--danger)'; statusEl.textContent='Set a return/strike date'; return; }
+
+  btn.disabled = true;
+  statusEl.style.color = 'var(--muted)';
+  statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Creating rental quote…';
+
+  try {
+    // ── Step 1: Find or create partner ───────────────────────────────────
+    let partnerId = contactId;
+    if (!partnerId) {
+      statusEl.textContent = 'Creating contact…';
+      const pVals = { name: customer || 'Unknown' };
+      if (email)   pVals.email        = email;
+      if (phone)   pVals.phone        = phone;
+      if (company) pVals.company_name = company;
+      partnerId = await odooExecute(odooUid, 'res.partner', 'create', [pVals]);
+    }
+
+    // ── Step 2: Create sale.order ─────────────────────────────────────────
+    // Dates as "YYYY-MM-DD HH:MM:SS" — same format qbCreate uses
+    const startFmt = eventDate + ' 08:00:00';
+    const retFmt   = retDate   + ' 18:00:00';
+
+    const noteLines = [venue ? 'Venue: ' + venue : '', notes].filter(Boolean);
+    const orderVals = {
+      partner_id:           partnerId,
+      is_rental_order:      true,
+      rental_start_date:    startFmt,
+      rental_return_date:   retFmt,
+    };
+    if (noteLines.length)  orderVals.note                   = noteLines.join('\n\n');
+    if (templateId)        orderVals.sale_order_template_id = templateId;
+
+    statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Creating order…';
+    const orderId = await odooExecute(odooUid, 'sale.order', 'create', [orderVals]);
+
+    // ── Step 3: Resolve product_id variants then create lines ───────────────
+    const matched = _qspMatchedLines.filter(function(l) { return l.matched && l.productTmplId; });
+    const lineErrors = [];
+
+    if (matched.length) {
+      statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Resolving '
+        + matched.length + ' product' + (matched.length !== 1 ? 's' : '') + '…';
+
+      // Fetch default variant (product.product) for each template in one batched call
+      const tmplIds = [...new Set(matched.map(function(l){ return l.productTmplId; }))];
+      const variants = await odooExecute(odooUid, 'product.product', 'search_read',
+        [[['product_tmpl_id','in', tmplIds],['active','=',true]]],
+        { fields: ['id','name','product_tmpl_id','list_price'], limit: tmplIds.length * 5 }
+      ).catch(function(){ return []; });
+
+      // Build tmplId → product_id map (first/default variant per template)
+      const tmplToVariant = {};
+      (variants || []).forEach(function(v) {
+        const tid = Array.isArray(v.product_tmpl_id) ? v.product_tmpl_id[0] : v.product_tmpl_id;
+        if (!tmplToVariant[tid]) tmplToVariant[tid] = v.id;
+      });
+
+      statusEl.innerHTML = '<div class="dot spin" style="display:inline-block;margin-right:5px"></div> Adding '
+        + matched.length + ' equipment line' + (matched.length !== 1 ? 's' : '') + '…';
+
+      for (let i = 0; i < matched.length; i++) {
+        const line     = matched[i];
+        const variantId = tmplToVariant[line.productTmplId] || null;
+
+        const lineVals = {
+          order_id:        orderId,
+          name:            line.productName,
+          product_uom_qty: line.qty,
+          is_rental:       true,
+          start_date:      startFmt,
+          return_date:     retFmt,
+        };
+        // product_id (variant) is what triggers price/description population in Odoo
+        if (variantId)          lineVals.product_id          = variantId;
+        if (line.productTmplId) lineVals.product_template_id = line.productTmplId;
+
+        try {
+          await odooExecute(odooUid, 'sale.order.line', 'create', [lineVals]);
+        } catch(lineErr) {
+          lineErrors.push(line.productName + ': ' + lineErr.message);
+        }
+      }
+    }
+
+    // ── Step 4: Success ───────────────────────────────────────────────────
+    const order    = await odooExecute(odooUid, 'sale.order', 'read', [[orderId]], { fields: ['name'] });
+    const orderName = order?.[0]?.name || ('RO' + orderId);
+    const odooUrl   = (document.getElementById('odoo-url')?.value || '').replace(/\/+$/, '');
+    const deepLink  = odooUrl ? odooUrl + '/odoo/rental/' + orderId : '';
+
+    if (lineErrors.length) {
+      statusEl.style.color = 'var(--warning)';
+      statusEl.innerHTML = '⚠ <strong>' + escHtml(orderName) + '</strong> created but '
+        + lineErrors.length + ' line' + (lineErrors.length !== 1 ? 's' : '') + ' failed: '
+        + lineErrors.map(escHtml).join('; ')
+        + (deepLink ? ' — <a href="' + deepLink + '" target="_blank" style="color:var(--accent)">Open in Odoo ↗</a>' : '');
+    } else {
+      statusEl.style.color = 'var(--success)';
+      statusEl.innerHTML = '✓ <strong>' + escHtml(orderName) + '</strong> created'
+        + (matched.length ? ' with ' + matched.length + ' line' + (matched.length !== 1 ? 's' : '') : '')
+        + (deepLink ? ' — <a href="' + deepLink + '" target="_blank" style="color:var(--accent)">Open in Odoo ↗</a>' : '');
+    }
+
+  } catch(e) {
+    statusEl.style.color = 'var(--danger)';
+    statusEl.textContent = '✗ ' + e.message;
+  }
+  btn.disabled = false;
+}
+
+// Keep qspBuildQuote as a stub for backwards compat (redirects to create)
+async function qspBuildQuote() {
+  await qspCreateQuote();
+}
+
 
 
 
@@ -10102,6 +10260,218 @@ async function qspLoadOdooTemplates() {
         return '<option value="' + t.id + '">' + escHtml(t.name) + '</option>';
       }).join('');
   } catch(e) { alert('Error loading templates: ' + e.message); }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── SMART BUILDER — equipment add helpers ──────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Helper: push a product.template result into _qspMatchedLines and re-render
+function qsbPushLine(tmplId, name, qty) {
+  qty = Math.max(1, parseInt(qty) || 1);
+  _qspMatchedLines.push({
+    desc:         name,
+    qty:          qty,
+    productId:    null,
+    productTmplId: tmplId,
+    productName:  name,
+    matched:      true,
+    alternatives: [],
+  });
+  // Show the equipment card if it was hidden
+  const card = document.getElementById('qsp-equipment-card');
+  if (card) card.style.display = 'block';
+  const buildCard = document.getElementById('qsp-build-card');
+  if (buildCard) buildCard.style.display = 'block';
+  qspRenderEquipment();
+  // Update match summary
+  const matched = _qspMatchedLines.filter(function(l){ return l.matched; }).length;
+  const summaryEl = document.getElementById('qsp-match-summary');
+  if (summaryEl) summaryEl.textContent = matched + ' of ' + _qspMatchedLines.length + ' matched';
+}
+
+// + Add item: prompt search then pick from results
+async function qsbAddLine() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const q = prompt('Search rental product:');
+  if (!q) return;
+  try {
+    const products = await odooExecute(odooUid, 'product.template', 'search_read',
+      [[['name','ilike',q],['active','=',true]]],
+      { fields: ['id','name','list_price'], limit: 10, order: 'name asc' }
+    );
+    if (!products || !products.length) { alert('No products found for "' + q + '"'); return; }
+    let picked;
+    if (products.length === 1) {
+      picked = products[0];
+    } else {
+      const list = products.map(function(p,i){ return (i+1) + '. ' + p.name + (p.list_price ? ' ($' + p.list_price.toFixed(2) + ')' : ''); }).join('\n');
+      const choice = prompt('Pick a product (enter number):\n' + list);
+      if (!choice) return;
+      picked = products[parseInt(choice)-1];
+      if (!picked) return;
+    }
+    qsbPushLine(picked.id, picked.name, 1);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// Browse catalog: reuse the Quote Builder catalog modal — items go to _qspMatchedLines
+function qsbOpenCatalog() {
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  // Set a flag so the catalog "Add selected" goes to Smart Builder
+  window._qsbCatalogMode = true;
+  qbOpenCatalog();
+}
+
+// My templates: reuse QB local template panel — applied to _qspMatchedLines
+function qsbShowLocalTemplates() {
+  window._qsbCatalogMode = true;
+  qbShowLocalTemplates();
+}
+
+
+// ── Smart Builder — local template save / load ──────────────────────────────
+const QSB_TMPL_KEY = 'oel_qb_local_templates'; // shared key with QB templates
+
+function qsbShowLocalTemplates() {
+  const stored = JSON.parse(localStorage.getItem(QSB_TMPL_KEY) || '[]');
+  const panel  = document.getElementById('qsb-template-panel');
+  const listEl = document.getElementById('qsb-template-list');
+  if (!panel || !listEl) return;
+
+  if (!stored.length) {
+    listEl.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);font-style:italic;padding:4px 0">No templates saved yet — build a quote and click Save as template.</div>';
+  } else {
+    listEl.innerHTML = stored.map(function(t, i) {
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px">'
+        + '<div style="flex:1;min-width:0">'
+        +   '<div style="font-size:0.83rem;font-weight:500;color:var(--text)">' + escHtml(t.name) + '</div>'
+        +   '<div style="font-size:0.71rem;color:var(--muted)">' + (t.lines||[]).length + ' item' + ((t.lines||[]).length !== 1 ? 's' : '') + '</div>'
+        + '</div>'
+        + '<button onclick="qsbApplyTemplate(' + i + ')" class="btn btn-ghost" style="padding:4px 12px;font-size:0.76rem;border-color:var(--accent);color:var(--accent);flex-shrink:0">Apply</button>'
+        + '<button onclick="qsbDeleteTemplate(' + i + ')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.85rem;padding:2px 4px;flex-shrink:0">✕</button>'
+        + '</div>';
+    }).join('');
+  }
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function qsbApplyTemplate(i) {
+  const stored = JSON.parse(localStorage.getItem(QSB_TMPL_KEY) || '[]');
+  const t = stored[i];
+  if (!t) return;
+
+  const startIdx = _qspMatchedLines.length;
+  (t.lines || []).forEach(function(l) {
+    _qspMatchedLines.push({
+      desc:          l.productName || l.name || 'Item',
+      qty:           l.qty || 1,
+      productId:     null,
+      productTmplId: l.productTmplId || null,
+      productName:   l.productName || l.name || 'Item',
+      matched:       false,   // start unmatched, verify below
+      alternatives:  [],
+    });
+  });
+
+  // Show cards immediately so user sees progress
+  const card = document.getElementById('qsp-equipment-card');
+  if (card) card.style.display = 'block';
+  const buildCard = document.getElementById('qsp-build-card');
+  if (buildCard) buildCard.style.display = 'block';
+  document.getElementById('qsb-template-panel').style.display = 'none';
+  qspRenderEquipment();
+
+  // Verify each line against Odoo catalog
+  await qsbVerifyLines(startIdx);
+}
+
+function qsbDeleteTemplate(i) {
+  if (!confirm('Delete this template?')) return;
+  const stored = JSON.parse(localStorage.getItem(QSB_TMPL_KEY) || '[]');
+  stored.splice(i, 1);
+  localStorage.setItem(QSB_TMPL_KEY, JSON.stringify(stored));
+  qsbShowLocalTemplates();
+}
+
+function qsbSaveTemplate() {
+  const lines = _qspMatchedLines.filter(function(l){ return l.matched && l.productTmplId; });
+  if (!lines.length) { alert('No matched equipment lines to save — match some products first'); return; }
+  const name = prompt('Template name:');
+  if (!name) return;
+  const stored = JSON.parse(localStorage.getItem(QSB_TMPL_KEY) || '[]');
+  stored.push({
+    name:  name.trim(),
+    lines: lines.map(function(l) {
+      return { productTmplId: l.productTmplId, productName: l.productName, qty: l.qty };
+    }),
+  });
+  localStorage.setItem(QSB_TMPL_KEY, JSON.stringify(stored));
+  const statusEl = document.getElementById('qsp-create-status');
+  if (statusEl) {
+    statusEl.style.color = 'var(--success)';
+    statusEl.textContent = '✓ Template "' + name.trim() + '" saved (' + lines.length + ' items)';
+    setTimeout(function(){ statusEl.textContent = ''; }, 3000);
+  }
+}
+
+
+// Verify _qspMatchedLines against live Odoo catalog, starting from startIdx
+async function qsbVerifyLines(startIdx) {
+  startIdx = startIdx || 0;
+  const summaryEl = document.getElementById('qsp-match-summary');
+  if (summaryEl) summaryEl.textContent = 'Verifying catalog…';
+
+  if (!odooUid) {
+    // No Odoo connection — mark all with tmplId as matched optimistically
+    for (let i = startIdx; i < _qspMatchedLines.length; i++) {
+      if (_qspMatchedLines[i].productTmplId) _qspMatchedLines[i].matched = true;
+    }
+    qspRenderEquipment();
+    qsbUpdateSummary();
+    return;
+  }
+
+  for (let i = startIdx; i < _qspMatchedLines.length; i++) {
+    const line = _qspMatchedLines[i];
+    if (!line.productTmplId) continue;
+    try {
+      const results = await odooExecute(odooUid, 'product.template', 'search_read',
+        [[['id','=',line.productTmplId],['active','=',true]]],
+        { fields: ['id','name'], limit: 1 }
+      );
+      if (results && results.length) {
+        _qspMatchedLines[i].matched     = true;
+        _qspMatchedLines[i].productName = results[0].name; // refresh name in case it changed
+      } else {
+        // ID no longer valid — try re-matching by name
+        const fallback = await odooExecute(odooUid, 'product.template', 'search_read',
+          [[['name','ilike', line.desc.split(' ').slice(0,3).join(' ')],['active','=',true]]],
+          { fields: ['id','name'], limit: 1 }
+        );
+        if (fallback && fallback.length) {
+          _qspMatchedLines[i].productTmplId = fallback[0].id;
+          _qspMatchedLines[i].productName   = fallback[0].name;
+          _qspMatchedLines[i].matched       = true;
+        }
+      }
+    } catch(e) {
+      // On error, keep existing matched state
+    }
+    // Re-render after each line so user sees progress
+    qspRenderEquipment();
+  }
+  qsbUpdateSummary();
+}
+
+function qsbUpdateSummary() {
+  const matched = _qspMatchedLines.filter(function(l){ return l.matched; }).length;
+  const total   = _qspMatchedLines.length;
+  const summaryEl = document.getElementById('qsp-match-summary');
+  if (!summaryEl) return;
+  summaryEl.style.color = matched === total ? 'var(--success)' : matched > 0 ? 'var(--warning)' : 'var(--muted)';
+  summaryEl.textContent = matched + ' of ' + total + ' matched';
 }
 
 // ─── Init ─────────────────────────────────────────────────
@@ -12205,17 +12575,18 @@ async function _qbLoadCatalog() {
     ]);
 
     _qbCatalogAll = (products || []).map(p => ({
-      id:          p.id,
-      name:        p.name,
-      price:       p.list_price || 0,
-      category:    Array.isArray(p.categ_id) ? p.categ_id[1] : '',
-      categoryId:  Array.isArray(p.categ_id) ? p.categ_id[0] : null,
-      description: p.description_sale || '',
-      rentOk:      p.rent_ok || false,
-      saleOk:      true,
-      type:        p.type || '',
-      uom:         p.uom_name || '',
-      image:       p.image_128 || null,
+      id:             p.id,       // product.template id
+      productTmplId:  p.id,       // explicit alias used when creating order lines
+      name:           p.name,
+      price:          p.list_price || 0,
+      category:       Array.isArray(p.categ_id) ? p.categ_id[1] : '',
+      categoryId:     Array.isArray(p.categ_id) ? p.categ_id[0] : null,
+      description:    p.description_sale || '',
+      rentOk:         p.rent_ok || false,
+      saleOk:         true,
+      type:           p.type || '',
+      uom:            p.uom_name || '',
+      image:          p.image_128 || null,
     }));
 
     // Populate category dropdown
@@ -12362,13 +12733,25 @@ function _updateCatalogFooter() {
 function qbCatalogAddSelected() {
   if (!_qbCatalogSelected.size) return;
 
+  if (window._qsbCatalogMode) {
+    // Smart Builder mode — push into _qspMatchedLines instead
+    _qbCatalogSelected.forEach(p => {
+      qsbPushLine(p.productTmplId || p.id, p.name, 1);
+    });
+    _qbCatalogSelected.clear();
+    document.getElementById('qb-catalog-modal').classList.add('hidden');
+    window._qsbCatalogMode = false;
+    return;
+  }
+
   _qbCatalogSelected.forEach(p => {
     _qbLines.push({
-      productId:   p.id,
-      productName: p.name,
-      qty:         1,
-      price:       p.price,
-      rentDays:    1,
+      productId:     null,
+      productTmplId: p.productTmplId || p.id,
+      productName:   p.name,
+      qty:           1,
+      price:         p.price,
+      rentDays:      1,
     });
   });
 

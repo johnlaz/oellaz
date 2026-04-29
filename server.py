@@ -209,8 +209,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
             target = params.get('url', [None])[0]
             if not target: self.send_response(400); self.end_headers(); return
             try:
-                req = Request(target, data=body, headers={'Content-Type':'text/xml'})
-                with urlopen(req, timeout=15) as r: data = r.read()
+                req = Request(target, data=body, headers={'Content-Type':'text/xml', 'Connection':'keep-alive'})
+                with urlopen(req, timeout=30) as r: data = r.read()
                 self.send_response(200); self._cors()
                 self.send_header('Content-Type','text/xml'); self.end_headers(); self.wfile.write(data)
             except urllib.error.URLError as e:
@@ -230,4 +230,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    HTTPServer(('localhost', PORT), ProxyHandler).serve_forever()
+    from socketserver import ThreadingMixIn
+    class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+        daemon_threads = True
+    ThreadedHTTPServer(('localhost', PORT), ProxyHandler).serve_forever()
