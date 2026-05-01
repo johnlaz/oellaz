@@ -1,60 +1,61 @@
-const CACHE  = 'oel-v11.0';
-const ASSETS = ['/', '/index.html', '/manifest.json',
-                '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
+@echo off
+:: OEL Command v9.3 — Start
+:: Double-click to launch both background servers and open the app.
+:: Registers itself to auto-start with Windows (runs silently in background).
 
-// Install — pre-cache shell assets
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
-  );
-});
+:: ── Self-elevate to Administrator ─────────────────────────────────────────
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+if '%errorlevel%' NEQ '0' (
+    echo Requesting administrator privileges...
+    goto UACPrompt
+) else ( goto GotAdmin )
 
-// Activate — delete every old cache version
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
+:UACPrompt
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
+    echo UAC.ShellExecute "%~s0", "", "", "runas", 1 >> "%temp%\getadmin.vbs"
+    "%temp%\getadmin.vbs"
+    del "%temp%\getadmin.vbs"
+    exit /b
 
-// Fetch strategy
-// • index.html   → network-first  (always pick up new deployments)
-// • API / localhost → pass-through (never cache)
-// • other assets → cache-first
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
+:GotAdmin
+    pushd "%~dp0"
 
-  const passThrough = [
-    'api.groq.com', 'corsproxy.io', 'allorigins.win', 'codetabs.com',
-    'cors.sh', 'fonts.googleapis.com', 'fonts.gstatic.com', 'localhost',
-    'maps.googleapis.com', 'cdnjs.cloudflare.com'
-  ];
-  if (passThrough.some(h => url.hostname.includes(h))) return;
+:: ── Python check ──────────────────────────────────────────────────────────
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo Python not found. Please install from https://python.org
+    pause
+    exit /b 1
+)
 
-  if (url.pathname === '/' || url.pathname === '/index.html') {
-    e.respondWith(
-      fetch(e.request)
-        .then(resp => {
-          if (resp && resp.status === 200) {
-            caches.open(CACHE).then(c => c.put(e.request, resp.clone()));
-          }
-          return resp;
-        })
-        .catch(() => caches.match('/index.html'))
-    );
-    return;
-  }
+:: ── Auto-startup registration (once, silent) ──────────────────────────────
+set STARTUP_DIR=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
+set SHORTCUT=%STARTUP_DIR%\OELCommand.lnk
+if not exist "%SHORTCUT%" (
+    powershell -WindowStyle Hidden -Command "$ws=New-Object -ComObject WScript.Shell; $s=$ws.CreateShortcut('%SHORTCUT%'); $s.TargetPath='%~dpnx0'; $s.WorkingDirectory='%~dp0'; $s.WindowStyle=7; $s.Description='OEL Command background servers'; $s.Save()" >nul 2>&1
+)
 
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(resp => {
-        if (resp && resp.status === 200 && resp.type !== 'opaque') {
-          caches.open(CACHE).then(c => c.put(e.request, resp.clone()));
-        }
-        return resp;
-      }).catch(() => caches.match('/index.html'));
-    })
-  );
-});
+:: ── Kill any existing instances on ports 7842 / 7843 ─────────────────────
+powershell -WindowStyle Hidden -Command "Stop-Process -Id (Get-NetTCPConnection -LocalPort 7843 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue" >nul 2>&1
+powershell -WindowStyle Hidden -Command "Stop-Process -Id (Get-NetTCPConnection -LocalPort 7842 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue" >nul 2>&1
+timeout /t 1 /nobreak >nul
+
+:: ── Start imap_server.py  (port 7843 — IMAP, SMTP, lead capture) ─────────
+powershell -WindowStyle Hidden -Command "Start-Process pythonw -ArgumentList 'imap_server.py' -WorkingDirectory '%~dp0' -WindowStyle Hidden -ErrorAction SilentlyContinue"
+if errorlevel 1 (
+    powershell -WindowStyle Hidden -Command "Start-Process python -ArgumentList 'imap_server.py' -WorkingDirectory '%~dp0' -WindowStyle Hidden"
+)
+
+:: ── Start server.py  (port 7842 — Odoo XML-RPC CORS proxy) ───────────────
+powershell -WindowStyle Hidden -Command "Start-Process pythonw -ArgumentList 'server.py' -WorkingDirectory '%~dp0' -WindowStyle Hidden -ErrorAction SilentlyContinue"
+if errorlevel 1 (
+    powershell -WindowStyle Hidden -Command "Start-Process python -ArgumentList 'server.py' -WorkingDirectory '%~dp0' -WindowStyle Hidden"
+)
+
+:: ── Wait for servers to initialise, then open app ─────────────────────────
+timeout /t 3 /nobreak >nul
+set "FILE_URL=file:///%~dp0index.html"
+set "FILE_URL=%FILE_URL:\=/%"
+start "" "chrome.exe" --disk-cache-size=1 "%FILE_URL%" 2>nul
+if errorlevel 1 ( start "" "index.html" )
+exit /b 0

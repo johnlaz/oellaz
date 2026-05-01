@@ -1,236 +1,112 @@
-#!/usr/bin/env python3
-"""
-Odoo Email Link - Local CORS Proxy + Gmail API Server
-Runs on http://localhost:7842
+# OEL Command v10.0
 
-Gmail API setup:
-  1. Drop credentials.json from Google Cloud Console into this folder
-  2. Run start.bat — browser opens to authorize on first use
-  3. token.json saved automatically for future runs
-"""
+**AI-powered sales operations command center — built for TRSAV and Odoo 19.**
 
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.request import urlopen, Request
-from urllib.parse import urlparse, parse_qs
-import urllib.error, json, threading, os, base64
+OEL Command is a single-file Progressive Web App that connects your IMAP inbox, Odoo CRM, and Groq AI into one dark-luxury interface. From unified inbox management to vendor outreach, AI-assisted project planning to bounced email handling — every tool you need to move deals forward, all in one place.
 
-PORT       = 7842
-SCOPES     = ['https://www.googleapis.com/auth/gmail.readonly']
-CREDS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'credentials.json')
-TOKEN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'token.json')
+---
 
-_inbox_store  = {}
-_inbox_lock   = threading.Lock()
-_gmail_svc    = None
-_gmail_lock   = threading.Lock()
+## What It Does
 
+### ✉ Unified Inbox
+Pull Turbify/IMAP, Odoo, and Gmail into one view. Click any email row to expand the body inline — HTML noise, invisible tracking characters, and base64 image data are automatically stripped so you see clean text. Reply, AI-draft, log to Odoo, schedule an activity, or trash from each row.
 
-def _libs_ok():
-    try:
-        import google.oauth2.credentials, google_auth_oauthlib.flow, googleapiclient.discovery
-        return True
-    except ImportError:
-        return False
+**Bounce detection:** Delivery failure emails auto-detect the undeliverable address and pre-fill the Odoo contact search in the log note modal. Log the bounce to the correct contact in two clicks.
 
+### ⚡ Activities
+Scans Odoo activities due today. AI drafts a personalized follow-up email per contact using deal context and last chatter note. Review in the Send tab — compose via Quick Compose, log as a note, or send via IMAP with auto-log. Follow-up Tracker shows leads missing a scheduled activity.
 
-def _get_svc():
-    global _gmail_svc
-    with _gmail_lock:
-        if _gmail_svc:
-            return _gmail_svc
-        from google.oauth2.credentials import Credentials
-        from google_auth_oauthlib.flow import InstalledAppFlow
-        from google.auth.transport.requests import Request as GReq
-        from googleapiclient.discovery import build
+### 📊 Dashboard & Reports
+Eight CRM stat cards + four accounting cards. Click any for drill-down. AI Daily Briefing with Over Achiever mode. Quick reports: Aged AR, Top Customers (YTD), Overdue Notices — all print-ready with Save as PDF.
 
-        creds = None
-        if os.path.exists(TOKEN_FILE):
-            creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(GReq())
-            else:
-                flow  = InstalledAppFlow.from_client_secrets_file(CREDS_FILE, SCOPES)
-                creds = flow.run_local_server(port=0)
-            open(TOKEN_FILE, 'w').write(creds.to_json())
-        _gmail_svc = build('gmail', 'v1', credentials=creds)
-        return _gmail_svc
+### 📝 Quote Desk
+Paste any vague quote request and AI extracts contact info then drafts a TRSAV-style response with clarifying questions: event dates, venue, indoor/outdoor, audience size, AV needs, setup timing, budget. Custom prompt editor saves your own instructions without touching code. Push contact + opportunity to Odoo, schedule activity, or log draft to contact chatter.
 
+### 🗂 Projects & Tasks
+Four sub-tabs — all connected to Odoo's project module:
 
-def _fetch(limit=30, flagged=False, folder='INBOX'):
-    import base64
-    svc = _get_svc()
-    q   = ('is:starred ' if flagged else '') + ('in:inbox' if folder.upper()=='INBOX' else f'in:{folder}')
-    res = svc.users().messages().list(userId='me', q=q.strip(), maxResults=limit).execute()
-    out = []
-    for ref in res.get('messages', []):
-        try:
-            m  = svc.users().messages().get(userId='me', id=ref['id'], format='full').execute()
-            hd = {h['name']:h['value'] for h in m['payload']['headers']}
-            fr = hd.get('From','')
-            sn, se = ('','')
-            if '<' in fr:
-                sn = fr.split('<')[0].strip().strip('"')
-                se = fr.split('<')[1].rstrip('>')
-            else:
-                se = fr
-            try:
-                from email.utils import parsedate_to_datetime
-                dt = parsedate_to_datetime(hd.get('Date',''))
-                ds = dt.strftime('%b %-d')
-            except Exception:
-                ds = hd.get('Date','')[:10]
+**Projects** — card grid of all Odoo projects. Click to view tasks or create new projects.
 
-            # Extract plain text body
-            body = ''
-            def _get_body(payload):
-                if payload.get('mimeType') == 'text/plain' and payload.get('body',{}).get('data'):
-                    try: return base64.urlsafe_b64decode(payload['body']['data']).decode('utf-8','replace')
-                    except: return ''
-                for part in payload.get('parts', []):
-                    r = _get_body(part)
-                    if r: return r
-                return ''
-            body = _get_body(m['payload'])
-            if not body:
-                body = m.get('snippet', '')
-            # Clean up body — normalize line endings and trim
-            body = body.replace('\r\n','\n').replace('\r','\n')
-            # Collapse 3+ blank lines to 2
-            import re as _re2
-            body = _re2.sub(r'\n{3,}', '\n\n', body).strip()
-            body = body[:2000]  # cap at 2000 chars for performance
+**Tasks** — filter by project, assignee, stage. Quick-add bar at the top. Full edit modal: name, description, stage, priority, assignee, deadline, chatter note, delete. Checkbox moves task to Done stage in Odoo (never deleted, always retrievable). AI Rewrite generates 3 alternative task name options.
 
-            out.append({
-                'uid':         ref['id'],
-                'subject':     hd.get('Subject','(no subject)'),
-                'sender':      se,
-                'sender_name': sn,
-                'preview':     m.get('snippet',''),
-                'body':        body,
-                'date':        ds,
-                'flagged':     'STARRED' in m.get('labelIds',[]),
-                'to':          hd.get('To',''),
-                'reply_to':    hd.get('Reply-To', se),
-                'message_id':  hd.get('Message-ID',''),
-            })
-        except Exception:
-            continue
-    return out
+**To Do** — personal tasks (localStorage-first), push any to Odoo. Sync imports existing personal Odoo tasks.
 
+**✦ AI Brainstorm** — conversational AI planning. AI asks clarifying questions before generating tasks — holds a real conversation rather than immediately dumping a list. Tasks auto-appear in the Task Summary panel. Save last response as staged tasks, To Do items, or a new Odoo project with all tasks created inside it.
 
-class ProxyHandler(BaseHTTPRequestHandler):
+### 💤 Dormant Contacts
+Finds contacts and opportunities with no recent activity. Filter by days inactive, type, rep, or tag. Search by name, company, or Odoo internal reference number. AI re-engagement drafts, send via IMAP, bulk schedule activities.
 
-    def do_GET(self):
-        path   = urlparse(self.path).path
-        params = parse_qs(urlparse(self.path).query)
+### 🏭 Vendor Outreach
+Find Vendors opens YellowPages/Yelp/Google/ThomasNet pre-filled. Paste results → AI extracts contacts. Push to Odoo as suppliers. Blast quote request emails to all vendors.
 
-        if path == '/ping':
-            self._j({'ok': True})
+### 📥 Lead Capture
+Scans IMAP for inbound leads matching your specs. Forwarded emails auto-detected — AI extracts the real customer from the forwarded body. Contact override lets you link to an existing Odoo contact. One click creates CRM lead + partner + note + activity.
 
-        elif path == '/gmail/status':
-            auth = False
-            if _libs_ok() and (os.path.exists(TOKEN_FILE) or os.path.exists(CREDS_FILE)):
-                try: _get_svc(); auth = True
-                except Exception: pass
-            self._j({'has_creds': os.path.exists(CREDS_FILE),
-                     'has_token': os.path.exists(TOKEN_FILE),
-                     'has_libs':  _libs_ok(),
-                     'authorized': auth})
+### 📭 Bounce Manager
+Upload .txt or .csv of undeliverable emails. Fuzzy-matches against Odoo contacts. Per card: log bounce note, clear activities, reschedule follow-up. Bulk log to all matched contacts.
 
-        elif path == '/gmail/auth':
-            if not os.path.exists(CREDS_FILE):
-                self._j({'error': 'credentials.json not found — drop it in the OEL folder'}, 400); return
-            if not _libs_ok():
-                self._j({'error': 'Missing libraries. Run: pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib'}, 400); return
-            try:
-                _get_svc()
-                self._j({'ok': True})
-            except Exception as e:
-                self._j({'error': str(e)}, 500)
+### 📋 Templates
+Standalone sidebar section. Editor with variable insertion. AI Composer generates name, keywords, and body from a description (plain-text calls — no JSON errors). Templates populate every composer. Build from inbox email wizard creates templates from real conversations.
 
-        elif path == '/gmail/fetch':
-            if not _libs_ok():
-                self._j({'error': 'Google API libraries not installed'}); return
-            try:
-                emails = _fetch(
-                    limit   = int(params.get('limit', ['30'])[0]),
-                    flagged = params.get('flagged', ['0'])[0] == '1',
-                    folder  = params.get('folder', ['INBOX'])[0])
-                self._j({'ok': True, 'emails': emails, 'count': len(emails)})
-            except Exception as e:
-                self._j({'error': str(e)}, 500)
+---
 
-        elif path == '/gmail/revoke':
-            global _gmail_svc
-            if os.path.exists(TOKEN_FILE): os.remove(TOKEN_FILE)
-            with _gmail_lock: _gmail_svc = None
-            self._j({'ok': True})
+## How It Works
 
-        elif path == '/inbox':
-            with _inbox_lock: data = dict(_inbox_store)
-            self._j(data)
+Single-file HTML/CSS/JS PWA. Two lightweight Python servers:
 
-        elif path == '/inbox/push':
-            enc = params.get('d', [None])[0]
-            if enc:
-                try:
-                    data = json.loads(base64.b64decode(enc.encode()).decode('utf-8','replace'))
-                    with _inbox_lock: _inbox_store.clear(); _inbox_store.update(data)
-                    html = b'<html><body style="font-family:sans-serif;padding:30px;background:#1a1a1a;color:#c8f04e"><h2>&#10003; Emails received</h2><p style="color:#888">OEL has your emails. You can close this tab.</p><script>setTimeout(function(){window.close();},1500);</script></body></html>'
-                    self.send_response(200); self._cors()
-                    self.send_header('Content-Type','text/html'); self.send_header('Content-Length',len(html)); self.end_headers(); self.wfile.write(html); return
-                except Exception: pass
-            self.send_response(400); self.end_headers()
+| Server | Port | Purpose |
+|--------|------|---------|
+| `imap_server.py` | 7843 | IMAP/SMTP, email body parsing, bounce detection |
+| `server.py` | 7842 | Odoo 19 XML-RPC CORS proxy |
 
-        else:
-            self.send_response(404); self.end_headers()
+All Odoo data stays between your browser and your instance. AI calls go directly to Groq with your own key. No cloud storage, no analytics.
 
-    def do_OPTIONS(self):
-        self.send_response(200); self._cors(); self.end_headers()
+---
 
-    def do_POST(self):
-        path   = urlparse(self.path).path
-        params = parse_qs(urlparse(self.path).query)
-        length = int(self.headers.get('Content-Length', 0))
-        body   = self.rfile.read(length)
+## Quick Start
 
-        if path == '/inbox':
-            try:
-                data = json.loads(body.decode('utf-8','replace'))
-                with _inbox_lock: _inbox_store.clear(); _inbox_store.update(data)
-                self._j({'ok': True, 'count': len(data.get('emails',[]))})
-            except Exception as e:
-                self._j({'error': str(e)}, 400)
-        elif path == '/inbox/clear':
-            with _inbox_lock: _inbox_store.clear()
-            self._j({'ok': True})
-        else:
-            target = params.get('url', [None])[0]
-            if not target: self.send_response(400); self.end_headers(); return
-            try:
-                req = Request(target, data=body, headers={'Content-Type':'text/xml', 'Connection':'keep-alive'})
-                with urlopen(req, timeout=30) as r: data = r.read()
-                self.send_response(200); self._cors()
-                self.send_header('Content-Type','text/xml'); self.end_headers(); self.wfile.write(data)
-            except urllib.error.URLError as e:
-                self.send_response(502); self._cors(); self.end_headers(); self.wfile.write(str(e).encode())
+**Requirements:** Python 3, Groq API key ([console.groq.com](https://console.groq.com)), Odoo 19 with API key enabled.
 
-    def _j(self, obj, status=200):
-        b = json.dumps(obj).encode()
-        self.send_response(status); self._cors()
-        self.send_header('Content-Type','application/json'); self.send_header('Content-Length',len(b)); self.end_headers(); self.wfile.write(b)
+```
+Double-click start.bat
+```
 
-    def _cors(self):
-        self.send_header('Access-Control-Allow-Origin','*')
-        self.send_header('Access-Control-Allow-Methods','GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers','Content-Type')
+Starts both servers and opens the app in Chrome. First-time: go to Settings, enter Odoo URL/database/username/API key and Groq key. Export credentials for backup.
 
-    def log_message(self, fmt, *args): pass
+---
 
+## File Structure
 
-if __name__ == '__main__':
-    from socketserver import ThreadingMixIn
-    class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
-        daemon_threads = True
-    ThreadedHTTPServer(('localhost', PORT), ProxyHandler).serve_forever()
+```
+OEL Command/
+├── index.html            — The entire app (single file)
+├── imap_server.py        — IMAP/SMTP server (port 7843)
+├── server.py             — Odoo CORS proxy (port 7842)
+├── manifest.json         — PWA manifest (v10.0.0)
+├── sw.js                 — Service worker (cache: oel-v10.0)
+├── start.bat             — Windows launcher
+├── credentials.json      — Empty credentials template
+└── icons/                — SVG + PNG icons (192, 512, maskable)
+```
+
+---
+
+## Version History
+
+| Version | Highlights |
+|---------|-----------|
+| **v10.0** | Projects tab (Projects/Tasks/To Do/AI Brainstorm), conversational AI, task edit modal with AI Rewrite, Done stage (not delete), Quote Desk TRSAV prompt with custom editor |
+| v9.5 | Quote Desk, FWD email detection, contact override in lead modal, schedule activity fix |
+| v9.3 | Templates standalone section, Bounce Manager, Help guide, email body cleaner |
+| v9.2 | Bounce Manager, Help sidebar, template system with AI Composer |
+| v9.1 | Contact search in log note modal, bounce address extraction |
+| v9.0 | Activity draft→compose→log, vendor paste-extract, inbox body preview |
+| v8.x | IMAP trash, inbox action bar, notes cleanup |
+| v7.x | Dormant contacts, vendor outreach, accounting dashboard, remote support |
+
+---
+
+## Built By
+
+Lazzaro · Powered by Groq AI + Odoo 19  
+`OEL Command v10.0`
