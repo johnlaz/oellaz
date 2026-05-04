@@ -8687,9 +8687,14 @@ async function qdScheduleActivity() {
     const deadline = new Date(Date.now() + 86400000).toISOString().split('T')[0];
     const name     = document.getElementById('qd-name')?.value?.trim() || 'Quote request';
 
+    // Use lead if available, fall back to partner
+    const actResModel = window._qdOdooLeadId ? 'crm.lead' : 'res.partner';
+    const actResId    = window._qdOdooLeadId || window._qdOdooPartnerId;
+    if (!actResId) throw new Error('No lead or contact — push to Odoo first');
+
     await odooExecute(odooUid, 'mail.activity', 'create', [{
-      res_model:        'crm.lead',
-      res_id:           window._qdOdooLeadId,
+      res_model:        actResModel,
+      res_id:           actResId,
       activity_type_id: typeId,
       summary:          'Follow up on quote request: ' + name,
       date_deadline:    deadline,
@@ -10596,6 +10601,71 @@ function qsbUpdateSummary() {
   summaryEl.textContent = matched + ' of ' + total + ' matched';
 }
 
+
+// ── Schedule Activity Modal — contact search/override ─────────────────────────
+async function samSearchContact(query) {
+  const resultsEl = document.getElementById('sam-contact-results');
+  const statusEl  = document.getElementById('sam-contact-status');
+  if (!resultsEl) return;
+  query = (query || '').trim();
+  if (!query || query.length < 2) { resultsEl.style.display = 'none'; return; }
+  if (!odooUid) return;
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '<div style="padding:6px 10px;font-size:0.75rem;color:var(--muted)">Searching…</div>';
+  try {
+    const partners = await odooExecute(odooUid, 'res.partner', 'search_read',
+      [[['active','=',true],'|',['name','ilike',query],['email','ilike',query]]],
+      { fields: ['id','name','email','phone'], limit: 8, order: 'name asc' }
+    );
+    if (!partners || !partners.length) {
+      resultsEl.innerHTML = '<div style="padding:6px 10px;font-size:0.75rem;color:var(--muted)">No contacts found</div>';
+      return;
+    }
+    resultsEl._partners = partners;
+    resultsEl.innerHTML = partners.map(function(p, i) {
+      return '<div onclick="samPickContact(' + i + ')" style="padding:7px 10px;cursor:pointer;font-size:0.78rem;color:var(--text);border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'
+        + '<strong>' + escHtml(p.name) + '</strong>'
+        + (p.email ? ' <span style="color:var(--muted)">' + escHtml(p.email) + '</span>' : '')
+        + '</div>';
+    }).join('');
+  } catch(e) {
+    resultsEl.innerHTML = '<div style="padding:6px 10px;font-size:0.75rem;color:var(--danger)">Error: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+function samPickContact(i) {
+  const resultsEl = document.getElementById('sam-contact-results');
+  const statusEl  = document.getElementById('sam-contact-status');
+  const searchEl  = document.getElementById('sam-contact-search');
+  const submitBtn = document.getElementById('sam-submit');
+  const p = (resultsEl?._partners || [])[i];
+  if (!p) return;
+  // Update the resolvedPartner in the modal's closure via a global temp
+  window._samOverridePartner = p;
+  if (statusEl) statusEl.innerHTML = '<span style="color:var(--success)">✓ Changed to: <strong>' + escHtml(p.name) + '</strong>' + (p.email ? ' — ' + escHtml(p.email) : '') + '</span>';
+  if (resultsEl) resultsEl.style.display = 'none';
+  if (searchEl)  searchEl.value = '';
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+}
+
+async function samCreateContact() {
+  const searchEl = document.getElementById('sam-contact-search');
+  const name = prompt('New contact name:', searchEl?.value || '');
+  if (!name) return;
+  if (!odooUid) { alert('Connect to Odoo first'); return; }
+  const email = prompt('Email address (optional):') || '';
+  try {
+    const vals = { name };
+    if (email) vals.email = email;
+    const id = await odooExecute(odooUid, 'res.partner', 'create', [vals]);
+    window._samOverridePartner = { id, name, email };
+    const statusEl = document.getElementById('sam-contact-status');
+    if (statusEl) statusEl.innerHTML = '<span style="color:var(--success)">✓ Created &amp; selected: <strong>' + escHtml(name) + '</strong></span>';
+    const submitBtn = document.getElementById('sam-submit');
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; }
+  } catch(e) { alert('Error creating contact: ' + e.message); }
+}
+
 // ─── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   loadCredentials();
@@ -12406,7 +12476,14 @@ async function _openScheduleActivityModal({ em, emailTo, subject, sender, src, i
       '</div>' +
       '<button onclick="_closeInboxModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:2px 8px">&#x2715;</button>' +
     '</div>' +
-    '<div id="sam-contact-status" style="padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:0.78rem;color:var(--muted);margin-bottom:12px">Looking up contact&#8230;</div>' +
+    '<div id="sam-contact-status" style="padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:0.78rem;color:var(--muted);margin-bottom:6px">Looking up contact&#8230;</div>' +
+    '<div style="margin-bottom:12px">' +
+      '<div style="display:flex;gap:6px;margin-bottom:4px">' +
+        '<input id="sam-contact-search" type="text" placeholder="Search to change contact…" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 9px;color:var(--text);font-size:0.77rem;outline:none" oninput="samSearchContact(this.value)">' +
+        '<button onclick="samCreateContact()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:0.74rem;color:var(--muted);cursor:pointer;white-space:nowrap">+ New contact</button>' +
+      '</div>' +
+      '<div id="sam-contact-results" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:6px;max-height:110px;overflow-y:auto"></div>' +
+    '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">' +
       '<div><label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-weight:500;display:block;margin-bottom:4px">Activity Type</label>' +
         '<select id="sam-type" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:0.78rem">' + typeOpts + '</select></div>' +
@@ -12433,6 +12510,7 @@ async function _openScheduleActivityModal({ em, emailTo, subject, sender, src, i
   const sumEl = document.getElementById('sam-summary');
   if (sumEl) sumEl.value = 'Follow up re: ' + subject;
 
+  window._samOverridePartner = null; // reset on each open
   let resolvedPartner = null;
   const statusEl  = document.getElementById('sam-contact-status');
   const submitBtn = document.getElementById('sam-submit');
@@ -12470,7 +12548,10 @@ async function _openScheduleActivityModal({ em, emailTo, subject, sender, src, i
   };
 
   submitBtn.onclick = async () => {
+    // Use override partner if user changed it, otherwise use auto-resolved one
+    if (window._samOverridePartner) resolvedPartner = window._samOverridePartner;
     if (!resolvedPartner) return;
+    window._samOverridePartner = null; // reset for next open
     const typeId  = parseInt((document.getElementById('sam-type')||{}).value)||null;
     const dueDate = (document.getElementById('sam-date')||{}).value||'';
     const repId   = parseInt((document.getElementById('sam-rep')||{}).value)||null;
