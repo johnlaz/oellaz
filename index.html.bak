@@ -3,7 +3,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="oel-version" content="v12.0">
+  <meta name="oel-version" content="v5.0">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="mobile-web-app-capable" content="yes">
@@ -2829,7 +2829,7 @@ Support Team"></textarea>
         </div>
 
         <div style="text-align:center;font-size:0.72rem;color:var(--muted);padding:12px 0">
-          OEL Command v12.0 · Built by Lazzaro · Powered by Groq AI + Odoo 19
+          OEL Command v11.1 · Built by Lazzaro · Powered by Groq AI + Odoo 19
         </div>
 
       </div>
@@ -2939,7 +2939,7 @@ Support Team"></textarea>
           <div class="card-title" style="font-family:'DM Serif Display',serif;font-size:1.2rem;margin-bottom:6px">Dashboard</div>
           <div class="card-subtitle" style="margin-bottom:16px">Pipeline, opportunities, and team performance from Odoo.</div>
           <div style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px">
-            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v12.0</span>
+            <span style="font-size:0.65rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;padding:3px 10px;border-radius:20px;border:1px solid var(--accent);color:var(--accent);font-family:'DM Mono',monospace;box-shadow:0 0 8px rgba(201,168,76,0.35),0 0 20px rgba(201,168,76,0.12);animation:versionGlow 3s ease-in-out infinite alternate">OEL Command v11.1</span>
             <span style="font-size:0.68rem;color:var(--muted)">Built by Lazzaro</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
@@ -3446,12 +3446,11 @@ Thank you</textarea>
 
         <div class="divider"></div>
 
-                <!-- Sidebar Order -->
+        <!-- Sidebar Order -->
         <div style="font-size:0.72rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">Sidebar Order</div>
-        <button class="gear-item" onclick="openSidebarOrderModal()">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M2 7h10M2 10h10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-          Reorder sidebar items
-        </button>
+        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:10px;line-height:1.5">Use ▲ ▼ to reorder. Settings is always pinned last.</div>
+        <div id="sidebar-order-list" style="display:flex;flex-direction:column;gap:3px"></div>
+        <button onclick="resetSidebarOrder()" style="margin-top:10px;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--muted);font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Reset to default</button>
 
         <div class="divider"></div>
 
@@ -9261,9 +9260,9 @@ async function projChatSend() {
     if (taskNames.length) {
       taskBtns = '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">' +
         taskNames.map(function(name, i) {
-          return '<button onclick="projStageBrainstormTask(\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:var(--accent-dim);border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:3px 10px;font-size:0.73rem;color:var(--accent);cursor:pointer;font-family:DM Sans,sans-serif">+ ' + escHtml(name.slice(0,35)) + (name.length>35?'…':'') + '</button>';
+          return '<button onclick="projStageBrainstormTask(\'' + escHtml(name).replace(/'/g,"\\'") + '\')" style="background:var(--accent-dim);border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:3px 10px;font-size:0.73rem;color:var(--accent);cursor:pointer;font-family:\'DM Sans\',sans-serif">+ ' + escHtml(name.slice(0,35)) + (name.length>35?'…':'') + '</button>';
         }).join('') +
-        (taskNames.length > 1 ? '<button onclick="projStageAllBrainstormTasks(' + JSON.stringify(taskNames).replace(/"/g,"'") + ')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:0.73rem;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif">+ All ' + taskNames.length + ' tasks</button>' : '') +
+        (taskNames.length > 1 ? '<button onclick="projStageAllBrainstormTasks(' + JSON.stringify(taskNames).replace(/"/g,"'") + ')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:0.73rem;color:var(--muted);cursor:pointer;font-family:\'DM Sans\',sans-serif">+ All ' + taskNames.length + ' tasks</button>' : '') +
       '</div>';
     }
 
@@ -9689,7 +9688,7 @@ async function ptmAIRewrite() {
       suggestionsEl.style.display = 'flex';
       suggestionsEl.innerHTML = '<div style="font-size:0.71rem;color:var(--muted);margin-bottom:3px">Choose a rewrite:</div>' +
         lines.map(function(l) {
-          return '<button onclick="ptmPickRewrite(\'' + escHtml(l).replace(/'/g,"\\'") + '\')" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-size:0.8rem;color:var(--text);cursor:pointer;text-align:left;font-family:DM Sans,sans-serif;transition:border-color 0.12s" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' + escHtml(l) + '</button>';
+          return '<button onclick="ptmPickRewrite(\'' + escHtml(l).replace(/'/g,"\\'") + '\')" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-size:0.8rem;color:var(--text);cursor:pointer;text-align:left;font-family:\'DM Sans\',sans-serif;transition:border-color 0.12s" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">' + escHtml(l) + '</button>';
         }).join('');
     }
   } catch(e) {
@@ -9937,7 +9936,7 @@ function qspRenderEquipment() {
           '<div style="flex-shrink:0;position:relative">' +
             '<input type="text" placeholder="Search catalog…" ' +
               'oninput="qspSearchProduct(this,\'' + idx + '\')" ' +
-              'style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:0.76rem;outline:none;width:140px;font-family:DM Sans,sans-serif" ' +
+              'style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:0.76rem;outline:none;width:140px;font-family:\'DM Sans\',sans-serif" ' +
               'id="qsp-search-' + idx + '">' +
             '<div id="qsp-results-' + idx + '" style="display:none;position:absolute;top:calc(100%+2px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:7px;z-index:200;min-width:200px;max-height:150px;overflow-y:auto;box-shadow:0 4px 14px rgba(0,0,0,0.25)"></div>' +
           '</div>' +
@@ -10687,7 +10686,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (typeof loadImapCreds  === 'function') loadImapCreds();
   // Update lights after credentials are restored
   setTimeout(updateStatusLights, 800);
-  // v12: restore sidebar order + load document library
+  // v11: restore sidebar order + load document library
   if (typeof docLibLoad === 'function') docLibLoad();
   if (typeof docLibRender  === 'function') docLibRender();
 });
@@ -13036,7 +13035,7 @@ async function lazSilentConnect() {
     const parts = [];
     if (!odooOk) parts.push(
       '<span style="color:var(--warning)">⚠ Odoo not connected — ' +
-      '<button onclick="setStep(1)" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.78rem;font-family:DM Sans,sans-serif;text-decoration:underline;padding:0">go to Step 1</button>' +
+      '<button onclick="setStep(1)" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.78rem;font-family:\'DM Sans\',sans-serif;text-decoration:underline;padding:0">go to Step 1</button>' +
       '</span>'
     );
     if (!imapOk) parts.push(
@@ -14372,7 +14371,7 @@ function renderLazNotes() {
     // Individual AI cleanup button
     const aiBtn = document.createElement('button');
     aiBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 11 11" fill="none"><path d="M5.5 1l1 3L10 5.5l-3 1-1 3-1-3-3-1 3-1z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg> Clean up';
-    aiBtn.style.cssText = 'background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.71rem;padding:0 4px;display:flex;align-items:center;gap:3px;font-family:DM Sans,sans-serif;opacity:0.7';
+    aiBtn.style.cssText = 'background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.71rem;padding:0 4px;display:flex;align-items:center;gap:3px;font-family:\'DM Sans\',sans-serif;opacity:0.7';
     aiBtn.onmouseover = () => aiBtn.style.opacity = '1';
     aiBtn.onmouseout  = () => aiBtn.style.opacity = '0.7';
     aiBtn.onclick     = () => notesCleanupOne(note.id);
@@ -14380,7 +14379,7 @@ function renderLazNotes() {
 
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'Delete';
-    deleteBtn.style.cssText = 'background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.71rem;padding:0 0 0 8px;opacity:0.6;font-family:DM Sans,sans-serif';
+    deleteBtn.style.cssText = 'background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.71rem;padding:0 0 0 8px;opacity:0.6;font-family:\'DM Sans\',sans-serif';
     deleteBtn.onmouseover = () => deleteBtn.style.opacity = '1';
     deleteBtn.onmouseout  = () => deleteBtn.style.opacity = '0.6';
     deleteBtn.onclick     = () => lazDeleteNote(note.id);
@@ -20758,7 +20757,7 @@ function ddOppsHTML(opps, base) {
   const oppsToolbar = '<div style="padding:9px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface2)">'+
     '<div><span style="font-size:0.72rem;color:var(--muted)">TOTAL</span> <strong style="color:var(--accent);font-family:\'DM Mono\',monospace">'+ddFmt(total)+'</strong></div>'+
     '<div><span style="font-size:0.72rem;color:var(--muted)">DEALS</span> <strong style="color:var(--text)">'+opps.length+'</strong></div>'+
-    '<button onclick="ddOppsTeamView()" style="background:none;border:1px solid var(--accent);border-radius:7px;padding:5px 12px;font-size:0.77rem;color:var(--accent);cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;margin-left:auto">Team view</button>'+
+    '<button onclick="ddOppsTeamView()" style="background:none;border:1px solid var(--accent);border-radius:7px;padding:5px 12px;font-size:0.77rem;color:var(--accent);cursor:pointer;font-family:\'DM Sans\',sans-serif;white-space:nowrap;margin-left:auto">Team view</button>'+
   '</div>';
   let html = ddTableStyles()+oppsToolbar+'<div style="overflow-y:auto;max-height:460px">';
   Object.entries(stages).forEach(([stage,deals]) => {
@@ -20802,7 +20801,7 @@ function ddWonHTML(won, base) {
   return ddTableStyles()+
     '<div style="padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px">'+
     '<span style="font-size:0.72rem;color:var(--muted)">TOTAL WON</span><strong style="color:var(--success);font-size:1.1rem;font-family:\'DM Serif Display\',serif">'+ddFmt(total)+'</strong>'+
-    '<button onclick="ddWonTeamView()" style="background:none;border:1px solid var(--accent);border-radius:7px;padding:5px 12px;font-size:0.77rem;color:var(--accent);cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;margin-left:auto">Team view</button>'+
+    '<button onclick="ddWonTeamView()" style="background:none;border:1px solid var(--accent);border-radius:7px;padding:5px 12px;font-size:0.77rem;color:var(--accent);cursor:pointer;font-family:\'DM Sans\',sans-serif;white-space:nowrap;margin-left:auto">Team view</button>'+
     '</div>'+
     '<div style="border-bottom:2px solid var(--border)">'+repRows+'</div>'+
     '<div style="overflow-y:auto;max-height:280px"><table class="dd-table"><thead><tr><th>Deal</th><th>Revenue</th><th>Owner</th><th>Closed</th></tr></thead><tbody>'+dealRows+'</tbody></table></div>';
@@ -20864,7 +20863,7 @@ function ddInboxHTML(msgs, base) {
       '<button class="dd-act-btn" onclick="ddMarkMsgRead('+m.id+',this)">Mark read ✓</button>'+
       (base&&m.model&&m.res_id?'<button class="dd-act-btn" onclick="window.open(\''+base+'/odoo/'+m.model.replace('.','-')+'/'+m.res_id+'\',\'_blank\')">Open ↗</button>':'')+
       '</div><div id="dd-reply-'+i+'" style="display:none;margin-top:8px">'+
-      '<textarea id="dd-reply-text-'+i+'" style="width:100%;min-height:60px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:DM Sans,sans-serif;font-size:0.82rem;outline:none;resize:none;line-height:1.5" placeholder="Write reply…"></textarea>'+
+      '<textarea id="dd-reply-text-'+i+'" style="width:100%;min-height:60px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;color:var(--text);font-family:\'DM Sans\',sans-serif;font-size:0.82rem;outline:none;resize:none;line-height:1.5" placeholder="Write reply…"></textarea>'+
       '<div style="display:flex;gap:6px;margin-top:6px">'+
       '<button class="dd-act-btn" onclick="ddSendReply('+m.id+',\''+m.model+'\','+m.res_id+','+i+')">Send</button>'+
       '<button class="dd-act-btn" onclick="document.getElementById(\'dd-reply-'+i+'\').style.display=\'none\'">Cancel</button></div></div></div>';
@@ -20917,7 +20916,7 @@ function ddVelocityHTML(opps, base) {
     '<div style="padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:0.78rem;color:var(--muted)">'+
     '<span>🔴 30+ days &nbsp;·&nbsp; 🟡 14-29 days &nbsp;·&nbsp; 🟢 Active</span>'+
     '<span style="color:var(--warning)">'+sc+' deal'+(sc!==1?'s':'')+' need attention</span>'+
-    '<button onclick="ddVelocityTeamView()" style="background:none;border:1px solid var(--accent);border-radius:7px;padding:5px 12px;font-size:0.77rem;color:var(--accent);cursor:pointer;font-family:DM Sans,sans-serif;white-space:nowrap;margin-left:auto">Team view</button>'+
+    '<button onclick="ddVelocityTeamView()" style="background:none;border:1px solid var(--accent);border-radius:7px;padding:5px 12px;font-size:0.77rem;color:var(--accent);cursor:pointer;font-family:\'DM Sans\',sans-serif;white-space:nowrap;margin-left:auto">Team view</button>'+
     '</div>'+
     '<div style="overflow-y:auto;max-height:440px"><table class="dd-table">'+
     '<thead><tr><th>Deal</th><th>Value</th><th>Stage</th><th>Last Activity</th><th>Owner</th></tr></thead>'+
@@ -21273,7 +21272,7 @@ function briefingRender(text, flaggedEmails, overAchiever, imapOnline) {
   // Parse numbered items (1. 2. 3. etc) into checkbox rows
   // Split on numbered list items while preserving section structure
   const lines = text.split('\n');
-  let html = '<div style="font-family:DM Sans,sans-serif;font-size:0.87rem;line-height:1.75;color:var(--text)">';
+  let html = '<div style="font-family:\'DM Sans\',sans-serif;font-size:0.87rem;line-height:1.75;color:var(--text)">';
   let itemIdx = 0;
 
   lines.forEach(line => {
@@ -21326,7 +21325,7 @@ function briefingRender(text, flaggedEmails, overAchiever, imapOnline) {
       html += '<div style="font-size:0.72rem;color:var(--muted);margin-top:2px">'+escHtml(e.sender_email)+' · '+escHtml(e.date||'')+'</div>';
       html += '</div>';
       html += '<div style="display:flex;gap:5px;flex-shrink:0">';
-      html += '<button onclick="openQuickCompose({to:\'' + senderAttr + '\',subject:\'Re: ' + subjectAttr + '\',context:\'' + subjectAttr + '\'})" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:0.71rem;color:var(--muted);cursor:pointer;font-family:DM Sans,sans-serif" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.color=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'">Reply</button>';
+      html += '<button onclick="openQuickCompose({to:\'' + senderAttr + '\',subject:\'Re: ' + subjectAttr + '\',context:\'' + subjectAttr + '\'})" style="background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:0.71rem;color:var(--muted);cursor:pointer;font-family:\'DM Sans\',sans-serif" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.color=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'">Reply</button>';
       html += '</div></div>';
     });
     html += '</div></div>';
@@ -21923,135 +21922,140 @@ window.actTab = function(tab) {
 
 
 // ── Sidebar Order ──────────────────────────────────────────────
-(function() {
-  var KEY = 'oel_sidebar_order';
-  var DEFAULTS = [
-    ['nav-inbox','Inbox'],['nav-leads','Lead Capture'],['nav-activities','Activities'],
-    ['nav-quotes','Quotes'],['nav-smartbuilder','Smart Builder'],['nav-quotedesk','Request Desk'],
-    ['nav-projects','Projects'],['nav-templates','Templates'],['nav-discuss','Discuss'],
-    ['nav-support','Support'],['nav-bounces','Bounces'],['nav-catchup','Dormant Contacts'],
-    ['nav-vendor','Vendor Outreach'],['nav-docs','Documents'],['nav-prospect','Prospecting'],
-    ['nav-reports','Reports'],['nav-help','Help']
-  ];
+const OEL_SIDEBAR_ORDER_KEY = 'oel_sidebar_order';
 
-  function load() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch(e) { return null; } }
-  function save(ids) { localStorage.setItem(KEY, JSON.stringify(ids)); }
-  function defaultIds() { return DEFAULTS.map(function(d){return d[0];}); }
-  function labelFor(id) { for(var i=0;i<DEFAULTS.length;i++){if(DEFAULTS[i][0]===id)return DEFAULTS[i][1];} return id; }
+// All reorderable nav items in default order (id, label)
+const SIDEBAR_ITEMS_DEFAULT = [
+  { id: 'nav-inbox',        label: '📥 Inbox' },
+  { id: 'nav-leads',        label: '🎯 Lead Capture' },
+  { id: 'nav-activities',   label: '📋 Activities' },
+  { id: 'nav-quotes',       label: '💬 Quotes' },
+  { id: 'nav-smartbuilder', label: '🤖 Smart Builder' },
+  { id: 'nav-quotedesk',    label: '📝 Request Desk' },
+  { id: 'nav-projects',     label: '📁 Projects' },
+  { id: 'nav-templates',    label: '✉️ Templates' },
+  { id: 'nav-discuss',      label: '💬 Discuss' },
+  { id: 'nav-support',      label: '🛠 Support' },
+  { id: 'nav-bounces',      label: '⚠️ Bounces' },
+  { id: 'nav-catchup',      label: '💤 Dormant Contacts' },
+  { id: 'nav-vendor',       label: '⭐ Vendor Outreach' },
+  { id: 'nav-docs',         label: '📄 Documents' },
+  { id: 'nav-prospect',     label: '🔍 Prospecting' },
+  { id: 'nav-reports',      label: '📊 Reports' },
+  { id: 'nav-help',         label: 'ℹ️ Help' },
+];
 
-  function applyOrder() {
-    var saved = load();
-    if (!saved || !saved.length) return;
-    var nav = document.querySelector('#sidebar nav.sb-nav');
-    var settingsEl = document.getElementById('nav-settings');
-    if (!nav || !settingsEl) return;
-    // The divider immediately before nav-settings is our anchor
-    var anchor = settingsEl.previousElementSibling;
-    if (!anchor || anchor.parentNode !== nav) {
-      // fallback: just use settingsEl itself as anchor
-      anchor = settingsEl;
-    }
-    var ordered = [];
-    for(var i=0;i<saved.length;i++){var el=document.getElementById(saved[i]);if(el)ordered.push(el);}
-    for(var j=0;j<DEFAULTS.length;j++){var el2=document.getElementById(DEFAULTS[j][0]);if(el2&&ordered.indexOf(el2)<0)ordered.push(el2);}
-    for(var k=0;k<ordered.length;k++){nav.insertBefore(ordered[k],anchor);}
-    nav.querySelectorAll('.sb-section-label').forEach(function(l){l.style.display='none';});
+function loadSidebarOrder() {
+  try { return JSON.parse(localStorage.getItem(OEL_SIDEBAR_ORDER_KEY)) || null; } catch { return null; }
+}
+function saveSidebarOrder(ids) {
+  localStorage.setItem(OEL_SIDEBAR_ORDER_KEY, JSON.stringify(ids));
+}
+
+function applySidebarOrder() {
+  const saved = loadSidebarOrder();
+  if (!saved || !saved.length) return;
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
+  // Find the nav-items container area (between sb-toggle and settings)
+  // We'll reorder by moving each element in order
+  const settingsEl = document.getElementById('nav-settings');
+  // Build ordered list of elements
+  const ordered = [];
+  saved.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) ordered.push(el);
+  });
+  // Also include any items not in saved (fallback)
+  SIDEBAR_ITEMS_DEFAULT.forEach(item => {
+    const el = document.getElementById(item.id);
+    if (el && !ordered.includes(el)) ordered.push(el);
+  });
+  // Insert them before settings
+  // Find the dividers — we keep the section labels in place but move items
+  // Simpler: just reinsert all sb-items (excluding settings) in new order before settings
+  if (!settingsEl) return;
+  // Remove existing dividers between items (sb-divider before settings stays)
+  const dividers = sidebar.querySelectorAll('.sb-divider');
+  // Keep first divider (after toggle) and last (before settings)
+  // We'll reconstruct: find the parent container
+  // Actually the simplest approach: move each nav item node before the settings divider
+  const lastDivider = settingsEl.previousElementSibling; // the sb-divider before settings
+  ordered.forEach(el => {
+    sidebar.insertBefore(el, lastDivider);
+  });
+  // Hide section labels (DAILY / MORE) since order is now custom
+  sidebar.querySelectorAll('.sb-section-label').forEach(lbl => {
+    lbl.style.display = 'none';
+  });
+}
+
+let _sboDragSrc = null;
+
+window.moveSidebarItem = function(idx, dir) {
+  const saved = loadSidebarOrder() || SIDEBAR_ITEMS_DEFAULT.map(i => i.id);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= saved.length) return;
+  const tmp = saved[idx];
+  saved[idx] = saved[newIdx];
+  saved[newIdx] = tmp;
+  saveSidebarOrder(saved);
+  applySidebarOrder();
+  renderSidebarOrderList();
+};
+
+window.renderSidebarOrderList = function() {
+  const container = document.getElementById('sidebar-order-list');
+  if (!container) return;
+  const saved = loadSidebarOrder() || SIDEBAR_ITEMS_DEFAULT.map(i => i.id);
+  const idToLabel = {};
+  SIDEBAR_ITEMS_DEFAULT.forEach(i => { idToLabel[i.id] = i.label; });
+  container.innerHTML = '';
+  saved.forEach(function(id, idx) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-size:0.8rem;color:var(--text)';
+    const upBtn = document.createElement('button');
+    upBtn.textContent = '▲';
+    upBtn.title = 'Move up';
+    upBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;width:24px;height:24px;font-size:0.7rem;flex-shrink:0;padding:0';
+    if (idx === 0) { upBtn.style.opacity = '0.2'; upBtn.disabled = true; }
+    upBtn.onclick = (function(i){ return function(){ window.moveSidebarItem(i, -1); }; })(idx);
+    const downBtn = document.createElement('button');
+    downBtn.textContent = '▼';
+    downBtn.title = 'Move down';
+    downBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;width:24px;height:24px;font-size:0.7rem;flex-shrink:0;padding:0';
+    if (idx === saved.length - 1) { downBtn.style.opacity = '0.2'; downBtn.disabled = true; }
+    downBtn.onclick = (function(i){ return function(){ window.moveSidebarItem(i, 1); }; })(idx);
+    const label = document.createElement('span');
+    label.style.flex = '1';
+    label.textContent = idToLabel[id] || id;
+    row.appendChild(upBtn);
+    row.appendChild(downBtn);
+    row.appendChild(label);
+    container.appendChild(row);
+  });
+};
+
+function renderSidebarOrderList() { window.renderSidebarOrderList(); }
+
+window.resetSidebarOrder = function() {
+  localStorage.removeItem(OEL_SIDEBAR_ORDER_KEY);
+  // Restore default DOM order
+  const sidebar = document.getElementById('sidebar');
+  const settingsEl = document.getElementById('nav-settings');
+  if (sidebar && settingsEl) {
+    const lastDivider = settingsEl.previousElementSibling;
+    SIDEBAR_ITEMS_DEFAULT.forEach(item => {
+      const el = document.getElementById(item.id);
+      if (el) sidebar.insertBefore(el, lastDivider);
+    });
+    // Restore section labels
+    sidebar.querySelectorAll('.sb-section-label').forEach(lbl => {
+      lbl.style.display = '';
+    });
   }
-
-  function buildModal() {
-    var existing = document.getElementById('sbo-modal');
-    if (existing) existing.parentNode.removeChild(existing);
-    var saved = load() || defaultIds();
-
-    var overlay = document.createElement('div');
-    overlay.id = 'sbo-modal';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5)';
-    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
-
-    var panel = document.createElement('div');
-    panel.style.cssText = 'width:280px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.6);overflow:hidden';
-    panel.addEventListener('click', function(e){ e.stopPropagation(); });
-
-    var header = document.createElement('div');
-    header.style.cssText = 'padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center';
-    var title = document.createElement('span');
-    title.style.cssText = 'font-size:0.85rem;font-weight:600;color:var(--text)';
-    title.textContent = 'Reorder Sidebar';
-    var closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    closeBtn.style.cssText = 'background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:2px 6px';
-    closeBtn.addEventListener('click', function(){ overlay.remove(); });
-    header.appendChild(title);
-    header.appendChild(closeBtn);
-
-    var listWrap = document.createElement('div');
-    listWrap.style.cssText = 'padding:10px 12px;max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:4px';
-
-    for (var i = 0; i < saved.length; i++) {
-      (function(idx){
-        var row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:6px';
-        var upBtn = document.createElement('button');
-        upBtn.textContent = '▲';
-        upBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);width:26px;height:26px;font-size:0.65rem;cursor:pointer;flex-shrink:0';
-        if (idx === 0) upBtn.style.opacity = '0.2';
-        upBtn.addEventListener('click', function(){ sboMove(idx,-1); });
-        var dnBtn = document.createElement('button');
-        dnBtn.textContent = '▼';
-        dnBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);width:26px;height:26px;font-size:0.65rem;cursor:pointer;flex-shrink:0';
-        if (idx === saved.length-1) dnBtn.style.opacity = '0.2';
-        dnBtn.addEventListener('click', function(){ sboMove(idx,1); });
-        var label = document.createElement('span');
-        label.style.cssText = 'flex:1;font-size:0.8rem;color:var(--text)';
-        label.textContent = labelFor(saved[idx]);
-        row.appendChild(upBtn); row.appendChild(dnBtn); row.appendChild(label);
-        listWrap.appendChild(row);
-      })(i);
-    }
-
-    var footer = document.createElement('div');
-    footer.style.cssText = 'padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px';
-    var resetBtn = document.createElement('button');
-    resetBtn.textContent = 'Reset to default';
-    resetBtn.style.cssText = 'flex:1;background:none;border:1px solid var(--border);border-radius:6px;padding:6px;font-size:0.75rem;color:var(--muted);cursor:pointer';
-    resetBtn.addEventListener('click', function(){ sboReset(); });
-    var doneBtn = document.createElement('button');
-    doneBtn.textContent = 'Done';
-    doneBtn.style.cssText = 'flex:1;background:var(--accent);border:none;border-radius:6px;padding:6px;font-size:0.75rem;color:var(--bg);cursor:pointer;font-weight:600';
-    doneBtn.addEventListener('click', function(){ overlay.remove(); });
-    footer.appendChild(resetBtn);
-    footer.appendChild(doneBtn);
-    panel.appendChild(header); panel.appendChild(listWrap); panel.appendChild(footer);
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-  }
-
-  function sboMove(idx, dir) {
-    var saved = load() || defaultIds();
-    var newIdx = idx + dir;
-    if (newIdx < 0 || newIdx >= saved.length) return;
-    var tmp = saved[idx]; saved[idx] = saved[newIdx]; saved[newIdx] = tmp;
-    save(saved); applyOrder(); buildModal();
-  }
-
-  function sboReset() {
-    localStorage.removeItem(KEY);
-    var nav = document.querySelector('#sidebar nav.sb-nav');
-    var settingsEl = document.getElementById('nav-settings');
-    if (nav && settingsEl) {
-      var anchor = settingsEl.previousElementSibling;
-      if (!anchor || anchor.parentNode !== nav) anchor = settingsEl;
-      for(var i=0;i<DEFAULTS.length;i++){var el=document.getElementById(DEFAULTS[i][0]);if(el)nav.insertBefore(el,anchor);}
-      nav.querySelectorAll('.sb-section-label').forEach(function(l){l.style.display='';});
-    }
-    buildModal();
-  }
-
-  window.openSidebarOrderModal = function() { buildModal(); };
-  window.applySidebarOrder = applyOrder;
-
-  document.addEventListener('DOMContentLoaded', applyOrder);
-})();
+  renderSidebarOrderList();
+};
 // ── End Sidebar Order ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', applySidebarOrder);
 
@@ -22060,6 +22064,7 @@ window.openSettings = function() {
   document.getElementById('settings-overlay').classList.add('open');
   // step-1 is permanently in settings drawer
   if (typeof oelRefreshStatusLights === 'function') oelRefreshStatusLights();
+  renderSidebarOrderList();
 };
 
 window.closeSettings = function() {
