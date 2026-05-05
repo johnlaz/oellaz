@@ -10690,6 +10690,8 @@ window.addEventListener('DOMContentLoaded', () => {
   // v12: restore sidebar order + load document library
   if (typeof docLibLoad === 'function') docLibLoad();
   if (typeof docLibRender  === 'function') docLibRender();
+  // Re-apply sidebar order after all init is complete (prevents race with nav render)
+  setTimeout(function(){ if (typeof window.applySidebarOrder === 'function') window.applySidebarOrder(); }, 100);
 });
 const THEME_COLORS = {
   lime: '#c8f04e', cyan: '#00d8ff', ember: '#ff7c2a', light: '#6c47ff', violet: '#c77dff'
